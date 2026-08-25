@@ -88,14 +88,14 @@ const packages = [
         </div>
 
         <h1 class="fade-in-up delay-100 font-serif text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-[1.15]">
-          Rencanakan hari bahagiamu. <br class="hidden md:block">
-          <span class="text-rose-600 italic font-medium">Secara bersamaan.</span>
+          Rencanakan hari bahagiamu <br class="hidden md:block">
+          <span class="text-rose-600 italic font-medium">secara bersama.</span>
         </h1>
 
         <p class="fade-in-up delay-200 text-lg md:text-xl text-slate-600 font-light max-w-2xl mx-auto mb-10 leading-relaxed">
-          Ruang kerja digital yang dirancang khusus untuk pasangan. Sinkronkan tugas, kelola anggaran, dan susun daftar tamu dalam satu tempat tanpa miskomunikasi. Mewujudkan pernikahan impian kini jauh lebih tenang.
+          Ruang kerja digital yang dirancang khusus untuk pasangan. Sinkronkan tugas, kelola anggaran, dan susun daftar tamu dalam satu tempat tanpa miskomunikasi. Mewujudkan pernikahan impian kini jauh lebih mudah.
         </p>
-
+        
         <div class="fade-in-up delay-300 flex flex-col sm:flex-row items-center justify-center gap-4">
           <NuxtLink to="/register" class="w-full sm:w-auto bg-rose-600 text-white px-8 py-3.5 rounded-full font-medium shadow-lg shadow-rose-600/30 hover:bg-rose-700 transition-all hover:-translate-y-0.5 text-center">
             Buat Ruang Rencana

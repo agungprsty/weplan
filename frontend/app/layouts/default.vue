@@ -1,5 +1,17 @@
 <script setup lang="ts">
 const route = useRoute()
+const authStore = useAuthStore()
+const weddingStore = useWeddingStore()
+const router = useRouter()
+
+const showUserMenu = ref(false)
+
+function handleLogout() {
+  authStore.clearSession()
+  weddingStore.clearWedding()
+  showUserMenu.value = false
+  router.push('/')
+}
 </script>
 
 <template>
@@ -14,10 +26,47 @@ const route = useRoute()
           <NuxtLink to="/" class="hover:text-rose-600 transition-colors">Home</NuxtLink>
         </div>
         <div class="flex items-center gap-4">
-          <NuxtLink to="/login" class="text-sm font-medium text-slate-600 hover:text-rose-600 transition-colors hidden md:block">Masuk</NuxtLink>
-          <NuxtLink to="/register" class="text-sm font-medium bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md hover:shadow-rose-500/30">
-            Mulai Perjalanan
-          </NuxtLink>
+          <template v-if="authStore.isAuthenticated">
+            <NuxtLink to="/dashboard" class="text-sm font-medium text-slate-600 hover:text-rose-600 transition-colors hidden md:block">
+              Dashboard
+            </NuxtLink>
+            <div class="relative">
+              <button
+                class="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                @click="showUserMenu = !showUserMenu"
+              >
+                <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold">
+                  {{ authStore.user?.name?.charAt(0)?.toUpperCase() }}
+                </span>
+                <span class="hidden sm:inline">{{ authStore.user?.name }}</span>
+              </button>
+              <div
+                v-if="showUserMenu"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-50"
+              >
+                <NuxtLink
+                  to="/dashboard"
+                  class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                  @click="showUserMenu = false"
+                >
+                  Dashboard
+                </NuxtLink>
+                <hr class="my-1 border-slate-100" />
+                <button
+                  class="w-full text-left px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50"
+                  @click="handleLogout"
+                >
+                  Keluar
+                </button>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <NuxtLink to="/login" class="text-sm font-medium text-slate-600 hover:text-rose-600 transition-colors hidden md:block">Masuk</NuxtLink>
+            <NuxtLink to="/register" class="text-sm font-medium bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md hover:shadow-rose-500/30">
+              Mulai Perjalanan
+            </NuxtLink>
+          </template>
         </div>
       </div>
     </nav>

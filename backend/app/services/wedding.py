@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -51,13 +51,13 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
     if existing.scalar_one_or_none() is not None:
         raise ValueError("Already paired to this wedding")
 
-    partner_count = await db.execute(
-        select(WeddingUser).where(
+    partner_count = await db.scalar(
+        select(func.count()).select_from(WeddingUser).where(
             WeddingUser.wedding_id == wedding.id,
             WeddingUser.role == "partner",
         )
     )
-    if partner_count.scalar_one_or_none() is not None:
+    if partner_count and partner_count >= 2:
         raise ValueError("Wedding already has two partners")
 
     wedding_user = WeddingUser(

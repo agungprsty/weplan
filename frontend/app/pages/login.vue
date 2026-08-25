@@ -5,10 +5,9 @@ definePageMeta({ layout: 'auth' })
 
 const route = useRoute()
 const router = useRouter()
-const apiBase = useRuntimeConfig().public.apiBase
+const api = useApi()
 const authStore = useAuthStore()
-
-authStore.restore()
+const weddingStore = useWeddingStore()
 
 const email = ref('')
 const password = ref('')
@@ -37,20 +36,28 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    const res = await $fetch<Record<string, unknown>>(`${apiBase}/api/auth/login`, {
+    const res = await api<{ access_token: string; refresh_token: string }>('/api/v1/auth/login', {
       method: 'POST',
       body: { email: email.value.trim(), password: password.value }
     })
-    const payload = (res?.data ?? res) as Record<string, unknown>
-    const token = (payload.access_token ?? payload.token) as string | undefined
-    const user = (payload.user ?? {}) as Record<string, unknown>
-    if (!token) throw new Error('Respons server tidak menyertakan token.')
-    authStore.setSession(token, {
-      id: String(user.id ?? ''),
-      name: String(user.name ?? email.value.trim()),
-      email: String(user.email ?? email.value.trim())
+
+    const me = await api<{ id: string; full_name: string; email: string }>('/api/v1/auth/me', {
+      headers: { Authorization: `Bearer ${res.access_token}` }
     })
-    await router.push('/')
+
+    authStore.setSession(res.access_token, {
+      id: me.id,
+      name: me.full_name,
+      email: me.email
+    })
+
+    await weddingStore.fetchWedding()
+
+    if (weddingStore.hasWedding) {
+      await router.push('/dashboard')
+    } else {
+      await router.push('/onboarding')
+    }
   } catch (err) {
     if (err instanceof FetchError) {
       const detail = (err.data as Record<string, unknown> | undefined)?.detail

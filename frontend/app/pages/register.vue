@@ -40,10 +40,10 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    await $fetch(`${apiBase}/api/auth/register`, {
+    await $fetch(`${apiBase}/api/v1/auth/register`, {
       method: 'POST',
       body: {
-        name: name.value.trim(),
+        full_name: name.value.trim(),
         email: email.value.trim(),
         password: password.value
       }

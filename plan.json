@@ -1,0 +1,149 @@
+{
+  "project_overview": {
+    "name": "Wedding Planner SaaS",
+    "version": "1.0.0-MVP",
+    "description": "Platform SaaS multi-tenant yang memfasilitasi kolaborasi real-time (optimistic update) antara pasangan dalam merencanakan pernikahan, mengelola anggaran, daftar tamu, dan tugas persiapan.",
+    "target_audience": [
+      "Pasangan yang sedang merencanakan pernikahan",
+      "Keluarga inti atau panitia lokal (fase lanjutan)",
+      "Wedding Organizer (fase lanjutan)"
+    ],
+    "business_model": "Freemium SaaS (Tier gratis untuk fitur dasar, Tier premium berbayar untuk fitur advance dan kuota tamu tak terbatas)"
+  },
+  "technical_architecture": {
+    "frontend": {
+      "framework": "Nuxt.js (Vue 3)",
+      "state_management": "Pinia",
+      "data_fetching": "Nuxt composables (useFetch/useAsyncData) dengan implementasi Optimistic UI",
+      "styling": "TailwindCSS (Rekomendasi)"
+    },
+    "backend": {
+      "framework": "FastAPI (Python)",
+      "orm": "SQLAlchemy",
+      "database_migrations": "Alembic",
+      "authentication": "JWT (JSON Web Tokens)",
+      "api_style": "RESTful API"
+    },
+    "database": {
+      "type": "PostgreSQL",
+      "multi_tenant_strategy": "Single database dengan kolom 'wedding_id' sebagai penanda tenant (Row-Level Isolation)"
+    }
+  },
+  "core_features_mvp": [
+    {
+      "module": "Authentication & Workspace",
+      "features": [
+        "Registrasi dan Login pengguna",
+        "Pembuatan entitas/workspace pernikahan",
+        "Sistem pairing akun via kode unik (Shared Workspace)"
+      ]
+    },
+    {
+      "module": "Checklist & Task Management",
+      "features": [
+        "Daftar tugas bawaan (Seserahan, KUA, Vendor, dll)",
+        "Status tugas (To-Do, In Progress, Done)",
+        "Assignee (Penugasan ke pihak pria/wanita)"
+      ]
+    },
+    {
+      "module": "Guest Management",
+      "features": [
+        "CRUD daftar tamu",
+        "Kategorisasi tamu (Keluarga, Teman, VIP)",
+        "Pelacakan status RSVP (Pending, Attending, Declined)"
+      ]
+    },
+    {
+      "module": "Budgeting (Sederhana)",
+      "features": [
+        "Input target anggaran total",
+        "Kalkulasi alokasi dana per kategori vendor"
+      ]
+    }
+  ],
+  "future_roadmap": [
+    {
+      "phase": "Post-MVP (Monetization)",
+      "features": [
+        "Integrasi Payment Gateway lokal (Midtrans/Xendit)",
+        "Sistem penagihan dan subscription bulanan/per-event",
+        "Pembatasan kuota tamu untuk akun gratis"
+      ]
+    },
+    {
+      "phase": "Advanced Features",
+      "features": [
+        "Role-Based Access Control (RBAC) dinamis untuk Panitia dan WO",
+        "QR Code Check-in untuk tamu di hari H",
+        "Export/Import data tamu via Excel/CSV",
+        "Log aktivitas/Audit trail yang mendetail"
+      ]
+    }
+  ],
+  "database_schema_summary": {
+    "users": "Menyimpan data kredensial individu.",
+    "weddings": "Menyimpan metadata acara (contoh: Pernikahan Agung & Fani, target dana, tanggal).",
+    "wedding_users": "Tabel pivot untuk mengikat user_id ke wedding_id beserta role-nya.",
+    "guests": "Tabel tamu dengan foreign key ke wedding_id.",
+    "checklists": "Tabel manajemen tugas dengan foreign key ke wedding_id dan assignee_id (users)."
+  },
+  "api_endpoint_structure": {
+    "auth": {
+      "POST /api/auth/register": "Mendaftar akun baru",
+      "POST /api/auth/login": "Mendapatkan JWT token"
+    },
+    "workspace": {
+      "POST /api/weddings": "Membuat workspace pernikahan baru",
+      "POST /api/weddings/pair": "Menggabungkan akun ke workspace menggunakan kode unik",
+      "GET /api/weddings/me": "Mengambil data detail pernikahan milik user"
+    },
+    "guests": {
+      "GET /api/weddings/{wedding_id}/guests": "Daftar tamu",
+      "POST /api/weddings/{wedding_id}/guests": "Tambah tamu",
+      "PATCH /api/weddings/{wedding_id}/guests/{guest_id}": "Update detail/RSVP tamu"
+    },
+    "checklists": {
+      "GET /api/weddings/{wedding_id}/checklists": "Daftar tugas",
+      "PATCH /api/weddings/{wedding_id}/checklists/{task_id}": "Update status/assignee tugas"
+    }
+  },
+  "development_milestones": [
+    {
+      "sprint": 1,
+      "focus": "Setup Infrastruktur & Skema Database",
+      "deliverables": [
+        "Inisialisasi repo Nuxt.js dan FastAPI",
+        "Model SQLAlchemy dan migrasi Alembic selesai",
+        "Sistem autentikasi JWT berfungsi"
+      ]
+    },
+    {
+      "sprint": 2,
+      "focus": "Sistem Pairing & Shared Workspace",
+      "deliverables": [
+        "Endpoint pembuatan workspace",
+        "Logika pairing kode berfungsi",
+        "Otorisasi akses berbasis wedding_id (Dependency Injection FastAPI)"
+      ]
+    },
+    {
+      "sprint": 3,
+      "focus": "Fitur Transaksional MVP",
+      "deliverables": [
+        "CRUD Checklist Seserahan/Tugas",
+        "CRUD Daftar Tamu",
+        "Integrasi Optimistic UI di Nuxt.js"
+      ]
+    },
+    {
+      "sprint": 4,
+      "focus": "Polishing & Testing",
+      "deliverables": [
+        "Handling race-conditions/konflik data (LWW)",
+        "End-to-end testing skenario kolaborasi dua browser berbeda",
+        "Persiapan deployment"
+      ]
+    }
+  ]
+}

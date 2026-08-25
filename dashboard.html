@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Pernikahan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        slate: {
+                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
+                            400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
+                            800: '#1e293b', 900: '#0f172a',
+                        },
+                        rose: {
+                            50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af',
+                            400: '#fb7185', 500: '#f43f5e', 600: '#e11d48',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar (Desktop) -->
+    <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
+        <div class="p-6 font-bold text-2xl text-rose-600 border-b border-slate-100">WePlan<span class="text-slate-800">.</span></div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center gap-3 bg-rose-50 text-rose-600 px-4 py-3 rounded-lg font-medium">
+                📊 Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-3 text-slate-600 px-4 py-3 rounded-lg font-medium hover:bg-slate-50 transition">
+                📝 Checklist
+            </a>
+            <a href="#" class="flex items-center gap-3 text-slate-600 px-4 py-3 rounded-lg font-medium hover:bg-slate-50 transition">
+                ✉️ Daftar Tamu
+            </a>
+            <a href="#" class="flex items-center gap-3 text-slate-600 px-4 py-3 rounded-lg font-medium hover:bg-slate-50 transition">
+                💰 Keuangan
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-y-auto">
+        
+        <!-- Topbar -->
+        <header class="bg-white px-8 py-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+            <h2 class="text-xl font-bold text-slate-800">Pernikahan Agung & Fani</h2>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium bg-green-100 text-green-700 px-3 py-1 rounded-full">Terkoneksi</span>
+                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600">A</div>
+                <div class="w-10 h-10 bg-rose-200 rounded-full flex items-center justify-center font-bold text-rose-700 -ml-4 border-2 border-white">F</div>
+            </div>
+        </header>
+
+        <!-- Dashboard Widgets -->
+        <div class="p-8 max-w-6xl mx-auto w-full space-y-6">
+            
+            <!-- Hero Stats -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Countdown -->
+                <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl p-6 text-white shadow-md flex flex-col justify-center items-center text-center">
+                    <p class="text-rose-100 font-medium mb-1">25 November</p>
+                    <h3 class="text-4xl font-extrabold mb-1" id="countdown-days">93</h3>
+                    <p class="text-sm text-rose-100">Hari Menuju Hari H</p>
+                </div>
+
+                <!-- Budget Summary -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <p class="text-slate-500 text-sm font-medium">Anggaran Terpakai</p>
+                    <h3 class="text-2xl font-bold text-slate-800 mt-2">Rp 45.000.000</h3>
+                    <p class="text-sm text-slate-500 mt-1">dari target Rp 100.000.000</p>
+                    
+                    <div class="w-full bg-slate-100 h-2 rounded-full mt-4">
+                        <div class="bg-rose-500 h-2 rounded-full" style="width: 45%"></div>
+                    </div>
+                </div>
+
+                <!-- Guest Summary -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <p class="text-slate-500 text-sm font-medium">RSVP Tamu</p>
+                    <div class="flex items-end gap-2 mt-2">
+                        <h3 class="text-2xl font-bold text-slate-800">120</h3>
+                        <span class="text-slate-500 mb-1">/ 300 Pax</span>
+                    </div>
+                    <div class="flex gap-4 mt-4 text-sm">
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 bg-green-400 rounded-full"></span> Hadir</div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 bg-yellow-400 rounded-full"></span> Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plan Status Widget -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-rose-400 to-rose-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-slate-500 text-sm font-medium">Plan Aktif</p>
+                            <h3 class="text-xl font-bold text-slate-800">Paket Dasar <span class="text-slate-400 font-normal text-sm">(Gratis)</span></h3>
+                        </div>
+                    </div>
+                    <button class="bg-rose-600 text-white px-5 py-2.5 rounded-full font-medium text-sm shadow-md shadow-rose-600/20 hover:bg-rose-700 hover:-translate-y-0.5 transition-all">
+                        Upgrade ke Premium
+                    </button>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <span class="text-slate-600">Maks <strong class="text-slate-800">50 tamu</strong></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-slate-600">2 akun kolaborasi</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task List Area -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-lg text-slate-800">Tugas Terdekat</h3>
+                    <button class="text-rose-600 text-sm font-medium hover:underline">+ Tambah Tugas</button>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Task Item 1 -->
+                    <label class="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition">
+                        <input type="checkbox" class="w-5 h-5 accent-rose-500 cursor-pointer" onclick="toggleTask(this)">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-800 transition-colors">Pesan Kotak Seserahan</p>
+                            <p class="text-xs text-slate-500">Tenggat: 15 Sep</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-md">Pihak Pria</span>
+                    </label>
+
+                    <!-- Task Item 2 -->
+                    <label class="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition">
+                        <input type="checkbox" class="w-5 h-5 accent-rose-500 cursor-pointer" onclick="toggleTask(this)">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-800 transition-colors">DP Vendor Katering</p>
+                            <p class="text-xs text-slate-500">Tenggat: 20 Sep</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 bg-pink-50 text-pink-600 rounded-md">Pihak Wanita</span>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Simple JS for interaction -->
+    <script>
+        // Coret teks saat checkbox di-klik (Simulasi Optimistic Update)
+        function toggleTask(checkbox) {
+            const textElement = checkbox.nextElementSibling.querySelector('p:first-child');
+            if(checkbox.checked) {
+                textElement.classList.add('line-through', 'text-slate-400');
+            } else {
+                textElement.classList.remove('line-through', 'text-slate-400');
+            }
+        }
+
+        // Kalkulasi countdown dinamis ke 25 November (asumsi tahun berjalan)
+        const targetDate = new Date(new Date().getFullYear(), 10, 25); // Bulan ke-10 adalah November
+        const today = new Date();
+        const diffTime = Math.abs(targetDate - today);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        document.getElementById('countdown-days').innerText = diffDays;
+    </script>
+</body>
+</html>

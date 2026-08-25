@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.order import Order
+from app.models.wedding import Wedding
 from app.schemas.order import OrderCreate
 
 
@@ -61,10 +62,14 @@ async def confirm_order(
 
     order.status = "confirmed"
     order.confirmed_by = admin_id
-    order.confirmed_at = datetime.now(UTC)
+    order.confirmed_at = datetime.now(UTC).replace(tzinfo=None)
     order.payment_method = payment_method
     if notes:
         order.notes = notes
+
+    wedding = await db.get(Wedding, order.wedding_id)
+    if wedding is not None:
+        wedding.plan_id = order.plan_id
 
     await db.flush()
     await db.refresh(order)

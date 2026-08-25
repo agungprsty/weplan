@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.user import User
 from app.models.wedding import Wedding
@@ -72,7 +73,11 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
 
 async def get_user_wedding(db: AsyncSession, user: User) -> Wedding | None:
     result = await db.execute(
-        select(Wedding).join(WeddingUser).where(WeddingUser.user_id == user.id).limit(1)
+        select(Wedding)
+        .options(selectinload(Wedding.plan))
+        .join(WeddingUser)
+        .where(WeddingUser.user_id == user.id)
+        .limit(1)
     )
     return result.scalar_one_or_none()
 

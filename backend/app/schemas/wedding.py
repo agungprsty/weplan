@@ -4,6 +4,15 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class PlanInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    slug: str
+    price: int
+    max_guests: int
+
+
 class WeddingBase(BaseModel):
     title: str
     wedding_date: date | None = None
@@ -29,6 +38,7 @@ class WeddingResponse(WeddingBase):
 
     id: uuid.UUID
     pair_code: str
+    plan: PlanInfo | None = None
     created_at: datetime
     updated_at: datetime
 

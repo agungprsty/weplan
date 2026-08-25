@@ -1,7 +1,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -33,13 +32,10 @@ async def register(
 
 @router.post("/login", response_model=Token)
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    data: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> Token:
-    user = await auth_service.authenticate_user(
-        db,
-        LoginRequest(email=form_data.username, password=form_data.password),
-    )
+    user = await auth_service.authenticate_user(db, data)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

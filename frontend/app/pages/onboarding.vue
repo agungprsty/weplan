@@ -5,6 +5,7 @@ definePageMeta({ layout: 'auth' })
 
 const router = useRouter()
 const weddingStore = useWeddingStore()
+const authStore = useAuthStore()
 
 const mode = ref<'choose' | 'create' | 'join'>('choose')
 
@@ -32,6 +33,29 @@ function validateJoin(): string | null {
   return null
 }
 
+function isAuthExpiredError(err: unknown): boolean {
+  if (err instanceof FetchError) {
+    const status = err.response?.status ?? (err as unknown as { statusCode?: number }).statusCode
+    if (status === 401) return true
+    const detail = (err.data as Record<string, unknown> | undefined)?.detail
+    if (typeof detail === 'string' && detail.toLowerCase().includes('expired')) return true
+    if (detail && typeof detail === 'object' && 'message' in detail) {
+      const msg = String((detail as Record<string, unknown>).message).toLowerCase()
+      if (msg.includes('expired') || msg.includes('token')) return true
+    }
+  }
+  // Fallback for plain error objects
+  const maybeStatus = (err as { response?: { status?: number }; statusCode?: number })?.response?.status ?? (err as { statusCode?: number })?.statusCode
+  if (maybeStatus === 401) return true
+  return false
+}
+
+function handleExpiredSession() {
+  authStore.clearSession()
+  weddingStore.clearWedding()
+  router.push('/login')
+}
+
 async function onCreateSubmit() {
   formError.value = null
   const invalid = validateCreate()
@@ -51,6 +75,10 @@ async function onCreateSubmit() {
     })
     await router.push('/dashboard')
   } catch (err) {
+    if (isAuthExpiredError(err)) {
+      handleExpiredSession()
+      return
+    }
     formError.value = extractError(err)
   } finally {
     submitting.value = false
@@ -70,6 +98,10 @@ async function onJoinSubmit() {
     await weddingStore.pairWedding(pairCode.value.trim().toUpperCase())
     await router.push('/dashboard')
   } catch (err) {
+    if (isAuthExpiredError(err)) {
+      handleExpiredSession()
+      return
+    }
     formError.value = extractError(err)
   } finally {
     submitting.value = false
@@ -86,22 +118,33 @@ function extractError(err: unknown): string {
   }
   return 'Terjadi kesalahan. Coba lagi.'
 }
+
+// Jika token sudah expired saat halaman dibuka, langsung arahkan ke login
+onMounted(async () => {
+  if (authStore.isAuthenticated && !weddingStore.fetched) {
+    try {
+      await weddingStore.fetchWedding()
+    } catch (err) {
+      if (isAuthExpiredError(err)) handleExpiredSession()
+    }
+  }
+})
 </script>
 
 <template>
-  <div class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-6 py-20">
+  <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
     <div class="w-full max-w-2xl">
-      <div class="text-center mb-10">
-        <h1 class="font-serif text-3xl font-bold text-slate-900">Selamat datang di WePlan!</h1>
-        <p class="mt-3 text-slate-600">
+      <div class="text-center mb-8 sm:mb-10">
+        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">Selamat datang di WePlan!</h1>
+        <p class="mt-3 text-sm sm:text-base text-slate-600">
           Mulai merencanakan pernikahan impian kalian. Pilih langkah pertama di bawah.
         </p>
       </div>
 
       <!-- Pilihan Mode -->
-      <div v-if="mode === 'choose'" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div v-if="mode === 'choose'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <button
-          class="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm text-left transition-all hover:border-rose-300 hover:shadow-md hover:shadow-rose-500/10"
+          class="group bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm text-left transition-all hover:border-rose-300 hover:shadow-md hover:shadow-rose-500/10"
           @click="mode = 'create'"
         >
           <div class="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-2xl mb-5 transition-colors group-hover:bg-rose-100">
@@ -120,7 +163,7 @@ function extractError(err: unknown): string {
         </button>
 
         <button
-          class="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm text-left transition-all hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/10"
+          class="group bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm text-left transition-all hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/10"
           @click="mode = 'join'"
         >
           <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl mb-5 transition-colors group-hover:bg-indigo-100">
@@ -142,7 +185,7 @@ function extractError(err: unknown): string {
       <!-- Form Buat Wedding -->
       <div
         v-if="mode === 'create'"
-        class="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm"
+        class="bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm"
       >
         <button
           class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-6"
@@ -154,7 +197,7 @@ function extractError(err: unknown): string {
           Kembali
         </button>
 
-        <h2 class="font-serif text-2xl font-bold text-slate-900">Buat Wedding Baru</h2>
+        <h2 class="font-serif text-xl sm:text-2xl font-bold text-slate-900">Buat Wedding Baru</h2>
         <p class="mt-2 text-sm text-slate-600">Isi detail pernikahan kalian. Bisa diubah nanti.</p>
 
         <form class="mt-6 space-y-5" @submit.prevent="onCreateSubmit">
@@ -235,7 +278,7 @@ function extractError(err: unknown): string {
       <!-- Form Join Wedding -->
       <div
         v-if="mode === 'join'"
-        class="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm"
+        class="bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm"
       >
         <button
           class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-6"
@@ -247,7 +290,7 @@ function extractError(err: unknown): string {
           Kembali
         </button>
 
-        <h2 class="font-serif text-2xl font-bold text-slate-900">Join Wedding Pasangan</h2>
+        <h2 class="font-serif text-xl sm:text-2xl font-bold text-slate-900">Join Wedding Pasangan</h2>
         <p class="mt-2 text-sm text-slate-600">
           Masukkan pair code yang diberikan pasangan untuk gabung ke workspace yang sama.
         </p>

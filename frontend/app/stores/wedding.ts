@@ -35,7 +35,17 @@ export const useWeddingStore = defineStore('wedding', () => {
     try {
       const res = await api<Wedding>('/api/v1/weddings/me')
       wedding.value = res as unknown as Wedding
-    } catch {
+    } catch (err: unknown) {
+      // Let 401 (Token has expired) bubble up so middleware / callers can redirect to login.
+      // Global useApi already clears session on 401, but we also need to avoid swallowing it here.
+      if (err && typeof err === 'object' && 'response' in err) {
+        const status = (err as { response?: { status?: number } }).response?.status
+        if (status === 401) throw err
+      }
+      // Fallback check for ofetch FetchError without response field but with statusCode
+      if (err && typeof err === 'object' && 'statusCode' in err) {
+        if ((err as { statusCode?: number }).statusCode === 401) throw err
+      }
       wedding.value = null
     } finally {
       loading.value = false

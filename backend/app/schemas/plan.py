@@ -9,6 +9,7 @@ class PlanBase(BaseModel):
     slug: str
     price: int = 0
     max_guests: int = 50
+    duration_months: int = 6
 
 
 class PlanResponse(PlanBase):

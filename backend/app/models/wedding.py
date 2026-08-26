@@ -20,6 +20,7 @@ class Wedding(Base):
         ForeignKey("plans.id", ondelete="SET NULL"), nullable=True
     )
     pair_code: Mapped[str] = mapped_column(String(8), unique=True, index=True)
+    plan_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
@@ -30,6 +31,15 @@ class Wedding(Base):
         back_populates="wedding", cascade="all, delete-orphan"
     )
     checklists: Mapped[list["Checklist"]] = relationship(
+        back_populates="wedding", cascade="all, delete-orphan"
+    )
+    vendors: Mapped[list["Vendor"]] = relationship(
+        back_populates="wedding", cascade="all, delete-orphan"
+    )
+    kua_documents: Mapped[list["KuaDocument"]] = relationship(
+        back_populates="wedding", cascade="all, delete-orphan"
+    )
+    mahar_items: Mapped[list["MaharItem"]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
     plan: Mapped["Plan | None"] = relationship()

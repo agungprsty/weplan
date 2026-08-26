@@ -26,6 +26,7 @@ class Order(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 

@@ -15,6 +15,7 @@ class Plan(Base):
     slug: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     price: Mapped[int] = mapped_column(BigInteger, default=0)
     max_guests: Mapped[int] = mapped_column(Integer, default=50)
+    duration_months: Mapped[int] = mapped_column(Integer, default=6)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)

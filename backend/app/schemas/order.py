@@ -30,5 +30,6 @@ class OrderResponse(BaseModel):
     notes: str | None
     confirmed_by: uuid.UUID | None
     confirmed_at: datetime | None
+    expires_at: datetime | None
     created_at: datetime
     updated_at: datetime

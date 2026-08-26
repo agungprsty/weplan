@@ -55,6 +55,10 @@ async def confirm_order(
     payment_method: str,
     notes: str | None = None,
 ) -> Order | None:
+    from datetime import timedelta
+
+    from app.models.plan import Plan
+
     result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
     if order is None:
@@ -67,9 +71,18 @@ async def confirm_order(
     if notes:
         order.notes = notes
 
+    # Set expiry based on plan duration (approx 30 days per month)
+    plan = await db.get(Plan, order.plan_id)
+    duration = plan.duration_months if plan else 6
+    if duration and duration > 0:
+        order.expires_at = order.confirmed_at + timedelta(days=duration * 30)
+    else:
+        order.expires_at = None
+
     wedding = await db.get(Wedding, order.wedding_id)
     if wedding is not None:
         wedding.plan_id = order.plan_id
+        wedding.plan_expires_at = order.expires_at
 
     await db.flush()
     await db.refresh(order)

@@ -1,148 +1,152 @@
 {
   "project_overview": {
     "name": "Wedding Planner SaaS",
-    "version": "1.0.0-MVP",
-    "description": "Platform SaaS multi-tenant yang memfasilitasi kolaborasi real-time (optimistic update) antara pasangan dalam merencanakan pernikahan, mengelola anggaran, daftar tamu, dan tugas persiapan.",
+    "version": "1.1.0-MVP",
+    "description": "Platform SaaS multi-tenant kolaborasi real-time pasangan. Freemium 50k/6 bulan, renewable. 6 modul inti hasil konsolidasi 9 fitur (Timeline+Checklist gabung, Mahar+Seserahan gabung, Target+Cashflow gabung). Bridesmaid masuk Tamu kategori bridesmaid + Budget Busana.",
     "target_audience": [
-      "Pasangan yang sedang merencanakan pernikahan",
-      "Keluarga inti atau panitia lokal (fase lanjutan)",
-      "Wedding Organizer (fase lanjutan)"
+      "Pasangan yang merencanakan pernikahan (12-1 bulan)",
+      "Keluarga/WO read-only (post-MVP)"
     ],
-    "business_model": "Freemium SaaS (Tier gratis untuk fitur dasar, Tier premium berbayar untuk fitur advance dan kuota tamu tak terbatas)"
+    "business_model": "Freemium 50k/6 bulan. Gratis selesaikan nikahan intim 50 tamu. Premium unlimited + upload + export. Jika expired bisa perpanjang (renew). Lifetime tidak, periodik 6 bulan."
+  },
+  "decisions_2026_08_25": {
+    "gabung": "9→6 modul: Timeline+Checklist=1, Mahar+Seserahan=1, Target+CASHFLOW=1",
+    "bridesmaid": "hapus modul terpisah → Tamu kategori=bridesmaid + Budget kategori Busana",
+    "berkas_kua": "gratis dasar (10 checklist tanpa upload), premium upload/scan/expiry/CPP-CPW terpisah",
+    "vendor": "premium only (unlimited, DP/Lunas, reminder H-7)",
+    "subscription": "50k/6 bulan renewable, bukan lifetime. Tambah plan.duration_months=6, wedding.plan_expires_at",
+    "priority": "Mahar & Seserahan dulu (sprint 1), Keuangan Cashflow setelahnya (sprint 2)",
+    "template": "12 bulan default auto-generate dari wedding_date"
   },
   "technical_architecture": {
     "frontend": {
       "framework": "Nuxt.js (Vue 3)",
       "state_management": "Pinia",
-      "data_fetching": "Nuxt composables (useFetch/useAsyncData) dengan implementasi Optimistic UI",
-      "styling": "TailwindCSS (Rekomendasi)"
+      "data_fetching": "Nuxt composables (useFetch/useAsyncData) dengan Optimistic UI",
+      "styling": "TailwindCSS"
     },
     "backend": {
       "framework": "FastAPI (Python)",
       "orm": "SQLAlchemy",
       "database_migrations": "Alembic",
-      "authentication": "JWT (JSON Web Tokens)",
-      "api_style": "RESTful API"
+      "authentication": "JWT (HS256, 30 menit access, 30 hari refresh)",
+      "api_style": "RESTful + wedding_id tenant isolation"
     },
     "database": {
       "type": "PostgreSQL",
-      "multi_tenant_strategy": "Single database dengan kolom 'wedding_id' sebagai penanda tenant (Row-Level Isolation)"
+      "multi_tenant_strategy": "Single DB, kolom wedding_id ROW-LEVEL, FK CASCADE/SET NULL"
     }
   },
   "core_features_mvp": [
     {
-      "module": "Authentication & Workspace",
+      "module": "1. Timeline & Checklist (Gabung)",
+      "tier": "Gratis",
       "features": [
-        "Registrasi dan Login pengguna",
-        "Pembuatan entitas/workspace pernikahan",
-        "Sistem pairing akun via kode unik (Shared Workspace)"
+        "Template 12 bulan default auto-generate 30 task dari wedding_date (due_date = wedding_date - X hari)",
+        "Status todo/in_progress/done, kategori seserahan/kua/vendor/dekorasi/undangan/catering/busana/dokumentasi/hiburan/lainnya, assignee pria/wanita/both, order drag",
+        "View Timeline (Gantt) + Daftar, warna kategori, filter status/kategori"
       ]
     },
     {
-      "module": "Checklist & Task Management",
+      "module": "2. Tamu & RSVP (inc. Bridesmaid)",
+      "tier": "Gratis 50 orang",
       "features": [
-        "Daftar tugas bawaan (Seserahan, KUA, Vendor, dll)",
-        "Status tugas (To-Do, In Progress, Done)",
-        "Assignee (Penugasan ke pihak pria/wanita)"
+        "CRUD tamu: name, email, phone, category(family/friend/vip/general/bridesmaid), side(bride/groom/both), rsvp(pending/attending/declined), pax, notes, angpao_tracker",
+        "Limit 50 gratis, unlimited premium, import Excel, group VIP/Keluarga, Tamu kategori bridesmaid masuk sini",
+        "Bridesmaid budget seragam masuk modul Budget kategori Busana (bukan modul terpisah)"
       ]
     },
     {
-      "module": "Guest Management",
+      "module": "3. Berkas KUA (Dokumen & Legal)",
+      "tier": "Gratis dasar",
       "features": [
-        "CRUD daftar tamu",
-        "Kategorisasi tamu (Keluarga, Teman, VIP)",
-        "Pelacakan status RSVP (Pending, Attending, Declined)"
+        "Checklist 10 berkas wajib (KTP, KK, Akta, N1-N4, Sehat, pas foto) tanpa upload — gratis",
+        "Premium: upload scan, file_url, expiry_date alert, progres CPP vs CPW terpisah (Numpang Nikah trigger), panduan Bimwin/Simkah, verifikasi KUA"
       ]
     },
     {
-      "module": "Budgeting (Sederhana)",
+      "module": "4. Vendor, Kontrak & Status Bayar",
+      "tier": "Premium",
       "features": [
-        "Input target anggaran total",
-        "Kalkulasi alokasi dana per kategori vendor"
+        "CRUD vendor: vendor_name, category, kontak WA, total_amount, dp_amount, paid_amount, status(belum_bayar/dp/lunas), due_date, invoice_url, notes",
+        "Gratis: locked/preview, Premium unlimited + reminder pelunasan H-7 + chart vs alokasi"
+      ]
+    },
+    {
+      "module": "5. Mahar & Seserahan (Gabung) — PRIORITAS 1",
+      "tier": "Premium",
+      "features": [
+        "Type mahar/seserahan_cpp/seserahan_cpw/hantaran, title, qty, estimated_cost, actual_cost, status(rencana/dibeli/dicicil/selesai), tenor_total/terbayar, linkage budget",
+        "Gratis preview 5 item, Premium unlimited + cicilan tracker + budget linkage Busana/Adat"
+      ]
+    },
+    {
+      "module": "6. Keuangan: Target Dana + Uang Masuk/Keluar (Gabung) — PRIORITAS 2",
+      "tier": "Premium",
+      "features": [
+        "savings_target (target_amount, deadline, current auto-sum), transactions (type masuk/keluar, amount, category, source, proof_url, transaction_date)",
+        "Progress %, grafik cashflow, Kantong Bersama invite pasangan, linkage ke Vendor/Mahar",
+        "Gratis: input target saja, Premium full cashflow"
+      ]
+    }
+  ],
+  "premium_gating": {
+    "gratis": "Timeline template dasar, 50 tamu, KUA 10 checklist tanpa upload, Mahar preview 5, Target input saja, 2 akun pasangan, tanpa export",
+    "premium_50k_6bulan": "Unlimited tamu/vendor/mahar, upload KUA, progress CPP/CPW, cicilan, full cashflow + grafik, export Excel/PDF, reminder WA, keluarga/WO read-only 2-3, renewable per 6 bulan"
+  },
+  "database_schema_summary": {
+    "existing": "users, weddings (plan_id, total_budget, wedding_date, pair_code), wedding_users, guests(category inc bridesmaid, side, rsvp), checklists(category, status, order, assignee), plans(price, max_guests), orders(status, amount, proof_url)",
+    "new_sprint1_mahar": "vendors, kua_documents, mahar_seserahan_items, plans.duration_months, weddings.plan_expires_at, orders.expires_at",
+    "new_sprint2_keuangan": "savings_targets, transactions"
+  },
+  "api_endpoint_structure": {
+    "auth": "POST /api/v1/auth/register, POST /api/v1/auth/login, GET /api/v1/auth/me",
+    "workspace": "POST /api/v1/weddings, POST /api/v1/weddings/pair, GET /api/v1/weddings/me, PATCH /api/v1/weddings/{id}",
+    "checklists": "GET/POST /api/v1/weddings/{id}/checklists, PATCH/DELETE /{task_id}, POST /auto-generate?template=12bulan",
+    "guests": "GET/POST /api/v1/weddings/{id}/guests, PATCH/DELETE /{guest_id} (category inc bridesmaid)",
+    "kua": "GET /api/v1/weddings/{id}/kua-documents, PATCH /{doc_id} (status/file_url), POST /seed (auto from template)",
+    "vendors": "GET/POST /api/v1/weddings/{id}/vendors, PATCH/DELETE /{vendor_id} (premium guard)",
+    "mahar": "GET/POST /api/v1/weddings/{id}/mahar-items, PATCH/DELETE /{item_id} (premium, preview limit gratis)",
+    "finance_next": "GET/PUT /api/v1/weddings/{id}/savings-target, GET/POST/PATCH /transactions",
+    "orders": "POST /api/v1/weddings/{id}/orders (create 50k/6bln), GET /, PATCH /admin/orders/{id}/confirm (sets wedding.plan_expires_at = now + 6 months)"
+  },
+  "development_milestones": [
+    {
+      "sprint": 1,
+      "focus": "Mahar & Seserahan + Vendor Premium + KUA Gratis + Subscription 50k/6bln",
+      "deliverables": [
+        "Model vendors, kua_documents, mahar_seserahan_items, Wedding.plan_expires_at, Plan.duration_months, Order.expires_at + migration",
+        "Seed: 2 plans (Gratis 0/50 tamu, Premium 50k/6bln unlimited), 10 KUA docs template, 30 checklist template 12 bulan",
+        "API CRUD Mahar (preview 5 gratis, premium guard), Vendor premium guard, KUA gratis",
+        "FE stores + UI Mahar & Seserahan tab mahar/seserahan_cpp/hantaran + cicilan tracker"
+      ]
+    },
+    {
+      "sprint": 2,
+      "focus": "Keuangan Cashflow + Timeline Auto-Generate",
+      "deliverables": [
+        "Model savings_targets + transactions + migration",
+        "API savings-target singleton + transactions CRUD + progress % + chart data",
+        "FE Target Dana + Uang Masuk/Keluar grafik, Kantong Bersama",
+        "Checklist auto-generate 12 bulan dari wedding_date"
+      ]
+    },
+    {
+      "sprint": 3,
+      "focus": "Freemium Enforce + Export + Realtime Polish",
+      "deliverables": [
+        "Middleware paywall (limit tamu/vendor/mahar, expiry check plan_expires_at)",
+        "Export Excel/PDF (premium), renewal flow 50k/6bln",
+        "Optimistic UI + LWW + 2-browser test + ruff/pytest/vitest"
       ]
     }
   ],
   "future_roadmap": [
     {
-      "phase": "Post-MVP (Monetization)",
+      "phase": "Post-MVP",
       "features": [
-        "Integrasi Payment Gateway lokal (Midtrans/Xendit)",
-        "Sistem penagihan dan subscription bulanan/per-event",
-        "Pembatasan kuota tamu untuk akun gratis"
-      ]
-    },
-    {
-      "phase": "Advanced Features",
-      "features": [
-        "Role-Based Access Control (RBAC) dinamis untuk Panitia dan WO",
-        "QR Code Check-in untuk tamu di hari H",
-        "Export/Import data tamu via Excel/CSV",
-        "Log aktivitas/Audit trail yang mendetail"
-      ]
-    }
-  ],
-  "database_schema_summary": {
-    "users": "Menyimpan data kredensial individu.",
-    "weddings": "Menyimpan metadata acara (contoh: Pernikahan Agung & Fani, target dana, tanggal).",
-    "wedding_users": "Tabel pivot untuk mengikat user_id ke wedding_id beserta role-nya.",
-    "guests": "Tabel tamu dengan foreign key ke wedding_id.",
-    "checklists": "Tabel manajemen tugas dengan foreign key ke wedding_id dan assignee_id (users)."
-  },
-  "api_endpoint_structure": {
-    "auth": {
-      "POST /api/auth/register": "Mendaftar akun baru",
-      "POST /api/auth/login": "Mendapatkan JWT token"
-    },
-    "workspace": {
-      "POST /api/weddings": "Membuat workspace pernikahan baru",
-      "POST /api/weddings/pair": "Menggabungkan akun ke workspace menggunakan kode unik",
-      "GET /api/weddings/me": "Mengambil data detail pernikahan milik user"
-    },
-    "guests": {
-      "GET /api/weddings/{wedding_id}/guests": "Daftar tamu",
-      "POST /api/weddings/{wedding_id}/guests": "Tambah tamu",
-      "PATCH /api/weddings/{wedding_id}/guests/{guest_id}": "Update detail/RSVP tamu"
-    },
-    "checklists": {
-      "GET /api/weddings/{wedding_id}/checklists": "Daftar tugas",
-      "PATCH /api/weddings/{wedding_id}/checklists/{task_id}": "Update status/assignee tugas"
-    }
-  },
-  "development_milestones": [
-    {
-      "sprint": 1,
-      "focus": "Setup Infrastruktur & Skema Database",
-      "deliverables": [
-        "Inisialisasi repo Nuxt.js dan FastAPI",
-        "Model SQLAlchemy dan migrasi Alembic selesai",
-        "Sistem autentikasi JWT berfungsi"
-      ]
-    },
-    {
-      "sprint": 2,
-      "focus": "Sistem Pairing & Shared Workspace",
-      "deliverables": [
-        "Endpoint pembuatan workspace",
-        "Logika pairing kode berfungsi",
-        "Otorisasi akses berbasis wedding_id (Dependency Injection FastAPI)"
-      ]
-    },
-    {
-      "sprint": 3,
-      "focus": "Fitur Transaksional MVP",
-      "deliverables": [
-        "CRUD Checklist Seserahan/Tugas",
-        "CRUD Daftar Tamu",
-        "Integrasi Optimistic UI di Nuxt.js"
-      ]
-    },
-    {
-      "sprint": 4,
-      "focus": "Polishing & Testing",
-      "deliverables": [
-        "Handling race-conditions/konflik data (LWW)",
-        "End-to-end testing skenario kolaborasi dua browser berbeda",
-        "Persiapan deployment"
+        "Midtrans/Xendit payment gateway webhook",
+        "RBAC Keluarga/WO, QR Check-in, Seating Plan, Rundown Hari H per jam + PIC, Angpao tracker, Budget auto 13 adat"
       ]
     }
   ]

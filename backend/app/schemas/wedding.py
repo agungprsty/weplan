@@ -11,6 +11,7 @@ class PlanInfo(BaseModel):
     slug: str
     price: int
     max_guests: int
+    duration_months: int
 
 
 class WeddingBase(BaseModel):
@@ -39,6 +40,7 @@ class WeddingResponse(WeddingBase):
     id: uuid.UUID
     pair_code: str
     plan: PlanInfo | None = None
+    plan_expires_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

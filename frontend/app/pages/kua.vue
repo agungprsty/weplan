@@ -13,6 +13,16 @@ const filtered = computed(() => {
 const total = computed(() => kuaStore.items.length)
 const doneCount = computed(() => kuaStore.items.filter((d) => d.status !== 'belum').length)
 
+const showAddModal = ref(false)
+const addForm = reactive<{ title: string; owner_type: KuaDocument['owner_type']; is_required: boolean }>({
+  title: '',
+  owner_type: 'both',
+  is_required: false,
+})
+const addSubmitting = ref(false)
+const addError = ref('')
+const deletingId = ref<string | null>(null)
+
 function isDone(doc: KuaDocument) {
   return doc.status !== 'belum'
 }
@@ -30,19 +40,58 @@ async function toggleStatus(doc: KuaDocument) {
   } catch {}
 }
 
+function openAddModal() {
+  addForm.title = ''
+  addForm.owner_type = 'both'
+  addForm.is_required = false
+  addError.value = ''
+  showAddModal.value = true
+}
+
+async function submitAdd() {
+  if (!addForm.title.trim()) {
+    addError.value = 'Judul berkas wajib diisi'
+    return
+  }
+  addError.value = ''
+  addSubmitting.value = true
+  try {
+    await kuaStore.createDocument({
+      title: addForm.title.trim(),
+      owner_type: addForm.owner_type,
+      is_required: addForm.is_required,
+    })
+    showAddModal.value = false
+  } catch (e: any) {
+    addError.value = e?.data?.detail?.message || e?.message || 'Gagal menambah berkas'
+  } finally {
+    addSubmitting.value = false
+  }
+}
+
+async function removeDoc(doc: KuaDocument) {
+  if (!kuaStore.isCustom(doc)) return
+  if (!confirm(`Hapus "${doc.title}"?`)) return
+  deletingId.value = doc.id
+  try {
+    await kuaStore.deleteDocument(doc.id)
+  } catch (e: any) {
+    alert(e?.data?.detail || 'Gagal menghapus berkas')
+  } finally {
+    deletingId.value = null
+  }
+}
+
 onMounted(async () => {
   await kuaStore.fetchKua()
 })
 </script>
 
 <template>
-  <div class="mx-auto max-w-[960px] px-4 py-6 lg:px-8">
+  <div class="mx-auto max-w-[1440px] px-4 py-6 lg:px-6">
     <!-- Header -->
     <div class="mb-6">
       <h1 class="font-serif text-[26px] font-bold tracking-tight text-slate-900">Berkas KUA</h1>
-      <p class="mt-1 max-w-xl text-sm leading-relaxed text-slate-500">
-        Siapkan 10 berkas wajib bersama pasangan. Centang jika sudah siap — progres terupdate otomatis.
-      </p>
     </div>
 
     <!-- Progress — dipertahankan, minimalis -->
@@ -65,17 +114,26 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Filter — tetap minimal -->
-    <div class="mb-4 flex gap-2">
+    <!-- Filter + tambah berkas -->
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex gap-2">
+        <button
+          v-for="t in (['all','cpp','cpw'] as const)"
+          :key="t"
+          class="rounded-full px-4 py-2 text-sm font-medium transition"
+          :class="activeOwner === t ? 'bg-slate-900 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
+          @click="activeOwner = t"
+        >
+          {{ t === 'all' ? 'Semua' : t.toUpperCase() }}
+          <span class="ml-1.5 text-xs opacity-60">· {{ t==='all' ? total : kuaStore.items.filter(d=> d.owner_type===t || d.owner_type==='both').length }}</span>
+        </button>
+      </div>
       <button
-        v-for="t in (['all','cpp','cpw'] as const)"
-        :key="t"
-        class="rounded-full px-4 py-2 text-sm font-medium transition"
-        :class="activeOwner === t ? 'bg-slate-900 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
-        @click="activeOwner = t"
+        class="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+        @click="openAddModal"
       >
-        {{ t === 'all' ? 'Semua' : t.toUpperCase() }}
-        <span class="ml-1.5 text-xs opacity-60">· {{ t==='all' ? total : kuaStore.items.filter(d=> d.owner_type===t || d.owner_type==='both').length }}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        Tambah berkas lain
       </button>
     </div>
 
@@ -133,11 +191,82 @@ onMounted(async () => {
             >
               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Siap
             </span>
+
+            <!-- Hapus — hanya untuk berkas custom -->
+            <button
+              v-if="kuaStore.isCustom(doc)"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition"
+              :disabled="deletingId === doc.id"
+              :aria-label="`Hapus ${doc.title}`"
+              title="Hapus berkas custom"
+              @click.stop="removeDoc(doc)"
+            >
+              <svg v-if="deletingId !== doc.id" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /></svg>
+              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" class="animate-spin" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9" stroke-opacity="0.2"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            </button>
           </li>
         </ul>
       </template>
     </div>
 
-    <p class="mt-4 text-center text-xs text-slate-400">Centang berkas yang sudah di tangan. Progress di atas akan menyesuaikan otomatis.</p>
+    <p class="mt-4 text-center text-xs text-slate-400">Centang berkas yang sudah di tangan. Progress di atas akan menyesuaikan otomatis. Tambah berkas lain untuk kebutuhan khusus daerah atau pekerjaan.</p>
+
+    <!-- Modal tambah berkas custom -->
+    <Teleport to="body">
+      <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showAddModal = false" />
+        <div class="relative w-full max-w-[480px] rounded-2xl bg-white p-6 shadow-xl">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">Tambah berkas lain</h3>
+              <p class="mt-1 text-sm text-slate-500">Untuk kebutuhan khusus daerah atau pekerjaan masing-masing. Akan muncul sebagai berkas tambahan di daftar.</p>
+            </div>
+            <button class="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200" aria-label="Tutup" @click="showAddModal = false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+
+          <form class="mt-5 space-y-4" @submit.prevent="submitAdd">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium text-slate-700">Judul berkas <span class="text-rose-600">*</span></label>
+              <input
+                v-model="addForm.title"
+                type="text"
+                maxlength="255"
+                placeholder="Contoh: Surat Keterangan Belum Menikah RT/RW"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-slate-700">Pemilik</label>
+                <select v-model="addForm.owner_type" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10">
+                  <option value="cpp">CPP</option>
+                  <option value="cpw">CPW</option>
+                  <option value="both">CPP & CPW</option>
+                </select>
+              </div>
+              <div class="flex items-end pb-2">
+                <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <input v-model="addForm.is_required" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900" />
+                  Wajib
+                </label>
+              </div>
+            </div>
+
+            <p v-if="addError" class="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ addError }}</p>
+
+            <div class="flex justify-end gap-2 pt-1">
+              <button type="button" class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="showAddModal = false">Batal</button>
+              <button type="submit" :disabled="addSubmitting" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+                <svg v-if="addSubmitting" width="14" height="14" viewBox="0 0 24 24" fill="none" class="animate-spin" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9" stroke-opacity="0.2"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+                {{ addSubmitting ? 'Menyimpan...' : 'Simpan berkas' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

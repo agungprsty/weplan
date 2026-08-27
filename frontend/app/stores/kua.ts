@@ -66,5 +66,55 @@ export const useKuaStore = defineStore('kua', () => {
     }
   }
 
-  return { items, loading, byOwner, progress, fetchKua, updateStatus }
+  async function createDocument(payload: { title: string; owner_type: KuaDocument['owner_type']; is_required?: boolean }) {
+    if (!weddingId.value) throw new Error('Wedding belum siap')
+    // optimistic: push temp
+    const tempId = crypto.randomUUID()
+    const optimistic: KuaDocument = {
+      id: tempId,
+      wedding_id: weddingId.value,
+      owner_type: payload.owner_type,
+      document_key: `custom_tmp_${tempId.slice(0, 6)}`,
+      title: payload.title,
+      is_required: payload.is_required ?? false,
+      status: 'belum',
+      file_url: null,
+      expiry_date: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    items.value.push(optimistic)
+    try {
+      const real = await api<KuaDocument>(`/api/v1/weddings/${weddingId.value}/kua-documents`, {
+        method: 'POST',
+        body: payload,
+      })
+      const idx = items.value.findIndex((i) => i.id === tempId)
+      if (idx !== -1) items.value[idx] = real as unknown as KuaDocument
+      else items.value.push(real as unknown as KuaDocument)
+      return real
+    } catch (err) {
+      items.value = items.value.filter((i) => i.id !== tempId)
+      throw err
+    }
+  }
+
+  async function deleteDocument(id: string) {
+    if (!weddingId.value) return
+    const idx = items.value.findIndex((i) => i.id === id)
+    const prev = idx !== -1 ? items.value[idx] : null
+    if (idx !== -1) items.value.splice(idx, 1)
+    try {
+      await api(`/api/v1/weddings/${weddingId.value}/kua-documents/${id}`, { method: 'DELETE' })
+    } catch (err) {
+      if (prev && idx !== -1) items.value.splice(idx, 0, prev)
+      throw err
+    }
+  }
+
+  function isCustom(doc: KuaDocument) {
+    return doc.document_key.startsWith('custom_')
+  }
+
+  return { items, loading, byOwner, progress, fetchKua, updateStatus, createDocument, deleteDocument, isCustom }
 })

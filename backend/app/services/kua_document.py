@@ -99,6 +99,46 @@ async def seed_kua_documents(
     return docs
 
 
+async def create_kua_document(
+    db: AsyncSession, wedding_id: uuid.UUID, data: dict
+) -> KuaDocument:
+    # Generate unique document_key for custom docs if not provided or collides
+    key = data.get("document_key")
+    if not key:
+        # slug from title + short uuid to avoid collision across regions/jobs
+        slug = data["title"].strip().lower().replace(" ", "_")[:30]
+        # sanitize: keep alnum and underscore
+        slug = "".join(c if c.isalnum() or c == "_" else "_" for c in slug).strip("_") or "custom"
+        key = f"custom_{slug}_{uuid.uuid4().hex[:6]}"
+        data["document_key"] = key
+    else:
+        # ensure custom prefix to distinguish from template keys when user provides key
+        if key in {t["document_key"] for t in KUA_TEMPLATE}:
+            key = f"custom_{key}_{uuid.uuid4().hex[:4]}"
+            data["document_key"] = key
+    doc = KuaDocument(wedding_id=wedding_id, **data)
+    db.add(doc)
+    await db.flush()
+    await db.refresh(doc)
+    return doc
+
+
+async def delete_kua_document(
+    db: AsyncSession, wedding_id: uuid.UUID, doc_id: uuid.UUID
+) -> bool:
+    result = await db.execute(
+        select(KuaDocument).where(
+            KuaDocument.id == doc_id, KuaDocument.wedding_id == wedding_id
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if doc is None:
+        return False
+    await db.delete(doc)
+    await db.flush()
+    return True
+
+
 async def update_kua_document(
     db: AsyncSession, wedding_id: uuid.UUID, doc_id: uuid.UUID, data: KuaDocumentUpdate
 ) -> KuaDocument | None:

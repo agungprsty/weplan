@@ -63,7 +63,9 @@ async def update_vendor(
 ) -> VendorResponse:
     vendor = await vendor_service.update_vendor(db, wedding_id, vendor_id, data)
     if vendor is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     return vendor
 
 
@@ -77,7 +79,9 @@ async def get_vendor(
 ) -> VendorResponse:
     vendor = await vendor_service.get_vendor(db, wedding_id, vendor_id)
     if vendor is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     return vendor
 
 
@@ -91,4 +95,6 @@ async def delete_vendor(
 ) -> None:
     ok = await vendor_service.delete_vendor(db, wedding_id, vendor_id)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )

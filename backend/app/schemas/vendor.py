@@ -34,17 +34,20 @@ class VendorCreate(VendorBase):
 
 class VendorUpdate(BaseModel):
     vendor_name: str | None = Field(default=None, min_length=1, max_length=255)
-    category: Literal[
-        "venue",
-        "catering",
-        "dekorasi",
-        "mua",
-        "dokumentasi",
-        "hiburan",
-        "souvenir",
-        "undangan",
-        "lainnya",
-    ] | None = None
+    category: (
+        Literal[
+            "venue",
+            "catering",
+            "dekorasi",
+            "mua",
+            "dokumentasi",
+            "hiburan",
+            "souvenir",
+            "undangan",
+            "lainnya",
+        ]
+        | None
+    ) = None
     contact_wa: str | None = Field(default=None, max_length=50)
     total_amount: int | None = Field(default=None, ge=0)
     dp_amount: int | None = Field(default=None, ge=0)

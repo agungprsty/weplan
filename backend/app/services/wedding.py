@@ -52,7 +52,9 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
         raise ValueError("Already paired to this wedding")
 
     partner_count = await db.scalar(
-        select(func.count()).select_from(WeddingUser).where(
+        select(func.count())
+        .select_from(WeddingUser)
+        .where(
             WeddingUser.wedding_id == wedding.id,
             WeddingUser.role == "partner",
         )

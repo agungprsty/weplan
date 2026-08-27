@@ -66,7 +66,9 @@ async def update_mahar_item(
 ) -> MaharItemResponse:
     item = await mahar_service.update_mahar_item(db, wedding_id, item_id, data)
     if item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan"
+        )
     return item
 
 
@@ -80,7 +82,9 @@ async def get_mahar_item(
 ) -> MaharItemResponse:
     item = await mahar_service.get_mahar_item(db, wedding_id, item_id)
     if item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan"
+        )
     return item
 
 
@@ -94,4 +98,6 @@ async def delete_mahar_item(
 ) -> None:
     ok = await mahar_service.delete_mahar_item(db, wedding_id, item_id)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan"
+        )

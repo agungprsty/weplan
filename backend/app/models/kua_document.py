@@ -26,4 +26,4 @@ class KuaDocument(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding: Mapped["Wedding"] = relationship(back_populates="kua_documents")  # noqa: F821
+    wedding: Mapped[Wedding] = relationship(back_populates="kua_documents")  # noqa: F821

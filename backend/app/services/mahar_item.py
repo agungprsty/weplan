@@ -9,13 +9,19 @@ from app.schemas.mahar_item import MaharItemCreate, MaharItemUpdate
 
 async def list_mahar_items(db: AsyncSession, wedding_id: uuid.UUID) -> list[MaharItem]:
     result = await db.execute(
-        select(MaharItem).where(MaharItem.wedding_id == wedding_id).order_by(MaharItem.created_at)
+        select(MaharItem)
+        .where(MaharItem.wedding_id == wedding_id)
+        .order_by(MaharItem.created_at)
     )
     return list(result.scalars().all())
 
 
 async def count_mahar_items(db: AsyncSession, wedding_id: uuid.UUID) -> int:
-    result = await db.execute(select(func.count()).select_from(MaharItem).where(MaharItem.wedding_id == wedding_id))
+    result = await db.execute(
+        select(func.count())
+        .select_from(MaharItem)
+        .where(MaharItem.wedding_id == wedding_id)
+    )
     return result.scalar() or 0
 
 
@@ -33,7 +39,9 @@ async def update_mahar_item(
     db: AsyncSession, wedding_id: uuid.UUID, item_id: uuid.UUID, data: MaharItemUpdate
 ) -> MaharItem | None:
     result = await db.execute(
-        select(MaharItem).where(MaharItem.id == item_id, MaharItem.wedding_id == wedding_id)
+        select(MaharItem).where(
+            MaharItem.id == item_id, MaharItem.wedding_id == wedding_id
+        )
     )
     item = result.scalar_one_or_none()
     if item is None:
@@ -49,7 +57,9 @@ async def get_mahar_item(
     db: AsyncSession, wedding_id: uuid.UUID, item_id: uuid.UUID
 ) -> MaharItem | None:
     result = await db.execute(
-        select(MaharItem).where(MaharItem.id == item_id, MaharItem.wedding_id == wedding_id)
+        select(MaharItem).where(
+            MaharItem.id == item_id, MaharItem.wedding_id == wedding_id
+        )
     )
     return result.scalar_one_or_none()
 

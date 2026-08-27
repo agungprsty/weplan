@@ -42,4 +42,10 @@ class Wedding(Base):
     mahar_items: Mapped[list["MaharItem"]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
+    savings_target: Mapped["SavingsTarget | None"] = relationship(
+        back_populates="wedding", cascade="all, delete-orphan", uselist=False
+    )
+    transactions: Mapped[list["Transaction"]] = relationship(
+        back_populates="wedding", cascade="all, delete-orphan"
+    )
     plan: Mapped["Plan | None"] = relationship()

@@ -8,7 +8,11 @@ from app.schemas.vendor import VendorCreate, VendorUpdate
 
 
 async def list_vendors(db: AsyncSession, wedding_id: uuid.UUID) -> list[Vendor]:
-    result = await db.execute(select(Vendor).where(Vendor.wedding_id == wedding_id).order_by(Vendor.created_at))
+    result = await db.execute(
+        select(Vendor)
+        .where(Vendor.wedding_id == wedding_id)
+        .order_by(Vendor.created_at)
+    )
     return list(result.scalars().all())
 
 

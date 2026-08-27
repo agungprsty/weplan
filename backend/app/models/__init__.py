@@ -4,6 +4,8 @@ from app.models.kua_document import KuaDocument  # noqa: F401
 from app.models.mahar_item import MaharItem  # noqa: F401
 from app.models.order import Order  # noqa: F401
 from app.models.plan import Plan  # noqa: F401
+from app.models.savings_target import SavingsTarget  # noqa: F401
+from app.models.transaction import Transaction  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.vendor import Vendor  # noqa: F401
 from app.models.wedding import Wedding  # noqa: F401

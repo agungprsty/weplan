@@ -27,7 +27,11 @@ async def list_kua_documents(
     return docs
 
 
-@router.post("/seed", response_model=list[KuaDocumentResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/seed",
+    response_model=list[KuaDocumentResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def seed_kua(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -50,7 +54,9 @@ async def update_kua_document(
     # Premium hanya untuk expiry alert — untuk MVP gratis semua
     doc = await kua_service.update_kua_document(db, wedding_id, doc_id, data)
     if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan"
+        )
     return doc
 
 
@@ -64,5 +70,7 @@ async def get_kua_document(
 ) -> KuaDocumentResponse:
     doc = await kua_service.get_kua_document(db, wedding_id, doc_id)
     if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan"
+        )
     return doc

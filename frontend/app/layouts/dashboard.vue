@@ -153,17 +153,34 @@ function isActive(path: string) {
                 </NuxtLink>
               </li>
               <li>
-                <a
-                  href="#"
-                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                  :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''"
+                <NuxtLink
+                  to="/checklists"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  :class="[
+                    isActive('/checklists') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
+                  ]"
                   :title="!sidebarOpen ? 'Checklist' : undefined"
-                  @click.prevent
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 6.5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1Z" /><path d="M6 10.5h12M6 14.5h12M6 18.5h8" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Checklist</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">Tim</span>
-                </a>
+                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] text-emerald-700">Gratis</span>
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
+                  to="/keuangan"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  :class="[
+                    isActive('/keuangan') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
+                  ]"
+                  :title="!sidebarOpen ? 'Keuangan' : undefined"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M9 12h6" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Keuangan</span>
+                  <span v-if="sidebarOpen && !isActive('/keuangan')" class="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">Premium</span>
+                </NuxtLink>
               </li>
             </ul>
           </div>

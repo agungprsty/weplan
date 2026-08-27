@@ -76,14 +76,20 @@ async def get_checklist(
     return checklist
 
 
-@router.post("/auto-generate", response_model=list[ChecklistResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/auto-generate",
+    response_model=list[ChecklistResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def auto_generate(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> list[ChecklistResponse]:
-    return await checklist_service.auto_generate_checklists(db, wedding_id, wedding.wedding_date)
+    return await checklist_service.auto_generate_checklists(
+        db, wedding_id, wedding.wedding_date
+    )
 
 
 @router.delete("/{checklist_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -4,6 +4,7 @@ from app.api.v1 import (
     admin,
     auth,
     checklists,
+    finance,
     guests,
     kua_documents,
     mahar_items,
@@ -48,4 +49,9 @@ api_router.include_router(
     mahar_items.router,
     prefix="/weddings/{wedding_id}/mahar-items",
     tags=["mahar-items"],
+)
+api_router.include_router(
+    finance.router,
+    prefix="/weddings/{wedding_id}",
+    tags=["finance"],
 )

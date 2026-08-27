@@ -4,7 +4,9 @@ const router = useRouter()
 const auth = useAuthStore()
 const weddingStore = useWeddingStore()
 
-const sidebarOpen = ref(true)
+const LG_BREAKPOINT = 1024
+const isMobile = ref(false)
+const sidebarOpen = ref(false)
 const showUserMenu = ref(false)
 const showMessages = ref(false)
 const showNotifications = ref(false)
@@ -12,6 +14,28 @@ const reportsOpen = ref(false)
 const authMenuOpen = ref(false)
 const errorsMenuOpen = ref(false)
 const searchQuery = ref('')
+
+function updateIsMobile() {
+  if (typeof window !== 'undefined') isMobile.value = window.innerWidth < LG_BREAKPOINT
+}
+
+function closeSidebarOnMobile() {
+  if (isMobile.value) sidebarOpen.value = false
+}
+
+onMounted(() => {
+  updateIsMobile()
+  sidebarOpen.value = !isMobile.value
+  window.addEventListener('resize', updateIsMobile)
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') window.removeEventListener('resize', updateIsMobile)
+})
+
+watch(() => route.path, () => {
+  closeSidebarOnMobile()
+})
 
 function handleLogout() {
   auth.clearSession()
@@ -40,7 +64,7 @@ function isActive(path: string) {
     >
       <!-- Brand -->
       <div class="flex h-[64px] shrink-0 items-center gap-3 border-b border-slate-100 px-5" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''">
-        <NuxtLink v-if="sidebarOpen" to="/" class="flex items-center gap-2.5 font-serif text-[18px] font-bold tracking-tight text-slate-900">
+        <NuxtLink v-if="sidebarOpen" to="/" class="flex items-center gap-2.5 font-serif text-[18px] font-bold tracking-tight text-slate-900" @click="closeSidebarOnMobile">
           <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 1.5l3.4 7.1 7.1 3.4-7.1 3.4-3.4 7.1-3.4-7.1L1.5 12l7.1-3.4z" opacity=".45" />
@@ -49,7 +73,7 @@ function isActive(path: string) {
           </span>
           We<span class="text-rose-600">Plan.</span>
         </NuxtLink>
-        <NuxtLink v-else to="/" class="hidden lg:grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white">
+        <NuxtLink v-else to="/" class="hidden lg:grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white" @click="closeSidebarOnMobile">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 1.5l3.4 7.1 7.1 3.4-7.1 3.4-3.4 7.1-3.4-7.1L1.5 12l7.1-3.4z" opacity=".45" />
             <path d="M12 1.5l3.4 7.1L12 12 8.6 8.6z" />
@@ -97,6 +121,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/dashboard"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/dashboard') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -111,6 +136,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/kua"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/kua') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -126,6 +152,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/vendors"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/vendors') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -141,6 +168,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/mahar"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/mahar') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -156,6 +184,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/checklists"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/checklists') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -171,6 +200,7 @@ function isActive(path: string) {
                 <NuxtLink
                   to="/keuangan"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
                   :class="[
                     isActive('/keuangan') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -215,9 +245,9 @@ function isActive(path: string) {
                   <svg v-if="sidebarOpen" class="ml-auto h-3.5 w-3.5 text-slate-400 transition-transform" :class="authMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
                 </button>
                 <ul v-show="authMenuOpen && sidebarOpen" class="mt-1 space-y-0.5 border-l border-slate-100 pl-4 ml-3">
-                  <li><NuxtLink to="/contact" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900">Hubungi Kami</NuxtLink></li>
-                  <li><NuxtLink to="/privacy" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900">Privasi</NuxtLink></li>
-                  <li><NuxtLink to="/terms" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900">Syarat</NuxtLink></li>
+                  <li><NuxtLink to="/contact" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Hubungi Kami</NuxtLink></li>
+                  <li><NuxtLink to="/privacy" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Privasi</NuxtLink></li>
+                  <li><NuxtLink to="/terms" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Syarat</NuxtLink></li>
                 </ul>
               </li>
               <li>
@@ -232,7 +262,7 @@ function isActive(path: string) {
                 </ul>
               </li>
               <li>
-                <NuxtLink to="/" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Profil' : undefined"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3.5" /><path d="M4 18a8 8 0 0 1 16 0" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Profil</span></NuxtLink>
+                <NuxtLink to="/" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Profil' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3.5" /><path d="M4 18a8 8 0 0 1 16 0" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Profil</span></NuxtLink>
               </li>
             </ul>
           </div>

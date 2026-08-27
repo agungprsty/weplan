@@ -9,7 +9,8 @@ export interface Wedding {
   partner2_name: string
   total_budget: number | null
   pair_code: string
-  plan: { name: string; slug: string; price: number; max_guests: number } | null
+  plan: { name: string; slug: string; price: number; max_guests: number; duration_months?: number } | null
+  plan_expires_at: string | null
   created_at: string
   updated_at: string
 }

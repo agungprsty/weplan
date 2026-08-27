@@ -39,23 +39,12 @@ export const useFinanceStore = defineStore('finance', () => {
 
   const isPremium = computed(() => {
     const w = weddingStore.wedding
-    if (!w?.plan_expires_at) return false as boolean
-    return new Date((w as unknown as { plan_expires_at: string }).plan_expires_at) > new Date() && !!(w as unknown as { plan_id: string }).plan_id
-    // fallback simple check via wedding.plan
-    // we use plan check below for safety
+    if (!w?.plan_expires_at || !w?.plan) return false as boolean
+    return w.plan.slug === 'premium' && new Date(w.plan_expires_at) > new Date()
   })
 
-  // computed from weddingStore.wedding direct
-  const isPremium2 = computed(() => {
-    const w = weddingStore.wedding as unknown as { plan_expires_at?: string; plan_id?: string; plan?: { slug?: string } }
-    if (!w) return false
-    // if premium slug
-    if (w.plan?.slug === 'premium') {
-      if (!w.plan_expires_at) return false
-      return new Date(w.plan_expires_at) > new Date()
-    }
-    return false
-  })
+  // alias untuk kompatibilitas (sebelumnya isPremium2)
+  const isPremium2 = isPremium
 
   const totalMasuk = computed(() => transactions.value.filter((t) => t.type === 'masuk').reduce((s, t) => s + t.amount, 0))
   const totalKeluar = computed(() => transactions.value.filter((t) => t.type === 'keluar').reduce((s, t) => s + t.amount, 0))

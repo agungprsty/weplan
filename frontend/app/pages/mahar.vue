@@ -23,8 +23,9 @@ const form = reactive({
 
 const wedding = computed(() => weddingStore.wedding)
 const isPremium = computed(() => {
-  if (!wedding.value?.plan_expires_at) return false
-  return new Date(wedding.value.plan_expires_at) > new Date() && !!wedding.value.plan_id
+  const w = wedding.value
+  if (!w?.plan_expires_at || !w?.plan) return false
+  return w.plan.slug === 'premium' && new Date(w.plan_expires_at) > new Date()
 })
 const freeLimit = 5
 

@@ -150,6 +150,37 @@ function isActive(path: string) {
               </li>
               <li>
                 <NuxtLink
+                  to="/guests"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
+                  :class="[
+                    isActive('/guests') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
+                  ]"
+                  :title="!sidebarOpen ? 'Tamu' : undefined"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Tamu & RSVP</span>
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
+                  to="/bridesmaids"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
+                  :class="[
+                    isActive('/bridesmaids') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
+                  ]"
+                  :title="!sidebarOpen ? 'Bridesmaid' : undefined"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><path d="M6 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4H6v-4z" /><path d="M14 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h-2v-4" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Bridesmaid</span>
+                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">Seragam</span>
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
                   to="/vendors"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
                   @click="closeSidebarOnMobile"

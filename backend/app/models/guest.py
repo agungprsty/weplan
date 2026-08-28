@@ -25,3 +25,6 @@ class Guest(Base):
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
     wedding: Mapped["Wedding"] = relationship(back_populates="guests")
+    bridesmaid_detail: Mapped["BridesmaidItem | None"] = relationship(
+        back_populates="guest", cascade="all, delete-orphan", uselist=False
+    )

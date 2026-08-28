@@ -18,7 +18,7 @@ const txForm = reactive({
   notes: '',
 })
 
-const categories = ['tabungan', 'vendor', 'mahar', 'kua', 'catering', 'dekorasi', 'lainnya']
+const categories = ['tabungan', 'vendor', 'mahar', 'busana', 'kua', 'catering', 'dekorasi', 'lainnya']
 
 const isPremium = computed(() => finance.isPremium)
 
@@ -104,7 +104,7 @@ const maxChart = computed(() => Math.max(1, ...chartData.value.map(([, v]) => Ma
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Keuangan — Target Dana & Cashflow</h1>
-        <p class="mt-1 text-sm text-slate-500">Gratis: atur target dana. Premium: kelola uang masuk/keluar + grafik + linkage Vendor/Mahar.</p>
+          <p class="mt-1 text-sm text-slate-500">Gratis: atur target dana. Premium: kelola uang masuk/keluar + grafik + linkage Vendor/Mahar/Bridesmaid Busana.</p>
         <div class="mt-2 flex flex-wrap gap-2 text-xs">
           <span class="rounded-full bg-slate-900 px-3 py-1 font-medium text-white">Saldo {{ formatIDR(finance.saldo) }}</span>
           <span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Masuk {{ formatIDR(finance.totalMasuk) }}</span>
@@ -145,7 +145,8 @@ const maxChart = computed(() => Math.max(1, ...chartData.value.map(([, v]) => Ma
           <p class="mt-2 text-sm text-slate-600">Ajak pasangan kelola 1 kantong dengan pair code.</p>
           <p class="mt-3 font-mono text-xl font-bold tracking-[0.2em] text-slate-900">{{ wedding?.pair_code ?? '—' }}</p>
           <p class="mt-1 text-xs text-slate-400">{{ wedding?.partner1_name }} & {{ wedding?.partner2_name }}</p>
-          <p class="mt-4 text-xs text-slate-500">Linkage: transaksi bisa dikaitkan ke Vendor & Mahar (kategori vendor/mahar).</p>
+          <p class="mt-4 text-xs text-slate-500">Linkage: transaksi bisa dikaitkan ke Vendor & Mahar (kategori vendor/mahar). <span class="font-medium text-violet-700">Bridesmaid seragam → kategori <strong>Busana</strong> (pisah dari daftar Tamu).</span></p>
+          <NuxtLink to="/guests" class="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-200 hover:bg-violet-50">Kelola Bridesmaid di Tamu</NuxtLink>
         </div>
       </div>
 

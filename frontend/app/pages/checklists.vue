@@ -10,6 +10,7 @@ const filterCategory = ref<string>('all')
 const search = ref('')
 const newTitle = ref('')
 const newCategory = ref<Checklist['category']>('lainnya')
+const newDueDate = ref('')
 
 const categories: Checklist['category'][] = ['seserahan', 'kua', 'vendor', 'dekorasi', 'undangan', 'catering', 'busana', 'dokumentasi', 'hiburan', 'lainnya']
 
@@ -22,6 +23,8 @@ const filtered = computed(() => {
 })
 
 const viewMode = ref<'list' | 'timeline'>('list')
+const total = computed(() => checklistStore.items.length)
+const doneCount = computed(() => checklistStore.grouped.done.length)
 
 onMounted(async () => {
   await checklistStore.fetchChecklists()
@@ -35,8 +38,9 @@ async function handleAutoGenerate() {
 
 async function addQuick() {
   if (newTitle.value.trim().length < 2) return
-  await checklistStore.addChecklist({ title: newTitle.value.trim(), category: newCategory.value })
+  await checklistStore.addChecklist({ title: newTitle.value.trim(), category: newCategory.value, due_date: newDueDate.value || null } as Partial<Checklist> & { title: string; category: Checklist['category'] })
   newTitle.value = ''
+  newDueDate.value = ''
 }
 
 async function toggleStatus(item: Checklist) {
@@ -46,30 +50,122 @@ async function toggleStatus(item: Checklist) {
   await checklistStore.updateChecklist(item.id, { status: next })
 }
 
+async function markDone(item: Checklist) {
+  await checklistStore.updateChecklist(item.id, { status: 'done' })
+}
+
+async function handleDelete(item: Checklist) {
+  if (!confirm(`Hapus tugas "${item.title}"?`)) return
+  await checklistStore.deleteChecklist(item.id)
+}
+
 function formatDate(d: string | null) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+function statusLabel(s: Checklist['status']) {
+  if (s === 'done') return 'Selesai'
+  if (s === 'in_progress') return 'Proses'
+  return 'Belum'
+}
+
+function statusDot(s: Checklist['status']) {
+  if (s === 'done') return 'bg-emerald-500'
+  if (s === 'in_progress') return 'bg-amber-500'
+  return 'bg-rose-500'
+}
+
+function rowAccent(s: Checklist['status']) {
+  if (s === 'done') return 'border-l-emerald-500'
+  if (s === 'in_progress') return 'border-l-amber-500'
+  return 'border-l-rose-500'
+}
+
+// Timeline grouping — berbasis selisih due_date terhadap wedding_date (offset_days)
+type TimelineGroup = { key: string; label: string; hint: string; items: Checklist[]; done: number }
+const TIMELINE_DEFS: { key: string; label: string; hint: string; min: number; max: number }[] = [
+  { key: '12m', label: '12+ Months Before', hint: '±365 hari', min: 320, max: 9999 },
+  { key: '9_11m', label: '9–11 Months Before', hint: '270–320 hari', min: 200, max: 319 },
+  { key: '6_8m', label: '6–8 Months Before', hint: '150–200 hari', min: 150, max: 199 },
+  { key: '4_5m', label: '4–5 Months Before', hint: '80–150 hari', min: 80, max: 149 },
+  { key: '2_3m', label: '2–3 Months Before', hint: '25–80 hari', min: 25, max: 79 },
+  { key: '1m', label: '1 Month Before', hint: '8–25 hari', min: 8, max: 24 },
+  { key: '2w', label: '2 Week Before', hint: '3–8 hari', min: 3, max: 7 },
+  { key: 'week', label: 'Wedding Week', hint: 'H-2 – H+2', min: -1, max: 2 },
+  { key: 'after', label: 'After Wedding', hint: 'H+3 ke atas', min: -9999, max: -2 },
+]
+
+function daysBeforeWedding(due: string | null): number | null {
+  const wd = weddingStore.wedding?.wedding_date
+  if (!wd || !due) return null
+  const w = new Date(wd)
+  const d = new Date(due)
+  // normalize to date only
+  w.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  return Math.round((w.getTime() - d.getTime()) / 86400000)
+}
+
+const groupedTimeline = computed<TimelineGroup[]>(() => {
+  const groups: TimelineGroup[] = TIMELINE_DEFS.map((def) => ({ key: def.key, label: def.label, hint: def.hint, items: [], done: 0 }))
+  const noDate: Checklist[] = []
+  for (const it of filtered.value) {
+    const days = daysBeforeWedding(it.due_date)
+    if (days === null) {
+      noDate.push(it)
+      continue
+    }
+    const def = TIMELINE_DEFS.find((g) => days >= g.min && days <= g.max)
+    if (def) {
+      const grp = groups.find((gr) => gr.key === def.key)!
+      grp.items.push(it)
+      if (it.status === 'done') grp.done++
+    } else {
+      // fallback to closest bucket (should not happen)
+      noDate.push(it)
+    }
+  }
+  // sort items inside each group by due_date/order
+  for (const g of groups) g.items.sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '') || a.order - b.order)
+  if (noDate.length > 0) {
+    groups.push({ key: 'nodate', label: 'Tanpa Jadwal', hint: 'Atur wedding_date', items: noDate.sort((a, b) => a.order - b.order), done: noDate.filter((i) => i.status === 'done').length })
+  }
+  return groups
+})
+
+const visibleTimelineGroups = computed(() => groupedTimeline.value.filter((g) => g.items.length > 0))
 </script>
 
 <template>
   <div class="mx-auto max-w-[1440px] px-4 py-6 lg:px-6">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Timeline & Checklist</h1>
-        <p class="mt-1 text-sm text-slate-500">Template 12 bulan auto-generate 30 tugas dari wedding_date. Gratis.</p>
-        <div class="mt-2 flex flex-wrap gap-2 text-xs">
-          <span class="rounded-full bg-slate-900 px-3 py-1 font-medium text-white">{{ checklistStore.items.length }} tugas</span>
-          <span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Selesai {{ checklistStore.grouped.done.length }}</span>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Progress {{ checklistStore.progress }}%</span>
-        </div>
-        <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 max-w-md">
-          <div class="h-full bg-emerald-500 transition-all" :style="{ width: checklistStore.progress + '%' }"></div>
-        </div>
+        <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Checklist & Timeline</h1>
       </div>
       <div class="flex gap-2">
         <button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm hover:bg-slate-50" @click="handleAutoGenerate">Auto-generate 12 bulan</button>
         <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="showForm = !showForm">Tambah Tugas</button>
+      </div>
+    </div>
+
+    <!-- Progress — seperti bekas KUA -->
+    <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Progres checklist</p>
+          <p class="mt-1 flex items-baseline gap-2">
+            <span class="text-3xl font-bold tracking-tight text-slate-900">{{ checklistStore.progress }}%</span>
+            <span class="text-sm text-slate-500">{{ doneCount }} dari {{ total || 0 }} tugas selesai</span>
+          </p>
+        </div>
+        <p class="text-xs text-slate-400">{{ doneCount === total && total > 0 ? 'Semua beres — siap hari H' : 'Selesaikan satu per satu' }}</p>
+      </div>
+      <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
+        <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: checklistStore.progress + '%' }" />
+      </div>
+      <div class="mt-2 flex justify-between text-[11px] text-slate-400">
+        <span>0%</span><span>100%</span>
       </div>
     </div>
 
@@ -83,9 +179,9 @@ function formatDate(d: string | null) {
       </div>
       <select v-model="filterStatus" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm">
         <option value="all">Semua status</option>
-        <option value="todo">Todo</option>
-        <option value="in_progress">In Progress</option>
-        <option value="done">Done</option>
+        <option value="todo">Belum</option>
+        <option value="in_progress">Proses</option>
+        <option value="done">Selesai</option>
       </select>
       <select v-model="filterCategory" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm">
         <option value="all">Semua kategori</option>
@@ -97,57 +193,122 @@ function formatDate(d: string | null) {
       </div>
     </div>
 
-    <!-- Quick add -->
-    <div v-if="showForm" class="mb-4 flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <input v-model="newTitle" type="text" placeholder="Judul tugas..." class="flex-1 min-w-[200px] rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:bg-white focus:border-slate-300" @keydown.enter="addQuick" />
-      <select v-model="newCategory" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm">
+    <!-- Quick add — sekarang dengan due date -->
+    <div v-if="showForm" class="mb-4 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <input v-model="newTitle" type="text" placeholder="Judul tugas..." class="flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:bg-white focus:border-slate-900" @keydown.enter="addQuick" />
+      <select v-model="newCategory" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white">
         <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
       </select>
-      <button class="rounded-full bg-slate-900 px-5 py-2 text-sm text-white" @click="addQuick">Simpan</button>
-      <button class="rounded-full border bg-white px-5 py-2 text-sm" @click="showForm=false">Batal</button>
+      <input v-model="newDueDate" type="date" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900" title="Jatuh tempo" />
+      <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="addQuick">Simpan</button>
+      <button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="showForm=false">Batal</button>
     </div>
 
-    <!-- List view -->
-    <div v-if="viewMode==='list'" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <!-- List view — tabel seperti vendor -->
+    <div v-if="viewMode==='list'" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div v-if="checklistStore.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
-      <div v-else-if="filtered.length===0" class="p-8 text-center">
-        <p class="text-sm text-slate-500">Belum ada tugas. Klik Auto-generate untuk template 12 bulan.</p>
-        <button class="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm text-white" @click="handleAutoGenerate">Generate 30 tugas</button>
+      <div v-else-if="filtered.length===0" class="p-10 text-center">
+        <p class="text-sm font-medium text-slate-700">Belum ada tugas</p>
+        <p class="mt-1 text-sm text-slate-500">Klik Auto-generate untuk template 12 bulan atau tambah tugas manual.</p>
+        <button class="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" @click="handleAutoGenerate">Generate 30 tugas</button>
       </div>
-      <div v-else class="divide-y divide-slate-100">
-        <div v-for="item in filtered" :key="item.id" class="flex flex-wrap items-center gap-3 px-5 py-4 hover:bg-slate-50/60">
-          <button
-            class="grid h-7 w-7 place-items-center rounded-full border transition-colors"
-            :class="item.status==='done' ? 'bg-emerald-500 border-emerald-500 text-white' : item.status==='in_progress' ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-300 bg-white text-transparent'"
-            @click="toggleStatus(item)"
-            :title="item.status"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7" /></svg>
-          </button>
-          <div class="min-w-0 flex-1">
-            <p class="font-medium text-slate-900" :class="item.status==='done' ? 'line-through text-slate-400' : ''">{{ item.title }} <span class="ml-2 rounded-full px-2 py-0.5 text-[11px]" :class="item.status==='done' ? 'bg-emerald-50 text-emerald-700' : item.status==='in_progress' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'">{{ item.status }}</span> <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{{ item.category }}</span></p>
-            <p class="mt-1 text-xs text-slate-500">Due {{ formatDate(item.due_date) }} · #{{ item.order }}</p>
-          </div>
-          <button class="rounded-lg border bg-white px-3 py-1.5 text-xs hover:bg-slate-50" @click="checklistStore.deleteChecklist(item.id)">Hapus</button>
-        </div>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+              <th class="px-5 py-3 font-medium">Tugas</th>
+              <th class="px-5 py-3 font-medium">Kategori</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Jatuh tempo</th>
+              <th class="px-5 py-3 font-medium text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="item in filtered" :key="item.id" class="border-l-4 bg-white transition-colors hover:bg-slate-50/40" :class="rowAccent(item.status)">
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <button
+                    class="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors"
+                    :class="item.status==='done' ? 'border-emerald-500 bg-emerald-500 text-white' : item.status==='in_progress' ? 'border-amber-500 bg-amber-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-slate-400'"
+                    :aria-label="item.status==='done' ? 'Tandai belum' : 'Tandai selesai'"
+                    @click="toggleStatus(item)"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4L19 7" /></svg>
+                  </button>
+                  <span class="font-medium" :class="item.status==='done' ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-900'">{{ item.title }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-4 text-slate-600"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{{ item.category }}</span></td>
+              <td class="px-5 py-4">
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                  <span class="h-2 w-2 rounded-full" :class="statusDot(item.status)" /> {{ statusLabel(item.status) }}
+                </span>
+              </td>
+              <td class="px-5 py-4 text-slate-500">{{ formatDate(item.due_date) }}</td>
+              <td class="px-5 py-4">
+                <div class="flex justify-end gap-1.5">
+                  <button
+                    v-if="item.status !== 'done'"
+                    class="rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+                    @click="markDone(item)"
+                  >
+                    Tandai selesai
+                  </button>
+                  <button class="rounded-full border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50" @click="handleDelete(item)">Hapus</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Timeline (Gantt) view -->
-    <div v-else class="overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Gantt 12 bulan</p>
-      <div class="mt-4 space-y-3">
-        <div v-for="item in filtered" :key="item.id" class="flex items-center gap-3">
-          <span class="w-40 truncate text-sm font-medium text-slate-700" :title="item.title">{{ item.title }}</span>
-          <span class="hidden sm:inline rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{{ item.category }}</span>
-          <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div class="h-full rounded-full transition-all" :class="item.status==='done' ? 'bg-emerald-500' : item.status==='in_progress' ? 'bg-amber-400' : 'bg-slate-300'" :style="{ width: item.status==='done' ? '100%' : item.status==='in_progress' ? '60%' : '30%' }"></div>
-          </div>
-          <span class="w-20 text-right text-xs text-slate-500">{{ formatDate(item.due_date) }}</span>
-          <span class="w-16 text-right text-xs font-medium" :class="item.status==='done' ? 'text-emerald-600' : item.status==='in_progress' ? 'text-amber-600' : 'text-slate-400'">{{ item.status }}</span>
-        </div>
-        <div v-if="filtered.length===0" class="py-8 text-center text-sm text-slate-400">Tidak ada tugas</div>
+    <!-- Timeline — overview 2 grid, 1 container, tanpa aksi -->
+    <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div v-if="checklistStore.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
+      <div v-else-if="filtered.length===0" class="p-10 text-center">
+        <p class="text-sm font-medium text-slate-700">Belum ada tugas</p>
+        <p class="mt-1 text-sm text-slate-500">Klik Auto-generate untuk template 12 bulan.</p>
       </div>
+      <template v-else>
+        <div v-if="visibleTimelineGroups.length===0" class="p-10 text-center text-sm text-slate-400">Tidak ada tugas untuk filter ini.</div>
+        <div v-else class="divide-y divide-slate-100">
+          <div
+            v-for="group in visibleTimelineGroups"
+            :key="group.key"
+            class="grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-[200px_1fr] sm:gap-6"
+          >
+            <!-- kiri: nama grup -->
+            <div class="min-w-0 sm:sticky sm:top-0 sm:self-start">
+              <p class="text-sm font-semibold leading-tight text-slate-900">{{ group.label }}</p>
+            </div>
+            <!-- kanan: list checklist overview tanpa aksi -->
+            <ul class="space-y-1.5">
+              <li
+                v-for="item in group.items"
+                :key="item.id"
+                class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5"
+                :class="item.status==='done' ? 'bg-slate-50' : 'bg-white'"
+              >
+                <span
+                  class="grid h-5 w-5 shrink-0 place-items-center rounded-full border"
+                  :class="item.status==='done' ? 'border-emerald-500 bg-emerald-500 text-white' : item.status==='in_progress' ? 'border-amber-500 bg-amber-50 text-amber-600' : 'border-slate-300 bg-white text-transparent'"
+                  :title="statusLabel(item.status)"
+                  aria-hidden="true"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4L19 7" /></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate text-sm" :class="item.status==='done' ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-700'">{{ item.title }}</span>
+                <span v-if="item.status==='done'" class="hidden shrink-0 text-emerald-600 sm:inline" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7" /></svg>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </template>
     </div>
+
+    <p class="mt-4 text-center text-xs text-slate-400">Centang tugas untuk ubah status. Tandai selesai hanya muncul jika belum selesai.</p>
   </div>
 </template>

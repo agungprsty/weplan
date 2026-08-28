@@ -21,17 +21,15 @@ const form = reactive({
   notes: '',
 })
 
-const wedding = computed(() => weddingStore.wedding)
 const isPremium = computed(() => {
-  const w = wedding.value
+  const w = weddingStore.wedding
   if (!w?.plan_expires_at || !w?.plan) return false
   return w.plan.slug === 'premium' && new Date(w.plan_expires_at) > new Date()
 })
 const freeLimit = 5
+const isEditing = computed(() => editingId.value !== null)
 
-function openAdd(type: MaharItem['type']) {
-  activeTab.value = type
-  form.type = type
+function resetForm() {
   form.title = ''
   form.qty = 1
   form.estimated_cost = ''
@@ -40,8 +38,15 @@ function openAdd(type: MaharItem['type']) {
   form.tenor_total = ''
   form.tenor_paid = 0
   form.notes = ''
-  editingId.value = null
   formError.value = null
+}
+
+function openAdd(type: MaharItem['type']) {
+  activeTab.value = type
+  form.type = type
+  resetForm()
+  form.type = type
+  editingId.value = null
   showForm.value = true
 }
 
@@ -56,13 +61,24 @@ function openEdit(item: MaharItem) {
   form.tenor_total = item.tenor_total ? String(item.tenor_total) : ''
   form.tenor_paid = item.tenor_paid
   form.notes = item.notes ?? ''
+  formError.value = null
   showForm.value = true
+}
+
+function cancelForm() {
+  showForm.value = false
+  editingId.value = null
+  resetForm()
 }
 
 async function submitForm() {
   formError.value = null
   if (form.title.trim().length < 2) {
     formError.value = 'Judul minimal 2 karakter.'
+    return
+  }
+  if (form.status === 'selesai' && !form.actual_cost) {
+    formError.value = 'Biaya aktual wajib diisi untuk status selesai.'
     return
   }
   const payload: MaharCreateInput = {
@@ -103,8 +119,27 @@ async function deleteItem(id: string) {
   if (!confirm('Hapus item ini?')) return
   try {
     await maharStore.deleteItem(id)
-  } catch (err) {
+  } catch {
     alert('Gagal hapus')
+  }
+}
+
+async function markSelesai(item: MaharItem) {
+  if (item.actual_cost == null) {
+    // biaya aktual belum ada — arahkan ke edit
+    formError.value = null
+    openEdit(item)
+    formError.value = 'Isi biaya aktual dulu sebelum tandai selesai.'
+    return
+  }
+  try {
+    await maharStore.updateItem(item.id, { status: 'selesai' })
+  } catch (err: unknown) {
+    const e = err as { data?: { detail?: unknown } }
+    const d = e?.data?.detail as Record<string, unknown> | string | undefined
+    if (typeof d === 'object' && d && 'message' in d) alert(String((d as Record<string, unknown>).message))
+    else if (typeof d === 'string') alert(d)
+    else alert('Gagal tandai selesai. Pastikan biaya aktual terisi.')
   }
 }
 
@@ -125,25 +160,38 @@ function formatIDR(v: number | null) {
   if (v === null || v === undefined) return '-'
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
 }
+
+function statusLabel(s: MaharItem['status']) {
+  if (s === 'selesai') return 'Selesai'
+  if (s === 'dicicil') return 'Dicicil'
+  if (s === 'dibeli') return 'Dibeli'
+  return 'Rencana'
+}
+
+function statusDot(s: MaharItem['status']) {
+  if (s === 'selesai') return 'bg-emerald-500'
+  if (s === 'dicicil') return 'bg-amber-500'
+  if (s === 'dibeli') return 'bg-sky-500'
+  return 'bg-slate-300'
+}
+
+function rowAccent(s: MaharItem['status']) {
+  if (s === 'selesai') return 'border-l-emerald-500'
+  if (s === 'dicicil') return 'border-l-amber-500'
+  if (s === 'dibeli') return 'border-l-sky-500'
+  return 'border-l-slate-300'
+}
 </script>
 
 <template>
   <div class="mx-auto max-w-[1440px] px-4 py-6 lg:px-6">
+    <!-- Header minimalis seperti vendor -->
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Mahar & Seserahan</h1>
-        <p class="mt-1 text-sm text-slate-500">Kelola mahar wajib, seserahan CPP/CPW, dan hantaran. Cicilan & budget terhubung.</p>
-        <div class="mt-2 flex flex-wrap gap-2 text-xs">
-          <span class="rounded-full bg-slate-900 px-3 py-1 font-medium text-white">{{ maharStore.items.length }} item</span>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Estimasi {{ formatIDR(maharStore.totalEstimated) }}</span>
-          <span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Aktual {{ formatIDR(maharStore.totalActual) }}</span>
-          <span v-if="!isPremium" class="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">Gratis: {{ freeLimit }} item — Premium unlimited</span>
-          <span v-else class="rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-800">Premium aktif — unlimited</span>
-        </div>
       </div>
-      <button class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="openAdd(activeTab)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14" /></svg>
-        Tambah {{ tabLabels[activeTab] }}
+      <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="openAdd(activeTab)">
+        Tambah Item
       </button>
     </div>
 
@@ -160,24 +208,24 @@ function formatIDR(v: number | null) {
         :class="activeTab === t ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
         @click="activeTab = t"
       >
-        {{ tabLabels[t] }} <span class="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-xs" :class="activeTab === t ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">{{ maharStore.grouped[t].length }}</span>
+        {{ tabLabels[t] }} <span class="ml-1 rounded-full px-1.5 py-0.5 text-xs" :class="activeTab === t ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">{{ maharStore.grouped[t].length }}</span>
       </button>
     </div>
 
     <!-- Form -->
-    <div v-if="showForm" class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div class="flex items-center justify-between">
-        <h3 class="font-semibold">{{ editingId ? 'Edit' : 'Tambah' }} {{ tabLabels[form.type] }}</h3>
-        <button class="text-slate-400 hover:text-slate-600" @click="showForm = false">✕</button>
+    <div v-if="showForm" class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">{{ isEditing ? 'Edit Item' : 'Tambah Item' }}</h3>
+        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{{ isEditing ? 'Update data' : 'Baru' }} · {{ tabLabels[form.type] }}</span>
       </div>
-      <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="text-xs font-medium text-slate-600">Judul</label>
-          <input v-model="form.title" type="text" placeholder="Cincin emas, kosmetik..." class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-slate-300 focus:bg-white outline-none" />
+          <label class="text-xs font-medium text-slate-700">Judul <span class="text-rose-600">*</span></label>
+          <input v-model="form.title" type="text" placeholder="Cincin emas, kosmetik..." class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600">Tipe</label>
-          <select v-model="form.type" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+          <label class="text-xs font-medium text-slate-700">Tipe</label>
+          <select v-model="form.type" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white">
             <option value="mahar">Mahar</option>
             <option value="seserahan_cpp">Seserahan CPP</option>
             <option value="seserahan_cpw">Seserahan CPW</option>
@@ -185,12 +233,12 @@ function formatIDR(v: number | null) {
           </select>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600">Qty</label>
-          <input v-model.number="form.qty" type="number" min="1" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <label class="text-xs font-medium text-slate-700">Qty</label>
+          <input v-model.number="form.qty" type="number" min="1" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600">Status</label>
-          <select v-model="form.status" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+          <label class="text-xs font-medium text-slate-700">Status</label>
+          <select v-model="form.status" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white">
             <option value="rencana">Rencana</option>
             <option value="dibeli">Dibeli</option>
             <option value="dicicil">Dicicil</option>
@@ -198,60 +246,98 @@ function formatIDR(v: number | null) {
           </select>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600">Estimasi Biaya</label>
-          <input v-model="form.estimated_cost" type="number" placeholder="0" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <label class="text-xs font-medium text-slate-700">Estimasi Biaya</label>
+          <input v-model="form.estimated_cost" type="number" placeholder="0" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600">Biaya Aktual</label>
-          <input v-model="form.actual_cost" type="number" placeholder="0" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <label class="text-xs font-medium text-slate-700">Biaya Aktual <span v-if="form.status==='selesai'" class="text-rose-600">*</span></label>
+          <input v-model="form.actual_cost" type="number" placeholder="0" class="mt-1 w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:bg-white" :class="form.status==='selesai' && !form.actual_cost ? 'border-rose-300 bg-rose-50 focus:border-rose-400' : 'border-slate-200 bg-slate-50 focus:border-slate-900'" />
+          <p v-if="form.status==='selesai' && !form.actual_cost" class="mt-1 text-xs text-rose-600">Wajib diisi untuk status selesai</p>
         </div>
         <div v-if="form.status === 'dicicil'" class="sm:col-span-2 grid grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-medium text-slate-600">Total Tenor</label>
-            <input v-model="form.tenor_total" type="number" min="1" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+            <label class="text-xs font-medium text-slate-700">Total Tenor</label>
+            <input v-model="form.tenor_total" type="number" min="1" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
           </div>
           <div>
-            <label class="text-xs font-medium text-slate-600">Terbayar</label>
-            <input v-model.number="form.tenor_paid" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+            <label class="text-xs font-medium text-slate-700">Terbayar</label>
+            <input v-model.number="form.tenor_paid" type="number" min="0" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
           </div>
         </div>
         <div class="sm:col-span-2">
-          <label class="text-xs font-medium text-slate-600">Catatan</label>
-          <textarea v-model="form.notes" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"></textarea>
+          <label class="text-xs font-medium text-slate-700">Catatan</label>
+          <textarea v-model="form.notes" rows="2" placeholder="Opsional" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"></textarea>
         </div>
       </div>
-      <p v-if="formError" class="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ formError }}</p>
+      <p v-if="formError" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ formError }}</p>
       <div class="mt-4 flex gap-2">
-        <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="submitForm">{{ editingId ? 'Simpan' : 'Tambah' }}</button>
-        <button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm hover:bg-slate-50" @click="showForm = false">Batal</button>
+        <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="submitForm">{{ isEditing ? 'Update' : 'Simpan' }}</button>
+        <button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="cancelForm">Batal</button>
       </div>
     </div>
 
-    <!-- List -->
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div class="border-b border-slate-100 px-5 py-4">
-        <h3 class="font-serif text-base font-bold">{{ tabLabels[activeTab] }} ({{ filtered.length }})</h3>
-      </div>
+    <!-- List tabel — garis kiri hijau selesai / amber dicicil / sky dibeli / slate rencana -->
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div v-if="maharStore.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
-      <div v-else-if="filtered.length === 0" class="p-8 text-center">
-        <p class="text-sm text-slate-500">Belum ada {{ tabLabels[activeTab].toLowerCase() }}.</p>
-        <button class="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm text-white" @click="openAdd(activeTab)">Tambah pertama</button>
+      <div v-else-if="filtered.length === 0" class="p-10 text-center">
+        <p class="text-sm font-medium text-slate-700">Belum ada {{ tabLabels[activeTab].toLowerCase() }}</p>
+        <p class="mt-1 text-sm text-slate-500">Tambah item untuk melihat judul, status, estimasi, aktual & cicilan di tabel.</p>
+        <button class="mt-4 rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white hover:bg-slate-800" @click="openAdd(activeTab)">Tambah Item</button>
       </div>
-      <div v-else class="divide-y divide-slate-100">
-        <div v-for="item in filtered" :key="item.id" class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/60">
-          <div class="min-w-0 flex-1">
-            <p class="font-medium text-slate-900">{{ item.title }} <span class="ml-2 text-xs text-slate-400">x{{ item.qty }}</span> <span class="ml-2 rounded-full px-2 py-0.5 text-xs" :class="item.status==='selesai' ? 'bg-emerald-50 text-emerald-700' : item.status==='dicicil' ? 'bg-amber-50 text-amber-700' : item.status==='dibeli' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600'">{{ item.status }}</span></p>
-            <p class="mt-1 text-xs text-slate-500">Est {{ formatIDR(item.estimated_cost) }} · Aktual {{ formatIDR(item.actual_cost) }} <span v-if="item.tenor_total">· Cicilan {{ item.tenor_paid }}/{{ item.tenor_total }}</span></p>
-            <div v-if="item.tenor_total" class="mt-2 h-1.5 w-32 rounded-full bg-slate-100"><div class="h-full rounded-full bg-slate-900" :style="{ width: Math.min(100, Math.round((item.tenor_paid / (item.tenor_total || 1))*100)) + '%' }"></div></div>
-          </div>
-          <div class="flex gap-1.5">
-            <button class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs hover:bg-slate-50" @click="openEdit(item)">Edit</button>
-            <button class="rounded-lg bg-rose-50 px-3 py-1.5 text-xs text-rose-700 hover:bg-rose-100" @click="deleteItem(item.id)">Hapus</button>
-          </div>
-        </div>
+
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+              <th class="px-5 py-3 font-medium">Item</th>
+              <th class="px-5 py-3 font-medium">Qty</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Estimasi</th>
+              <th class="px-5 py-3 font-medium">Aktual</th>
+              <th class="px-5 py-3 font-medium">Cicilan</th>
+              <th class="px-5 py-3 font-medium text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="item in filtered" :key="item.id" class="border-l-4 bg-white transition-colors hover:bg-slate-50/40" :class="rowAccent(item.status)">
+              <td class="px-5 py-4">
+                <p class="font-medium text-slate-900">{{ item.title }}</p>
+                <p v-if="item.notes" class="mt-0.5 line-clamp-1 max-w-[28ch] text-xs text-slate-500">{{ item.notes }}</p>
+              </td>
+              <td class="px-5 py-4 text-slate-600">x{{ item.qty }}</td>
+              <td class="px-5 py-4">
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                  <span class="h-2 w-2 rounded-full" :class="statusDot(item.status)" /> {{ statusLabel(item.status) }}
+                </span>
+              </td>
+              <td class="px-5 py-4 font-medium text-slate-900">{{ formatIDR(item.estimated_cost) }}</td>
+              <td class="px-5 py-4 font-medium text-slate-900">{{ formatIDR(item.actual_cost) }}</td>
+              <td class="px-5 py-4 text-slate-500">
+                <span v-if="item.tenor_total">{{ item.tenor_paid }}/{{ item.tenor_total }}</span>
+                <span v-else class="text-slate-400">-</span>
+              </td>
+              <td class="px-5 py-4">
+                <div class="flex justify-end gap-1.5">
+                  <button class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50" @click="openEdit(item)">Lihat</button>
+                  <button
+                    v-if="item.status !== 'selesai'"
+                    class="rounded-full px-3.5 py-1.5 text-xs font-medium text-white"
+                    :class="item.actual_cost == null ? 'bg-slate-300 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'"
+                    :disabled="item.actual_cost == null"
+                    :title="item.actual_cost == null ? 'Isi biaya aktual di Edit dulu' : 'Tandai selesai'"
+                    @click="markSelesai(item)"
+                  >
+                    Tandai selesai
+                  </button>
+                  <button class="rounded-full border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50" @click="deleteItem(item.id)">Hapus</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <p class="mt-8 text-center text-xs text-slate-400">© 2026 WePlan · Tier Premium 50k/6 bulan — renewable. Gratis 5 item preview.</p>
+    <p class="mt-4 text-center text-xs text-slate-400">Lihat membuka form yang sama dengan tambah — ubah lalu simpan untuk update. Tandai selesai hanya muncul jika belum selesai.</p>
   </div>
 </template>

@@ -26,6 +26,11 @@ const isPremium = computed(() => {
 
 const isEditing = computed(() => editingId.value !== null)
 
+// DP hanya relevan saat status DP — hide jika belum_bayar/lunas
+watch(() => form.status, (s) => {
+  if (s !== 'dp') form.dp_amount = ''
+})
+
 function resetForm() {
   form.vendor_name = ''
   form.category = 'lainnya'
@@ -79,7 +84,7 @@ async function submit() {
     category: form.category,
     contact_wa: form.contact_wa || undefined,
     total_amount: form.total_amount ? parseInt(form.total_amount) : 0,
-    dp_amount: form.dp_amount ? parseInt(form.dp_amount) : 0,
+    dp_amount: form.status === 'dp' && form.dp_amount ? parseInt(form.dp_amount) : 0,
     status: form.status,
     due_date: form.due_date || undefined,
     notes: form.notes || undefined,
@@ -183,7 +188,7 @@ function categoryLabel(c: string) {
         <div><label class="text-xs font-medium text-slate-700">WA</label><input v-model="form.contact_wa" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="08xx" /></div>
         <div><label class="text-xs font-medium text-slate-700">Status</label><select v-model="form.status" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="belum_bayar">Belum Bayar</option><option value="dp">DP</option><option value="lunas">Lunas</option></select></div>
         <div><label class="text-xs font-medium text-slate-700">Total</label><input v-model="form.total_amount" type="number" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="0" /></div>
-        <div><label class="text-xs font-medium text-slate-700">DP</label><input v-model="form.dp_amount" type="number" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="0" /></div>
+        <div v-if="form.status === 'dp'"><label class="text-xs font-medium text-slate-700">DP</label><input v-model="form.dp_amount" type="number" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="0" /></div>
         <div><label class="text-xs font-medium text-slate-700">Jatuh Tempo</label><input v-model="form.due_date" type="date" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" /></div>
         <div><label class="text-xs font-medium text-slate-700">Catatan</label><input v-model="form.notes" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="Opsional" /></div>
       </div>

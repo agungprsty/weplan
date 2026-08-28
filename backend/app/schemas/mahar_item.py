@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class MaharItemBase(BaseModel):
@@ -18,7 +18,11 @@ class MaharItemBase(BaseModel):
 
 
 class MaharItemCreate(MaharItemBase):
-    pass
+    @model_validator(mode="after")
+    def _validate_selesai_actual_cost(self) -> "MaharItemCreate":
+        if self.status == "selesai" and self.actual_cost is None:
+            raise ValueError("Biaya aktual wajib diisi untuk status selesai")
+        return self
 
 
 class MaharItemUpdate(BaseModel):

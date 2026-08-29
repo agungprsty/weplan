@@ -135,16 +135,6 @@ onMounted(async () => {
   await guestStore.fetchGuests()
 })
 
-function formatRp(n: number | null | undefined) {
-  if (n === null || n === undefined) return '—'
-  return `Rp ${n.toLocaleString('id-ID')}`
-}
-
-function giftSummary(g: Guest) {
-  if (!g.gift_count) return ''
-  return `${g.gift_count} gift${g.gift_total ? ` • ${formatRp(g.gift_total)}` : ''}`
-}
-
 function categoryLabel(c: string) {
   const map: Record<string, string> = {
     family: 'Keluarga',
@@ -274,10 +264,6 @@ function sideLabel(s: string) {
               <span class="inline-flex rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">{{ categoryLabel(g.category) }}</span>
               <span class="text-slate-300">•</span>
               <span class="text-xs" :class="sideBadge(g.side).text">{{ sideBadge(g.side).label }}</span>
-              <template v-if="g.gift_count">
-                <span class="text-slate-300">•</span>
-                <span class="text-[11px] font-medium text-emerald-700">{{ giftSummary(g) }}</span>
-              </template>
             </p>
             <p v-if="g.notes" class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500">{{ g.notes }}</p>
           </div>
@@ -310,7 +296,6 @@ function sideLabel(s: string) {
               <th class="px-5 py-3 font-medium">Kategori</th>
               <th class="px-5 py-3 font-medium">Sisi</th>
               <th class="px-5 py-3 font-medium">RSVP</th>
-              <th class="px-5 py-3 font-medium">Gift</th>
               <th class="px-5 py-3 font-medium">Kontak</th>
               <th class="px-5 py-3 font-medium text-right">Aksi</th>
             </tr>
@@ -324,7 +309,6 @@ function sideLabel(s: string) {
               <td class="px-5 py-4 text-slate-600">{{ categoryLabel(g.category) }}</td>
               <td class="px-5 py-4 text-xs" :class="sideBadge(g.side).text">{{ sideBadge(g.side).label }}</td>
               <td class="px-5 py-4 text-xs font-medium text-slate-700">{{ rsvpLabel(g.rsvp_status) }}</td>
-              <td class="px-5 py-4 text-xs" :class="g.gift_count ? 'font-medium text-emerald-700' : 'text-slate-400'">{{ giftSummary(g) || '—' }}</td>
               <td class="px-5 py-4 text-xs text-slate-500">{{ g.phone || g.email || '—' }}</td>
               <td class="px-5 py-4">
                 <div class="flex justify-end gap-1.5">

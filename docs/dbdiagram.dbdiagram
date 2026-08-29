@@ -1,0 +1,94 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "plans",
+        "schemaName": "public",
+        "x": 12,
+        "y": 12
+      },
+      {
+        "name": "users",
+        "schemaName": "public",
+        "x": 12,
+        "y": 378
+      },
+      {
+        "name": "weddings",
+        "schemaName": "public",
+        "x": 548.96240234375,
+        "y": 12
+      },
+      {
+        "name": "wedding_users",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 2633
+      },
+      {
+        "name": "guests",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 53
+      },
+      {
+        "name": "checklists",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 2903
+      },
+      {
+        "name": "orders",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 3333
+      },
+      {
+        "name": "vendors",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 483
+      },
+      {
+        "name": "kua_documents",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 1009
+      },
+      {
+        "name": "mahar_seserahan_items",
+        "schemaName": "public",
+        "x": 1117.03857421875,
+        "y": 1437.010709709869
+      },
+      {
+        "name": "savings_targets",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 1933
+      },
+      {
+        "name": "transactions",
+        "schemaName": "public",
+        "x": 1110.3349609375,
+        "y": 2203
+      },
+      {
+        "name": "cortage_items",
+        "schemaName": "public",
+        "x": 1634.953125,
+        "y": 12
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": []
+  },
+  "views": {}
+}

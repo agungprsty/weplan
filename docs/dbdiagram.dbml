@@ -1,0 +1,267 @@
+// WePlan - Wedding Planner SaaS
+// Generated from alembic migrations + SQLAlchemy models
+// Copy-paste ke https://dbdiagram.io/d
+// Last update: 2026-08-29 (head = b2c3d4e5f6a7)
+
+Project weplan {
+  database_type: 'PostgreSQL'
+  note: 'WePlan DB - multi-tenant via weddings.id, row-level isolation via wedding_id'
+}
+
+Table plans {
+  id uuid [pk, not null]
+  name varchar(100) [not null, note: 'Gratis / Premium']
+  slug varchar(50) [not null, unique, note: 'gratis, premium']
+  price bigint [not null, default: 0, note: 'Premium 50000']
+  max_guests integer [not null, default: 50, note: 'gratis 50, premium 9999']
+  duration_months integer [not null, default: 6, note: 'gratis 0, premium 6']
+  is_active boolean [not null, default: true]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    slug [unique]
+  }
+}
+
+Table users {
+  id uuid [pk, not null]
+  email varchar(255) [not null, unique]
+  hashed_password varchar(255) [not null]
+  full_name varchar(255) [not null]
+  is_active boolean [not null, default: true]
+  is_superadmin boolean [not null, default: false]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    email [unique]
+  }
+}
+
+Table weddings {
+  id uuid [pk, not null]
+  title varchar(255) [not null]
+  wedding_date date [note: 'nullable']
+  partner1_name varchar(255) [not null]
+  partner2_name varchar(255) [not null]
+  total_budget bigint [note: 'nullable']
+  plan_id uuid [ref: > plans.id, note: 'FK -> plans.id SET NULL']
+  pair_code varchar(8) [not null, unique, note: '8 char invite code']
+  plan_expires_at datetime [note: 'nullable']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    pair_code [unique]
+    plan_id
+  }
+}
+
+Table wedding_users {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  user_id uuid [not null, ref: > users.id]
+  role varchar(20) [not null, default: 'partner', note: 'partner / collaborator']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    (wedding_id, user_id) [unique]
+  }
+}
+
+Table guests {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  name varchar(255) [not null]
+  email varchar(255)
+  phone varchar(50)
+  category varchar(50) [not null, default: 'general', note: 'family,friend,vip,general,bridesmaid,groomsman']
+  rsvp_status varchar(20) [not null, default: 'pending', note: 'pending,attending,declined']
+  notes text
+  side varchar(10) [not null, default: 'both', note: 'both,bride,groom - Umum/Mempelai Wanita/Pria']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+  }
+}
+
+Table checklists {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  assignee_id uuid [ref: > users.id, note: 'nullable']
+  title varchar(255) [not null]
+  description text
+  category varchar(50) [not null, note: 'undangan,vendor,catering,busana,dokumentasi,hiburan,lainnya...']
+  status varchar(20) [not null, default: 'todo', note: 'todo,done']
+  due_date date
+  order integer [not null, default: 0]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table orders {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  plan_id uuid [not null, ref: > plans.id]
+  status varchar(20) [not null, default: 'pending', note: 'pending,paid,rejected']
+  amount bigint [not null]
+  payment_method varchar(50)
+  proof_url varchar(500)
+  notes text
+  confirmed_by uuid [ref: > users.id]
+  confirmed_at datetime
+  expires_at datetime
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table vendors {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  vendor_name varchar(255) [not null]
+  category varchar(50) [not null, default: 'lainnya']
+  contact_wa varchar(50)
+  total_amount bigint [not null, default: 0]
+  dp_amount bigint [not null, default: 0]
+  paid_amount bigint [not null, default: 0]
+  status varchar(20) [not null, default: 'belum_bayar', note: 'belum_bayar,dp,lunas']
+  due_date date
+  invoice_url varchar(500)
+  notes text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+  }
+}
+
+Table kua_documents {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  owner_type varchar(20) [not null, default: 'both', note: 'both,cpp,cpw']
+  document_key varchar(50) [not null, note: 'KTP, KK, Akta, dll']
+  title varchar(255) [not null]
+  is_required boolean [not null, default: true]
+  status varchar(20) [not null, default: 'belum', note: 'belum,proses,selesai']
+  file_url varchar(500)
+  expiry_date date
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+  }
+}
+
+Table mahar_seserahan_items {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  type varchar(30) [not null, default: 'mahar', note: 'mahar,seserahan_cpp,seserahan_cpw,hantaran']
+  title varchar(255) [not null]
+  qty integer [not null, default: 1]
+  estimated_cost bigint
+  actual_cost bigint
+  status varchar(20) [not null, default: 'rencana', note: 'rencana,dibeli']
+  tenor_total integer
+  tenor_paid integer [not null, default: 0]
+  notes text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+  }
+}
+
+Table savings_targets {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, unique, ref: > weddings.id]
+  target_amount bigint [not null, default: 0]
+  deadline date
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id [unique]
+  }
+}
+
+Table transactions {
+  id uuid [pk, not null, note: 'cashflow']
+  wedding_id uuid [not null, ref: > weddings.id]
+  type varchar(10) [not null, note: 'masuk,keluar']
+  amount bigint [not null]
+  category varchar(50) [not null, default: 'lainnya', note: 'busana,catering,lainnya...']
+  source varchar(255) [note: 'Bridesmaid - Nama / Groomsman - Nama / manual']
+  proof_url varchar(500)
+  transaction_date date [not null]
+  notes text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+  }
+}
+
+Table gifts {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  guest_id uuid [ref: > guests.id]
+  type varchar(20) [not null, default: 'kado', note: 'kado,uang,other']
+  description varchar(255)
+  amount bigint
+  received_at date
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+    guest_id
+  }
+}
+
+Table cortage_items {
+  id uuid [pk, not null, note: 'Renamed dari bridesmaid_items; generic bridesmaid+groomsman']
+  wedding_id uuid [not null, ref: > weddings.id]
+  guest_id uuid [not null, unique, ref: > guests.id]
+  uniform_size varchar(20) [note: 'XS,S,M,L,XL,XXL,Custom']
+  fitting_status varchar(20) [not null, default: 'pending', note: 'pending,fitting,done']
+  payment_status varchar(20) [not null, default: 'belum_bayar', note: 'belum_bayar,dp,lunas']
+  price bigint [not null, default: 0]
+  notes text
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    wedding_id
+    guest_id [unique]
+  }
+}
+
+// Legacy name (sudah di-rename): bridesmaid_items -> cortage_items
+
+TableGroup core {
+  weddings
+  wedding_users
+  plans
+  orders
+  users
+}
+
+TableGroup wedding_content {
+  guests
+  gifts
+  cortage_items
+  checklists
+  vendors
+  kua_documents
+  mahar_seserahan_items
+  savings_targets
+  transactions
+}

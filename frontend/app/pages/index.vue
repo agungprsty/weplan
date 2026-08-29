@@ -82,14 +82,9 @@ const packages = [
       <div class="absolute top-40 -right-20 w-[400px] h-[400px] bg-indigo-100/60 blur-[80px] rounded-full -z-10 pointer-events-none"></div>
 
       <div class="max-w-4xl mx-auto text-center relative z-10">
-        <div class="fade-in-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 mb-8 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-          Ruang Kerja Kolaborasi Pasangan
-        </div>
-
         <h1 class="fade-in-up delay-100 font-serif text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-[1.15]">
           Rencanakan hari bahagiamu <br class="hidden md:block">
-          <span class="text-rose-600 italic font-medium">secara bersama.</span>
+          <span class="text-rose-600 italic font-medium">bersama.</span>
         </h1>
 
         <p class="fade-in-up delay-200 text-lg md:text-xl text-slate-600 font-light max-w-2xl mx-auto mb-10 leading-relaxed">

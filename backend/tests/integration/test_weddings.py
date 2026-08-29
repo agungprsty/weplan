@@ -13,7 +13,7 @@ async def register_and_login(client: AsyncClient) -> str:
     )
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": "test@example.com", "password": "password123"},
+        json={"email": "test@example.com", "password": "password123"},
     )
     return response.json()["access_token"]
 

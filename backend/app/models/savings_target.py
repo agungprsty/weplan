@@ -14,7 +14,7 @@ class SavingsTarget(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     wedding_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("weddings.id", ondelete="CASCADE"), unique=True, index=True
+        ForeignKey("weddings.id", ondelete="CASCADE"), unique=True
     )
     target_amount: Mapped[int] = mapped_column(BigInteger, default=0)
     deadline: Mapped[date | None] = mapped_column(Date, nullable=True)

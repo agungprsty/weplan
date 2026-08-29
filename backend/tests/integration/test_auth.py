@@ -59,7 +59,7 @@ async def test_login(client: AsyncClient):
     )
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": "test@example.com", "password": "password123"},
+        json={"email": "test@example.com", "password": "password123"},
     )
     assert response.status_code == 200
     data = response.json()

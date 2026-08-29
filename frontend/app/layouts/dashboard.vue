@@ -8,12 +8,40 @@ const LG_BREAKPOINT = 1024
 const isMobile = ref(false)
 const sidebarOpen = ref(false)
 const showUserMenu = ref(false)
-const showMessages = ref(false)
 const showNotifications = ref(false)
 const reportsOpen = ref(false)
 const authMenuOpen = ref(false)
 const errorsMenuOpen = ref(false)
-const searchQuery = ref('')
+const mobileSearchOpen = ref(false)
+const showUpgradeModal = ref(false)
+
+const PREMIUM_PATHS = ['/gifts', '/pengiring', '/vendors', '/mahar', '/checklists', '/keuangan']
+
+const isPremium = computed(() => {
+  const w = weddingStore.wedding
+  return Boolean(w && w.plan_expires_at && new Date(w.plan_expires_at).getTime() > Date.now())
+})
+
+function openUpgradeModal() {
+  showNotifications.value = false
+  showUserMenu.value = false
+  showUpgradeModal.value = true
+}
+
+function handleNavClick(path: string) {
+  if (!isPremium.value && PREMIUM_PATHS.includes(path)) {
+    openUpgradeModal()
+    return
+  }
+  closeSidebarOnMobile()
+  router.push(path)
+}
+
+function goToPricing() {
+  showUpgradeModal.value = false
+  closeSidebarOnMobile()
+  router.push('/#harga')
+}
 
 function updateIsMobile() {
   if (typeof window !== 'undefined') isMobile.value = window.innerWidth < LG_BREAKPOINT
@@ -35,6 +63,7 @@ onBeforeUnmount(() => {
 
 watch(() => route.path, () => {
   closeSidebarOnMobile()
+  mobileSearchOpen.value = false
 })
 
 function handleLogout() {
@@ -46,7 +75,12 @@ function handleLogout() {
 
 function closePopovers() {
   showUserMenu.value = false
-  showMessages.value = false
+  showNotifications.value = false
+}
+
+function toggleMobileSearch() {
+  mobileSearchOpen.value = !mobileSearchOpen.value
+  showUserMenu.value = false
   showNotifications.value = false
 }
 
@@ -90,26 +124,6 @@ function isActive(path: string) {
         </button>
       </div>
 
-      <!-- Search in sidebar -->
-      <div class="px-3 py-3" :class="!sidebarOpen ? 'lg:hidden' : ''">
-        <div class="relative">
-          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7" /><path stroke-linecap="round" d="M16.5 16.5L20 20" /></svg>
-          </span>
-          <input
-            v-model="searchQuery"
-            type="search"
-            placeholder="Cari tugas, tamu, anggaran..."
-            class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-slate-300 focus:bg-white"
-          />
-        </div>
-      </div>
-      <div v-if="!sidebarOpen" class="hidden lg:flex justify-center py-3">
-        <button class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100" aria-label="Cari" @click.stop="sidebarOpen = true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7" /><path stroke-linecap="round" d="M16.5 16.5L20 20" /></svg>
-        </button>
-      </div>
-
       <!-- Menu -->
       <div class="flex-1 overflow-y-auto px-3 py-2">
         <nav class="space-y-6">
@@ -145,7 +159,6 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M7 8h4M7 12h10" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Berkas KUA</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] text-emerald-700">Gratis</span>
                 </NuxtLink>
               </li>
               <li>
@@ -164,10 +177,10 @@ function isActive(path: string) {
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink
-                  to="/gifts"
+                <a
+                  href="/gifts"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/gifts')"
                   :class="[
                     isActive('/gifts') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -176,14 +189,14 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Gifts</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] text-emerald-700">Gratis</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
               <li>
-                <NuxtLink
-                  to="/pengiring"
+                <a
+                  href="/pengiring"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/pengiring')"
                   :class="[
                     isActive('/pengiring') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -192,14 +205,14 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><path d="M6 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4H6v-4z" /><path d="M14 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h-2v-4" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Pengiring</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">Seragam</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
               <li>
-                <NuxtLink
-                  to="/vendors"
+                <a
+                  href="/vendors"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/vendors')"
                   :class="[
                     isActive('/vendors') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -208,14 +221,14 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Vendor</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">Premium</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
               <li>
-                <NuxtLink
-                  to="/mahar"
+                <a
+                  href="/mahar"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/mahar')"
                   :class="[
                     isActive('/mahar') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -224,14 +237,14 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><circle cx="12" cy="12" r="3" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Mahar & Seserahan</span>
-                  <span v-if="sidebarOpen && !isActive('/mahar')" class="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">Premium</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
               <li>
-                <NuxtLink
-                  to="/checklists"
+                <a
+                  href="/checklists"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/checklists')"
                   :class="[
                     isActive('/checklists') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -240,14 +253,14 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 6.5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1Z" /><path d="M6 10.5h12M6 14.5h12M6 18.5h8" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Checklist</span>
-                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] text-emerald-700">Gratis</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
               <li>
-                <NuxtLink
-                  to="/keuangan"
+                <a
+                  href="/keuangan"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
+                  @click.prevent="handleNavClick('/keuangan')"
                   :class="[
                     isActive('/keuangan') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
@@ -256,8 +269,8 @@ function isActive(path: string) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M9 12h6" /></svg>
                   <span :class="!sidebarOpen ? 'lg:hidden' : ''">Keuangan</span>
-                  <span v-if="sidebarOpen && !isActive('/keuangan')" class="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">Premium</span>
-                </NuxtLink>
+                  <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
+                </a>
               </li>
             </ul>
           </div>
@@ -344,38 +357,21 @@ function isActive(path: string) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
         </button>
 
-        <div class="hidden items-center gap-2 lg:flex">
-          <div class="relative">
-            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7" /><path stroke-linecap="round" d="M16.5 16.5L20 20" /></svg>
-            </span>
-            <input type="search" placeholder="Cari tugas, tamu, catatan..." class="w-[320px] rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-slate-300 focus:bg-white" />
-          </div>
+        <div class="relative hidden w-full max-w-sm lg:block">
+          <SearchBox @premium-blocked="openUpgradeModal" />
         </div>
 
         <div class="ml-auto flex items-center gap-1">
-          <!-- Messages -->
-          <div class="relative">
-            <button class="relative grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Messages" @click.stop="showMessages = !showMessages; showNotifications = false; showUserMenu = false">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" /><path d="M8 12h.01M12 12h.01M16 12h.01" /></svg>
-              <span class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white" />
+          <!-- Search (mobile) -->
+          <div class="relative lg:hidden">
+            <button class="grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Cari" @click.stop="toggleMobileSearch">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7" /><path stroke-linecap="round" d="M16.5 16.5L20 20" /></svg>
             </button>
-            <div v-if="showMessages" class="absolute right-0 top-11 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-xl" @click.stop>
-              <div class="flex items-center justify-between px-3 py-2">
-                <p class="text-sm font-semibold">Pesan</p>
-                <button class="text-xs text-rose-600">Tandai dibaca</button>
-              </div>
-              <div class="space-y-1">
-                <a href="#" class="flex gap-3 rounded-lg bg-slate-50 p-3" @click.prevent><span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">AP</span><span class="min-w-0"><p class="text-sm font-medium">Ani & Partner</p><p class="truncate text-xs text-slate-500">Jangan lupa final fitting besok!</p><p class="text-[11px] text-slate-400">2 menit lalu</p></span></a>
-                <a href="#" class="flex gap-3 rounded-lg p-3 hover:bg-slate-50" @click.prevent><span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-bold">WO</span><span class="min-w-0"><p class="text-sm font-medium">WO Pelangi</p><p class="truncate text-xs text-slate-500">Revisi dekorasi sudah dikirim</p><p class="text-[11px] text-slate-400">1 jam lalu</p></span></a>
-              </div>
-              <a href="#" class="mt-2 block rounded-lg border border-slate-200 py-2 text-center text-sm hover:bg-slate-50" @click.prevent>Lihat semua</a>
-            </div>
           </div>
 
           <!-- Notifications -->
           <div class="relative">
-            <button class="grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Notifications" @click.stop="showNotifications = !showNotifications; showMessages = false; showUserMenu = false">
+            <button class="grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Notifications" @click.stop="showNotifications = !showNotifications; showUserMenu = false">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9a6 6 0 0 1 12 0c0 7-6 9-6 9s-6-2-6-9" /><path d="M9 18a3 3 0 0 0 6 0" /></svg>
             </button>
             <div v-if="showNotifications" class="absolute right-0 top-11 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-xl" @click.stop>
@@ -395,7 +391,7 @@ function isActive(path: string) {
 
           <!-- User -->
           <div class="relative">
-            <button class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 pl-3 text-sm hover:bg-slate-50" @click.stop="showUserMenu = !showUserMenu; showMessages = false; showNotifications = false">
+            <button class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 pl-3 text-sm hover:bg-slate-50" @click.stop="showUserMenu = !showUserMenu; showNotifications = false">
               <span class="hidden text-sm font-medium text-slate-700 sm:inline">{{ auth.user?.name ?? 'Tamu' }}</span>
               <span class="grid h-7 w-7 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">{{ auth.user?.name?.charAt(0)?.toUpperCase() ?? 'U' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="text-slate-400"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
@@ -413,6 +409,11 @@ function isActive(path: string) {
             </div>
           </div>
         </div>
+
+        <!-- Mobile search panel -->
+        <div v-if="mobileSearchOpen" class="absolute inset-x-0 top-full z-30 border-b border-slate-200 bg-white px-4 py-3 shadow-lg lg:hidden" @click.stop>
+          <SearchBox @premium-blocked="openUpgradeModal" />
+        </div>
       </header>
 
       <!-- Page -->
@@ -420,5 +421,50 @@ function isActive(path: string) {
         <slot />
       </main>
     </div>
+
+    <!-- Upgrade Modal -->
+    <Transition name="upgrade-fade">
+      <div v-if="showUpgradeModal" class="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showUpgradeModal = false" />
+        <div class="relative w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+          <button class="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-600" aria-label="Tutup" @click="showUpgradeModal = false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+          <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-500">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg>
+          </div>
+          <h3 class="mt-4 font-serif text-xl font-bold text-slate-900">Upgrade ke Premium</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-500">Fitur ini khusus pasangan Premium. Buka akses penuh Gifts, Vendor, Mahar &amp; Seserahan, Checklist lengkap, dan modul Keuangan.</p>
+          <ul class="mt-4 space-y-1.5 text-left text-sm text-slate-600">
+            <li class="flex items-center gap-2"><svg class="shrink-0 text-emerald-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>Semua fitur lengkap tanpa batas</li>
+            <li class="flex items-center gap-2"><svg class="shrink-0 text-emerald-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>Prioritas dukungan pasangan</li>
+          </ul>
+          <button class="mt-5 block w-full rounded-full bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-900" @click="goToPricing">Upgrade Sekarang</button>
+          <button class="mt-2 block w-full rounded-full py-2.5 text-sm text-slate-500 hover:bg-slate-50" @click="showUpgradeModal = false">Nanti saja</button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.upgrade-fade-enter-active,
+.upgrade-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.upgrade-fade-enter-active .relative,
+.upgrade-fade-leave-active .relative {
+  transition: transform 0.2s ease;
+}
+
+.upgrade-fade-enter-from,
+.upgrade-fade-leave-to {
+  opacity: 0;
+}
+
+.upgrade-fade-enter-from .relative,
+.upgrade-fade-leave-to .relative {
+  transform: translateY(12px) scale(0.97);
+}
+</style>

@@ -21,6 +21,7 @@ target_metadata = Base.metadata
 
 from app.models import (  # noqa: F401  # noqa: F401
     checklist,
+    cortage,
     guest,
     kua_document,
     mahar_item,

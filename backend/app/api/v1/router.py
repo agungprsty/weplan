@@ -5,6 +5,7 @@ from app.api.v1 import (
     auth,
     bridesmaids,
     checklists,
+    cortage,
     finance,
     guests,
     kua_documents,
@@ -31,6 +32,12 @@ api_router.include_router(
     prefix="/weddings/{wedding_id}/guests",
     tags=["guests"],
 )
+api_router.include_router(
+    cortage.router,
+    prefix="/weddings/{wedding_id}/cortage",
+    tags=["cortage"],
+)
+# backwards compat: keep old prefix bridesmaids
 api_router.include_router(
     bridesmaids.router,
     prefix="/weddings/{wedding_id}/bridesmaids",

@@ -48,7 +48,15 @@ class Wedding(Base):
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    bridesmaid_items: Mapped[list["BridesmaidItem"]] = relationship(
+    cortage_items: Mapped[list["CortageItem"]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
+
+    @property
+    def bridesmaid_items(self) -> list["CortageItem"]:  # backwards compat
+        return self.cortage_items
+
+    @bridesmaid_items.setter
+    def bridesmaid_items(self, value: list["CortageItem"]) -> None:
+        self.cortage_items = value
     plan: Mapped["Plan | None"] = relationship()

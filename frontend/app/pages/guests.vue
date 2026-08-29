@@ -30,8 +30,6 @@ const filtered = computed(() => {
   return list
 })
 
-const bridesmaidCount = computed(() => guestStore.items.filter((i) => i.category === 'bridesmaid').length)
-
 function resetForm() {
   form.name = ''
   form.email = ''
@@ -125,6 +123,7 @@ function categoryLabel(c: string) {
     vip: 'VIP',
     general: 'Umum',
     bridesmaid: 'Bridesmaid',
+    groomsman: 'Groomsman',
   }
   return map[c] ?? c
 }
@@ -143,6 +142,7 @@ function rsvpDot(s: Guest['rsvp_status']) {
 
 function rowAccent(s: Guest['rsvp_status'], category: string) {
   if (category === 'bridesmaid') return 'border-l-violet-500'
+  if (category === 'groomsman') return 'border-l-sky-500'
   if (s === 'attending') return 'border-l-emerald-500'
   if (s === 'declined') return 'border-l-rose-500'
   return 'border-l-amber-500'
@@ -160,17 +160,8 @@ function sideLabel(s: string) {
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Tamu & RSVP</h1>
-        <p class="mt-1 text-sm text-slate-500">Kelola daftar tamu & RSVP. Bridesmaid dipisah sebagai kategori — budget seragam di Keuangan kategori Busana.</p>
       </div>
       <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="openCreate">Tambah Tamu</button>
-    </div>
-
-    <!-- Info pisah bridesmaid -->
-    <div class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">
-      <span class="inline-flex h-2 w-2 rounded-full bg-violet-500" />
-      <span><strong>{{ bridesmaidCount }} Bridesmaid</strong> — kelola orang di sini, setup seragam di <NuxtLink to="/bridesmaids" class="font-semibold underline">Bridesmaid → Seragam</NuxtLink>.</span>
-      <NuxtLink to="/bridesmaids" class="ml-auto rounded-full bg-white px-3 py-1 text-xs font-medium text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100">Ke Bridesmaid</NuxtLink>
-      <NuxtLink to="/keuangan" class="rounded-full bg-white px-3 py-1 text-xs font-medium text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100">Lihat Budget Busana</NuxtLink>
     </div>
 
     <div v-if="showForm" class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -180,13 +171,13 @@ function sideLabel(s: string) {
       </div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div><label class="text-xs font-medium text-slate-700">Nama <span class="text-rose-600">*</span></label><input v-model="form.name" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="Nama tamu" /></div>
-        <div><label class="text-xs font-medium text-slate-700">Kategori</label><select v-model="form.category" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="general">Umum</option><option value="family">Keluarga</option><option value="friend">Teman</option><option value="vip">VIP</option><option value="bridesmaid">Bridesmaid</option></select></div>
+        <div><label class="text-xs font-medium text-slate-700">Kategori</label><select v-model="form.category" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="general">Umum</option><option value="family">Keluarga</option><option value="friend">Teman</option><option value="vip">VIP</option><option value="bridesmaid">Bridesmaid</option><option value="groomsman">Groomsman</option></select></div>
         <div><label class="text-xs font-medium text-slate-700">Sisi</label><select v-model="form.side" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="both">Both</option><option value="bride">Bride</option><option value="groom">Groom</option></select></div>
         <div><label class="text-xs font-medium text-slate-700">Email</label><input v-model="form.email" type="email" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="opsional" /></div>
         <div><label class="text-xs font-medium text-slate-700">Phone/WA</label><input v-model="form.phone" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="08xx" /></div>
         <div><label class="text-xs font-medium text-slate-700">Catatan</label><input v-model="form.notes" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="Opsional — angpao, alergi, dll" /></div>
       </div>
-      <p v-if="form.category === 'bridesmaid'" class="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">Bridesmaid: data orang disimpan di sini. Untuk biaya seragam, buat transaksi di Keuangan kategori <strong>Busana</strong>.</p>
+      <p v-if="form.category === 'bridesmaid' || form.category === 'groomsman'" class="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">{{ form.category === 'groomsman' ? 'Groomsman' : 'Bridesmaid' }}: data orang disimpan di sini. Untuk biaya seragam, kelola di halaman Pengiring lalu otomatis jadi transaksi Keuangan kategori <strong>Busana</strong>.</p>
       <p v-if="formError" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ formError }}</p>
       <div class="mt-4 flex gap-2"><button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="submit">{{ isEditing ? 'Update' : 'Simpan' }}</button><button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="cancelForm">Batal</button></div>
     </div>
@@ -202,6 +193,7 @@ function sideLabel(s: string) {
       <select v-model="filterCategory" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm">
         <option value="all">Semua kategori</option>
         <option value="bridesmaid">Bridesmaid</option>
+        <option value="groomsman">Groomsman</option>
         <option value="family">Keluarga</option>
         <option value="friend">Teman</option>
         <option value="vip">VIP</option>
@@ -213,7 +205,6 @@ function sideLabel(s: string) {
         <option value="attending">Hadir</option>
         <option value="declined">Tidak hadir</option>
       </select>
-      <span class="ml-auto text-xs text-slate-500">{{ filtered.length }} tamu · <span class="text-violet-600 font-medium">{{ bridesmaidCount }} bridesmaid</span></span>
     </div>
 
     <!-- List tabel — seperti vendor -->
@@ -238,7 +229,7 @@ function sideLabel(s: string) {
           <tbody class="divide-y divide-slate-100">
             <tr v-for="g in filtered" :key="g.id" class="border-l-4 bg-white transition-colors hover:bg-slate-50/40" :class="rowAccent(g.rsvp_status, g.category)">
               <td class="px-5 py-4">
-                <p class="font-medium text-slate-900">{{ g.name }} <span v-if="g.category==='bridesmaid'" class="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700">Bridesmaid</span></p>
+                <p class="font-medium text-slate-900">{{ g.name }} <span v-if="g.category==='bridesmaid'" class="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700">Bridesmaid</span><span v-else-if="g.category==='groomsman'" class="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-700">Groomsman</span></p>
                 <p v-if="g.notes" class="mt-0.5 line-clamp-1 max-w-[28ch] text-xs text-slate-500">{{ g.notes }}</p>
               </td>
               <td class="px-5 py-4 text-slate-600">{{ categoryLabel(g.category) }}</td>
@@ -262,6 +253,6 @@ function sideLabel(s: string) {
       </div>
     </div>
 
-    <p class="mt-4 text-center text-xs text-slate-400">Lihat membuka form yang sama dengan tambah — ubah lalu simpan. Budget seragam bridesmaid kelola di Keuangan kategori Busana (pisah dari daftar orang).</p>
+    <p class="mt-4 text-center text-xs text-slate-400">Lihat membuka form yang sama dengan tambah — ubah lalu simpan. Budget seragam pengiring kelola di halaman Pengiring → otomatis jadi Keuangan Busana.</p>
   </div>
 </template>

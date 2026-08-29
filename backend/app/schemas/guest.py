@@ -9,7 +9,7 @@ class GuestBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=50)
-    category: Literal["family", "friend", "vip", "general", "bridesmaid"] = "general"
+    category: Literal["family", "friend", "vip", "general", "bridesmaid", "groomsman"] = "general"
     side: Literal["bride", "groom", "both"] = "both"
     notes: str | None = None
 
@@ -22,7 +22,7 @@ class GuestUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=50)
-    category: Literal["family", "friend", "vip", "general", "bridesmaid"] | None = None
+    category: Literal["family", "friend", "vip", "general", "bridesmaid", "groomsman"] | None = None
     rsvp_status: Literal["pending", "attending", "declined"] | None = None
     side: Literal["bride", "groom", "both"] | None = None
     notes: str | None = None

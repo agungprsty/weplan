@@ -25,6 +25,14 @@ class Guest(Base):
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
     wedding: Mapped["Wedding"] = relationship(back_populates="guests")
-    bridesmaid_detail: Mapped["BridesmaidItem | None"] = relationship(
+    cortage_detail: Mapped["CortageItem | None"] = relationship(
         back_populates="guest", cascade="all, delete-orphan", uselist=False
     )
+
+    @property
+    def bridesmaid_detail(self) -> "CortageItem | None":  # backwards compat
+        return self.cortage_detail
+
+    @bridesmaid_detail.setter
+    def bridesmaid_detail(self, value: "CortageItem | None") -> None:
+        self.cortage_detail = value

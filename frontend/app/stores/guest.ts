@@ -6,7 +6,7 @@ export interface Guest {
   name: string
   email: string | null
   phone: string | null
-  category: 'family' | 'friend' | 'vip' | 'general' | 'bridesmaid'
+  category: 'family' | 'friend' | 'vip' | 'general' | 'bridesmaid' | 'groomsman'
   side: 'bride' | 'groom' | 'both'
   rsvp_status: 'pending' | 'attending' | 'declined'
   notes: string | null
@@ -29,6 +29,8 @@ export const useGuestStore = defineStore('guest', () => {
       friend: items.value.filter((i) => i.category === 'friend'),
       vip: items.value.filter((i) => i.category === 'vip'),
       bridesmaid: items.value.filter((i) => i.category === 'bridesmaid'),
+      groomsman: items.value.filter((i) => i.category === 'groomsman'),
+      cortage: items.value.filter((i) => i.category === 'bridesmaid' || i.category === 'groomsman'),
       attending: items.value.filter((i) => i.rsvp_status === 'attending'),
     }
     return g

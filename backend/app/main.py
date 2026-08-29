@@ -22,12 +22,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Harden CORS: support multiple origins from env and fallback regex for localhost/127.0.0.1 any port
+origins = settings.allowed_origins_list
+# if single wildcard configured, allow all
+if origins == ["*"]:
+    allow_origins = ["*"]
+    allow_origin_regex = None
+else:
+    allow_origins = origins
+    # also allow any localhost / 127.0.0.1 port during dev
+    allow_origin_regex = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origins=allow_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

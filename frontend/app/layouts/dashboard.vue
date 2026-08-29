@@ -165,6 +165,22 @@ function isActive(path: string) {
               </li>
               <li>
                 <NuxtLink
+                  to="/gifts"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
+                  @click="closeSidebarOnMobile"
+                  :class="[
+                    isActive('/gifts') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
+                  ]"
+                  :title="!sidebarOpen ? 'Gifts' : undefined"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Gifts</span>
+                  <span v-if="sidebarOpen" class="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] text-emerald-700">Gratis</span>
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
                   to="/pengiring"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
                   @click="closeSidebarOnMobile"

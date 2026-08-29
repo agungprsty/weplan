@@ -7,6 +7,7 @@ from app.api.v1 import (
     checklists,
     cortage,
     finance,
+    gifts,
     guests,
     kua_documents,
     mahar_items,
@@ -31,6 +32,11 @@ api_router.include_router(
     guests.router,
     prefix="/weddings/{wedding_id}/guests",
     tags=["guests"],
+)
+api_router.include_router(
+    gifts.router,
+    prefix="/weddings/{wedding_id}/gifts",
+    tags=["gifts"],
 )
 api_router.include_router(
     cortage.router,

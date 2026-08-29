@@ -34,5 +34,7 @@ class GuestResponse(GuestBase):
     id: uuid.UUID
     wedding_id: uuid.UUID
     rsvp_status: str
+    gift_count: int = 0
+    gift_total: int = 0
     created_at: datetime
     updated_at: datetime

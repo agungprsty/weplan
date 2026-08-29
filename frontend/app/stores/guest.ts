@@ -10,6 +10,8 @@ export interface Guest {
   side: 'bride' | 'groom' | 'both'
   rsvp_status: 'pending' | 'attending' | 'declined'
   notes: string | null
+  gift_count?: number
+  gift_total?: number
   created_at: string
   updated_at: string
 }

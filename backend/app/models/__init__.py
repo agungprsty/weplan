@@ -1,6 +1,7 @@
 from app.models.bridesmaid import BridesmaidItem  # noqa: F401  # backwards compat
 from app.models.cortage import CortageItem  # noqa: F401
 from app.models.checklist import Checklist  # noqa: F401
+from app.models.gift import Gift  # noqa: F401
 from app.models.guest import Guest  # noqa: F401
 from app.models.kua_document import KuaDocument  # noqa: F401
 from app.models.mahar_item import MaharItem  # noqa: F401

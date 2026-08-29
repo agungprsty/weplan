@@ -41,6 +41,7 @@ class WeddingResponse(WeddingBase):
     pair_code: str
     plan: PlanInfo | None = None
     plan_expires_at: datetime | None = None
+    member_count: int = 0
     created_at: datetime
     updated_at: datetime
 

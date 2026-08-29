@@ -11,6 +11,7 @@ export interface Wedding {
   pair_code: string
   plan: { name: string; slug: string; price: number; max_guests: number; duration_months?: number } | null
   plan_expires_at: string | null
+  member_count?: number | null
   created_at: string
   updated_at: string
 }

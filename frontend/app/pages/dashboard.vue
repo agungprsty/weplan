@@ -3,6 +3,10 @@ definePageMeta({ layout: 'dashboard' })
 
 const auth = useAuthStore()
 const weddingStore = useWeddingStore()
+const guestStore = useGuestStore()
+const checklistStore = useChecklistStore()
+const financeStore = useFinanceStore()
+const vendorStore = useVendorStore()
 
 const copiedPairCode = ref(false)
 
@@ -35,105 +39,239 @@ const daysUntil = computed(() => {
   const d = Math.ceil(diff / (1000 * 60 * 60 * 24))
   return d > 0 ? d : 0
 })
+
+function formatIDR(v: number | null | undefined): string {
+  if (v == null) return 'Rp —'
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
+}
+
+// Real data computeds
+const guestTotal = computed(() => guestStore.items.length)
+const umumCount = computed(() => guestStore.items.filter((g) => g.side === 'both').length)
+const brideCount = computed(() => guestStore.items.filter((g) => g.side === 'bride').length)
+const groomCount = computed(() => guestStore.items.filter((g) => g.side === 'groom').length)
+
+const totalTasks = computed(() => checklistStore.items.length)
+const todoCount = computed(() => checklistStore.grouped.todo.length)
+const inProgressCount = computed(() => checklistStore.grouped.in_progress.length)
+const doneCount = computed(() => checklistStore.grouped.done.length)
+const checklistProgress = computed(() => checklistStore.progress)
+
+// Badge — minimalist & relevan (data real)
+const anggaranBadgeText = computed(() => {
+  if (financeStore.target) return `${financeStore.target.progress_pct}% terkumpul`
+  if (financeStore.transactions.length > 0) return `${financeStore.transactions.length} transaksi`
+  return 'Belum ada target'
+})
+const anggaranBadgeClass = computed(() => {
+  if (!financeStore.target) return 'border-slate-200 bg-slate-50 text-slate-500'
+  const p = financeStore.target.progress_pct
+  if (p >= 75) return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (p >= 40) return 'border-amber-200 bg-amber-50 text-amber-700'
+  return 'border-slate-200 bg-white text-slate-600'
+})
+
+const tamuBadgeText = computed(() => {
+  const max = wedding.value?.plan?.max_guests
+  if (max) return `${guestTotal.value}/${max} tamu`
+  return `${guestTotal.value} tamu`
+})
+const tamuBadgeClass = computed(() => {
+  if (guestTotal.value === 0) return 'border-slate-200 bg-slate-50 text-slate-500'
+  return 'border-indigo-200 bg-indigo-50 text-indigo-700'
+})
+
+const checklistBadgeText = computed(() => {
+  if (totalTasks.value === 0) return 'Belum ada tugas'
+  return `${checklistProgress.value}% selesai`
+})
+const checklistBadgeClass = computed(() => {
+  if (totalTasks.value === 0) return 'border-slate-200 bg-slate-50 text-slate-500'
+  const p = checklistProgress.value
+  if (p >= 75) return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (p >= 40) return 'border-amber-200 bg-amber-50 text-amber-700'
+  return 'border-slate-200 bg-white text-slate-600'
+})
+
+const isPremium = computed(() => {
+  // sesuaikan dengan deteksi premium app: financeStore.isPremium (slug premium + expiry) fallback ke expiry seperti layout
+  if (typeof financeStore.isPremium === 'boolean') return financeStore.isPremium
+  const w = weddingStore.wedding as unknown as { plan_expires_at?: string | null } | null
+  return Boolean(w?.plan_expires_at && new Date(w.plan_expires_at).getTime() > Date.now())
+})
+
+const isPaired = computed(() => {
+  const c = wedding.value?.member_count
+  return typeof c === 'number' ? c >= 2 : false
+})
+
+// Pengeluaran — 4 kolom: inisial, nama vendor, harga, persentase (real vendor, top 5)
+const topVendors = computed(() => {
+  const list = [...vendorStore.items].sort((a, b) => b.total_amount - a.total_amount).slice(0, 5)
+  const totalBudget = wedding.value?.total_budget ?? 0
+  const sum = vendorStore.items.reduce((s, v) => s + v.total_amount, 0)
+  const denom = totalBudget > 0 ? totalBudget : sum
+  return list.map((v) => {
+    const pct = denom > 0 ? Math.round((v.total_amount / denom) * 100) : 0
+    const initials = v.vendor_name.trim().slice(0, 2).toUpperCase() || 'VD'
+    return { ...v, pct, initials }
+  })
+})
+
+// Fetch real data when wedding available
+watch(
+  () => weddingStore.wedding?.id,
+  (id) => {
+    if (id) {
+      guestStore.fetchGuests()
+      checklistStore.fetchChecklists()
+      financeStore.fetchTarget()
+      financeStore.fetchTransactions()
+      vendorStore.fetchVendors()
+    }
+  },
+  { immediate: true },
+)
+
+onMounted(async () => {
+  // paksa refresh wedding agar member_count (deteksi pasangan join) selalu fresh
+  try { await weddingStore.fetchWedding() } catch {}
+})
 </script>
 
 <template>
   <div class="mx-auto max-w-[1440px] px-4 py-6 lg:px-6">
     <!-- Page header -->
     <div class="mb-6">
-      <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Welcome back, {{ auth.user?.name?.split(' ')[0] ?? 'Steven' }} 👋</h1>
-      <p v-if="wedding" class="mt-1 text-sm text-slate-500">{{ wedding.title }} · {{ wedding.partner1_name }} & {{ wedding.partner2_name }} <span v-if="formattedDate">· {{ formattedDate }}</span><span v-if="daysUntil !== null" class="ml-2 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">{{ daysUntil }} hari lagi</span></p>
-      <p v-else class="mt-1 text-sm text-slate-500">Ruang kerja persiapan pernikahan kalian.</p>
+      <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Welcome back, {{ auth.user?.name?.split(' ')[0] ?? 'Steven' }}!</h1>
     </div>
 
     <!-- Grid 12 -->
-    <div class="grid grid-cols-12 gap-4">
-      <!-- Order Statistics -> Ringkasan Checklist -->
+    <div class="grid grid-cols-12 gap-4 items-stretch">
+      <!-- Card Tamu -->
       <div class="col-span-12 xl:col-span-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Ringkasan Checklist</p>
-          <div class="mt-4 flex items-end gap-3">
-            <p class="font-serif text-4xl font-bold text-slate-900">12</p>
-            <div class="pb-1">
-              <p class="text-xs text-slate-500">Total tugas · Bulan ini</p>
-              <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 8l4 4-4 4M8 12h8" class="rotate-[-90deg] origin-center" /></svg> 23%</span>
-            </div>
+        <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Tamu Undangan</p>
+            <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium" :class="tamuBadgeClass">{{ tamuBadgeText }}</span>
           </div>
-          <div class="mt-4 flex h-2 overflow-hidden rounded-full bg-slate-100">
-            <span class="bg-amber-400" style="width: 41%"></span>
-            <span class="bg-slate-900" style="width: 20%"></span>
-            <span class="bg-emerald-400" style="width: 39%"></span>
-          </div>
-          <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+          <p class="mt-3 font-serif text-2xl font-bold text-slate-900">{{ guestTotal }}</p>
+          <div class="mt-auto grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
             <div>
-              <p class="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide text-slate-400"><span class="h-2 w-2 rounded-full bg-amber-400"></span> Pending</p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">5</p>
-              <p class="text-xs text-slate-500">41%</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">Umum</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ umumCount }}</p>
             </div>
             <div class="border-x border-slate-100">
-              <p class="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide text-slate-400"><span class="h-2 w-2 rounded-full bg-slate-900"></span> Proses</p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">3</p>
-              <p class="text-xs text-slate-500">20%</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">Wanita</p>
+              <p class="mt-1 text-lg font-semibold text-rose-600">{{ brideCount }}</p>
             </div>
             <div>
-              <p class="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide text-slate-400"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Selesai</p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">4</p>
-              <p class="text-xs text-slate-500">39%</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">Pria</p>
+              <p class="mt-1 text-lg font-semibold text-sky-600">{{ groomCount }}</p>
             </div>
           </div>
+          <NuxtLink to="/guests" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Kelola tamu →</NuxtLink>
         </div>
       </div>
 
-      <!-- Available Balance -> Anggaran -->
+      <!-- Card Ringkasan Checklist -->
       <div class="col-span-12 sm:col-span-6 xl:col-span-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-start justify-between">
-            <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-white">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M9 12h6" /></svg>
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5l4 4-4 4M8 12h8" class="rotate-90 origin-center" /></svg> 8.2%</span>
+        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Ringkasan Checklist</p>
+              <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium" :class="checklistBadgeClass">{{ checklistBadgeText }}</span>
+            </div>
+            <div class="mt-4 flex items-end gap-3">
+              <p class="font-serif text-4xl font-bold text-slate-900">{{ totalTasks }}</p>
+              <div class="pb-1">
+                <p class="text-xs text-slate-500">Total tugas</p>
+              </div>
+            </div>
+            <div class="mt-auto grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
+              <div>
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Belum</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900">{{ todoCount }}</p>
+              </div>
+              <div class="border-x border-slate-100">
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Proses</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900">{{ inProgressCount }}</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Selesai</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900">{{ doneCount }}</p>
+              </div>
+            </div>
+            <NuxtLink to="/checklists" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Kelola checklist →</NuxtLink>
           </div>
-          <p class="mt-4 text-xs font-semibold uppercase tracking-widest text-slate-400">Sisa Anggaran</p>
-          <p class="mt-2 font-serif text-2xl font-bold text-slate-900">{{ formattedBudget ?? 'Rp —' }}</p>
-          <p class="mt-1 text-xs text-slate-500">Terpakai 58% · Sisa {{ wedding?.total_budget ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.round(wedding.total_budget * 0.42)) : '—' }}</p>
-          <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <div class="h-full rounded-full bg-slate-900" style="width: 58%"></div>
+          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
+            </span>
+            <p class="mt-3 text-sm font-semibold text-slate-900">Checklist Terkunci</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-sky-600">Upgrade ke Premium</NuxtLink> untuk akses checklist & timeline.</p>
           </div>
         </div>
       </div>
-
-      <!-- Units Sold -> Tamu -->
+      
+      <!-- Card Keuangan -->
       <div class="col-span-12 sm:col-span-6 xl:col-span-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-start justify-between">
-            <span class="grid h-10 w-10 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-            </span>
-            <span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">+12%</span>
+        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Keuangan</p>
+              <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium" :class="anggaranBadgeClass">{{ anggaranBadgeText }}</span>
+            </div>
+            <p class="mt-3 font-serif text-2xl font-bold text-slate-900">{{ formattedBudget ?? 'Rp —' }}</p>
+            <div class="mt-auto grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
+              <div>
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Masuk</p>
+                <p class="mt-1 truncate text-sm font-semibold text-emerald-700">{{ formatIDR(financeStore.totalMasuk) }}</p>
+              </div>
+              <div class="border-x border-slate-100">
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Keluar</p>
+                <p class="mt-1 truncate text-sm font-semibold text-rose-700">{{ formatIDR(financeStore.totalKeluar) }}</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-wide text-slate-400">Saldo</p>
+                <p class="mt-1 truncate text-sm font-semibold text-slate-900">{{ formatIDR(financeStore.saldo) }}</p>
+              </div>
+            </div>
+            <NuxtLink to="/keuangan" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Kelola keuangan →</NuxtLink>
           </div>
-          <p class="mt-4 text-xs font-semibold uppercase tracking-widest text-slate-400">Tamu Undangan</p>
-          <p class="mt-2 font-serif text-2xl font-bold text-slate-900">{{ wedding?.plan?.max_guests ?? 120 }}</p>
-          <p class="mt-1 text-xs text-slate-500">Terkonfirmasi 48 · Menunggu 32 · Ditolak 4</p>
-          <div class="mt-4 flex gap-1.5">
-            <span class="h-1.5 flex-1 rounded-full bg-emerald-500" style="width: 40%"></span>
-            <span class="h-1.5 flex-1 rounded-full bg-amber-400" style="width: 27%"></span>
-            <span class="h-1.5 flex-1 rounded-full bg-slate-200" style="width: 33%"></span>
+          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
+            </span>
+            <p class="mt-3 text-sm font-semibold text-slate-900">Keuangan Terkunci</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-sky-600">Upgrade ke Premium</NuxtLink>  untuk kelola anggaran & cashflow.</p>
           </div>
         </div>
       </div>
 
-      <!-- Sales Budget / Pair code card - 8 col -->
-      <div class="col-span-12 xl:col-span-8">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <!-- Pair code card — sama tinggi dengan Pengeluaran, deteksi pasangan join -->
+      <div class="col-span-12 xl:col-span-6">
+        <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Pair Code & Workspace</p>
               <h3 class="mt-2 font-serif text-lg font-bold text-slate-900">{{ wedding?.title }}</h3>
-              <p class="mt-1 text-sm text-slate-500">Bagikan kode ke pasangan agar bisa join workspace yang sama. Kode tidak kedaluwarsa.</p>
+              <p class="mt-1 text-sm text-slate-500">{{ isPaired ? 'Kode pair tidak perlu ditampilkan lagi. Kalian sudah berkolaborasi di workspace yang sama.' : 'Bagikan kode ke pasangan agar bisa join workspace yang sama. Kode tidak kedaluwarsa.' }}</p>
             </div>
-            <span class="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">{{ wedding?.plan?.name ?? 'Free Plan' }}</span>
           </div>
-          <div class="mt-5 flex flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <!-- jika pasangan sudah join: ganti kode dengan pesan -->
+          <div v-if="isPaired" class="mt-5 flex flex-1 flex-col justify-center rounded-xl border border-emerald-200 bg-emerald-50/60 p-5">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" /></svg>
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-emerald-900">Pasangan sudah bergabung</p>
+                <p class="text-xs text-emerald-700">{{ wedding?.partner1_name }} & {{ wedding?.partner2_name }} · workspace terhubung</p>
+              </div>
+            </div>
+          </div>
+          <div v-else class="mt-5 flex flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Pair Code</p>
               <p class="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-slate-900">{{ wedding?.pair_code }}</p>
@@ -156,20 +294,37 @@ const daysUntil = computed(() => {
         </div>
       </div>
 
-      <!-- Top Customers -> Top Vendors -->
-      <div class="col-span-12 xl:col-span-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Pengeluaran Terbesar</p>
-            <a href="#" class="text-xs font-medium text-slate-500 hover:text-slate-900" @click.prevent>Lihat semua</a>
+      <!-- Card Pengeluaran — 4 kolom: inisial, nama vendor, harga, persentase (premium gated, sama tinggi) -->
+      <div class="col-span-12 xl:col-span-6">
+        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Pengeluaran Terbesar</p>
+              <NuxtLink to="/vendors" class="text-xs font-medium text-slate-500 hover:text-slate-900">Lihat semua</NuxtLink>
+            </div>
+            <div v-if="vendorStore.loading" class="flex flex-1 items-center justify-center py-8 text-sm text-slate-400">Memuat...</div>
+            <div v-else-if="topVendors.length === 0" class="flex flex-1 flex-col items-center justify-center py-8 text-center">
+              <p class="text-sm font-medium text-slate-600">Belum ada vendor</p>
+              <p class="mt-1 text-xs text-slate-400">Tambah vendor untuk melihat pengeluaran.</p>
+            </div>
+            <ul v-else class="mt-1 flex-1 space-y-0 divide-y divide-slate-50">
+              <li v-for="v in topVendors" :key="v.id" class="grid grid-cols-[40px_1fr_auto_auto] items-center gap-2 py-3">
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-xs font-bold text-slate-700">{{ v.initials }}</span>
+                <span class="min-w-0 truncate text-sm font-medium text-slate-900">{{ v.vendor_name }}</span>
+                <span class="whitespace-nowrap text-right text-xs font-medium text-slate-700">{{ formatIDR(v.total_amount) }}</span>
+                <span class="w-10 text-right text-xs font-semibold" :class="v.pct >= 50 ? 'text-rose-600' : v.pct >= 20 ? 'text-amber-600' : 'text-slate-500'">{{ v.pct }}%</span>
+              </li>
+            </ul>
+            <NuxtLink to="/vendors" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Kelola vendor →</NuxtLink>
           </div>
-          <ul class="mt-4 space-y-3">
-            <li class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-lg bg-rose-50 text-xs font-bold text-rose-700">VG</span><span class="flex-1 min-w-0"><p class="truncate text-sm font-medium">Venue Gedung</p><p class="text-xs text-slate-500">5 vendor · Rp 24.900.000</p></span><span class="text-xs font-medium text-emerald-600">12%</span></li>
-            <li class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-700">KT</span><span class="flex-1 min-w-0"><p class="truncate text-sm font-medium">Katering</p><p class="text-xs text-slate-500">2 paket · Rp 18.200.000</p></span><span class="text-xs font-medium text-amber-600">6%</span></li>
-            <li class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 text-xs font-bold text-emerald-700">DK</span><span class="flex-1 min-w-0"><p class="truncate text-sm font-medium">Dekorasi</p><p class="text-xs text-slate-500">1 paket · Rp 12.540.000</p></span><span class="text-xs text-slate-500">3%</span></li>
-            <li class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-lg bg-amber-50 text-xs font-bold text-amber-700">DO</span><span class="flex-1 min-w-0"><p class="truncate text-sm font-medium">Dokumentasi</p><p class="text-xs text-slate-500">Foto & video · Rp 9.180.000</p></span><span class="text-xs font-medium text-emerald-600">8%</span></li>
-            <li class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-xs font-bold">MS</span><span class="flex-1 min-w-0"><p class="truncate text-sm font-medium">Makeup & Busana</p><p class="text-xs text-slate-500">MUA · Rp 6.420.000</p></span><span class="text-xs text-slate-400">2%</span></li>
-          </ul>
+          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
+            </span>
+            <p class="mt-3 text-sm font-semibold text-slate-900">Pengeluaran Terkunci</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600">Butuh Premium untuk melihat rincian pengeluaran vendor.</p>
+            <NuxtLink to="/#harga" class="mt-4 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800">Upgrade ke Premium</NuxtLink>
+          </div>
         </div>
       </div>
 

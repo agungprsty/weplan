@@ -10,6 +10,22 @@ from app.models.wedding_user import WeddingUser
 from app.schemas.wedding import WeddingCreate
 
 
+async def _attach_member_count(
+    db: AsyncSession, wedding: Wedding | None
+) -> Wedding | None:
+    """Best practice: centralize count logic in service, not API. Single place, type-safe via setattr."""
+    if wedding is None:
+        return None
+    cnt = await db.scalar(
+        select(func.count())
+        .select_from(WeddingUser)
+        .where(WeddingUser.wedding_id == wedding.id)
+    )
+    # Attach transient attribute for Pydantic serialization (no DB column)
+    wedding.member_count = int(cnt or 0)
+    return wedding
+
+
 async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> Wedding:
     from app.services.auth import generate_pair_code
 
@@ -32,6 +48,8 @@ async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> W
     db.add(wedding_user)
     await db.flush()
     await db.refresh(wedding)
+    # New wedding always has 1 partner, no extra query needed
+    wedding.member_count = 1
     return wedding
 
 
@@ -70,6 +88,8 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
     db.add(wedding_user)
     await db.flush()
     await db.refresh(wedding)
+    # After pairing, wedding has 2 partners
+    wedding.member_count = 2
     return wedding
 
 
@@ -81,8 +101,13 @@ async def get_user_wedding(db: AsyncSession, user: User) -> Wedding | None:
         .where(WeddingUser.user_id == user.id)
         .limit(1)
     )
-    return result.scalar_one_or_none()
+    wedding = result.scalar_one_or_none()
+    return await _attach_member_count(db, wedding)
 
 
 async def get_wedding_by_id(db: AsyncSession, wedding_id: uuid.UUID) -> Wedding | None:
-    return await db.get(Wedding, wedding_id)
+    wedding = await db.get(Wedding, wedding_id)
+    # Lazy attach if needed
+    if wedding is not None and not hasattr(wedding, "member_count"):
+        wedding.member_count = 0
+    return wedding

@@ -5,6 +5,7 @@ definePageMeta({ layout: 'auth' })
 
 const router = useRouter()
 const apiBase = useRuntimeConfig().public.apiBase
+const authStore = useAuthStore()
 
 const name = ref('')
 const email = ref('')
@@ -48,7 +49,24 @@ async function onSubmit() {
         password: password.value
       }
     })
-    await router.push('/login?registered=1')
+
+    // Auto-login: buat access token lalu set session
+    const res = await $fetch<{ access_token: string }>(`${apiBase}/api/v1/auth/login`, {
+      method: 'POST',
+      body: { email: email.value.trim(), password: password.value }
+    })
+
+    const me = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
+      headers: { Authorization: `Bearer ${res.access_token}` }
+    })
+
+    authStore.setSession(res.access_token, {
+      id: me.id,
+      name: me.full_name,
+      email: me.email
+    })
+
+    await router.push('/onboarding')
   } catch (err) {
     if (err instanceof FetchError) {
       const detail = (err.data as Record<string, unknown> | undefined)?.detail

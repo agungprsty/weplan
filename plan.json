@@ -14,7 +14,7 @@
     "bridesmaid": "hapus modul terpisah → Tamu kategori=bridesmaid + Budget kategori Busana",
     "berkas_kua": "gratis dasar (10 checklist tanpa upload), premium upload/scan/expiry/CPP-CPW terpisah",
     "vendor": "premium only (unlimited, DP/Lunas, reminder H-7)",
-    "subscription": "50k/6 bulan renewable, bukan lifetime. Tambah plan.duration_months=6, wedding.plan_expires_at",
+    "subscription": "150k/1 tahun renewable, bukan lifetime. Tambah plan.duration_months=12, wedding.plan_expires_at",
     "priority": "Mahar & Seserahan dulu (sprint 1), Keuangan Cashflow setelahnya (sprint 2)",
     "template": "12 bulan default auto-generate dari wedding_date"
   },

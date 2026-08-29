@@ -5,7 +5,7 @@ const features = [
   {
     title: 'Checklist Terpadu',
     description:
-      'Bagi tugas antara Anda dan pasangan. Saat satu tugas diselesaikan, layar pihak lain akan diperbarui seketika.',
+      'Bagi tugas dengan pasangan dan pantau statusnya — tersinkron real-time di kedua akun.',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     color: 'rose'
   },
@@ -19,9 +19,30 @@ const features = [
   {
     title: 'Relasi Tamu & RSVP',
     description:
-      'Kelompokkan tamu dari kedua belah pihak keluarga, pantau konfirmasi kehadiran, dan atur porsi katering akurat.',
+      'Kelompokkan tamu kedua keluarga, pantau konfirmasi hadir, dan atur porsi katering akurat.',
     icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
     color: 'indigo'
+  },
+  {
+    title: 'Kelola Vendor',
+    description:
+      'Simpan daftar vendor, catatan kontak, dan status kontrak dalam satu tempat.',
+    icon: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8Z',
+    color: 'amber'
+  },
+  {
+    title: 'Gifts, Mahar & Seserahan',
+    description:
+      'Catat kado dan uang yang diterima, lengkap dengan daftar mahar & seserahan.',
+    icon: 'M8.5 6.5a2 2 0 011.5-2h2a2 2 0 011.5 2M6 8h12M14 6.5l3.5 14h-4M12 8v13M6 8l3.5 14h4M12 8v13',
+    color: 'violet'
+  },
+  {
+    title: 'Berkas KUA',
+    description:
+      'Persiapan dokumen nikah terpusat dan siap diajukan kapan pun dibutuhkan.',
+    icon: 'M3 4a2 2 0 012-2h2a2 2 0 012 2v1h10v13a2 2 0 01-2 2H7a2 2 0 01-2-2V4Z M7 8h10M7 12h10M7 16h6',
+    color: 'sky'
   }
 ]
 
@@ -50,23 +71,31 @@ const testimonials = [
 const packages = [
   {
     name: 'Paket Dasar',
-    desc: 'Untuk acara intim yang sederhana.',
+    desc: 'Untuk pasangan yang mulai merencanakan.',
     price: 'Gratis',
-    items: ['Kolaborasi 2 Akun (Pasangan)', 'Checklist standar', 'Batas hingga 50 nama tamu'],
+    items: [
+      'Kolaborasi 2 akun pasangan',
+      'Dashboard & Berkas KUA',
+      'Manajemen tamu & RSVP',
+      'Maksimal 50 tamu'
+    ],
     buttonStyle: 'border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
     dark: false
   },
   {
     name: 'Paket Lengkap',
     desc: 'Untuk resepsi dan acara berskala besar.',
-    price: 'Rp 149rb',
-    suffix: '/ acara',
+    price: 'Rp 150.000',
+    suffix: '/ 1 Tahun',
     badge: 'Paling Populer',
     items: [
       'Semua fitur di Paket Dasar',
       'Daftar tamu tanpa batas',
-      'Export data ke Excel/PDF',
-      'Akses baca untuk Panitia & Keluarga'
+      'Checklist lengkap & bagi tugas',
+      'Modul Keuangan & Anggaran',
+      'Manajemen Vendor',
+      'Gifts, Mahar & Seserahan',
+      'Pengiring & seragam'
     ],
     buttonStyle: 'bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-600/30',
     dark: true
@@ -166,9 +195,12 @@ const packages = [
             <div
               :class="[
                 'w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110',
-                feature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
-                feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
-                feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : ''
+                  feature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
+                  feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
+                  feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
+                  feature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
+                  feature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
+                  feature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
               ]"
             >
               <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="feature.icon" /></svg>

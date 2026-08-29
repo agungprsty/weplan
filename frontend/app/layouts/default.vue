@@ -22,14 +22,14 @@ function handleLogout() {
           We<span class="text-rose-600">Plan.</span>
         </NuxtLink>
         <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <NuxtLink v-if="route.path === '/'" to="/#fitur" class="hover:text-rose-600 transition-colors">Fitur</NuxtLink>
-          <NuxtLink to="/" class="hover:text-rose-600 transition-colors">Home</NuxtLink>
+          <template v-if="route.path === '/'">
+            <a href="#fitur" class="hover:text-rose-600 transition-colors">Fitur</a>
+            <a href="#harga" class="hover:text-rose-600 transition-colors">Harga</a>
+            <a href="#testimoni" class="hover:text-rose-600 transition-colors">Testimoni</a>
+          </template>
         </div>
         <div class="flex items-center gap-4">
           <template v-if="authStore.isAuthenticated">
-            <NuxtLink to="/dashboard" class="text-sm font-medium text-slate-600 hover:text-rose-600 transition-colors hidden md:block">
-              Dashboard
-            </NuxtLink>
             <div class="relative">
               <button
                 class="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
@@ -90,3 +90,9 @@ function handleLogout() {
     </footer>
   </div>
 </template>
+
+<style>
+html {
+  scroll-behavior: smooth;
+}
+</style>

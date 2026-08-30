@@ -98,6 +98,8 @@ function categoryLabel(c: Guest['category']) {
   if (c === 'family') return 'Keluarga'
   if (c === 'bridesmaid') return 'Bridesmaid'
   if (c === 'groomsman') return 'Groomsman'
+  if (c === 'family_groom') return 'Keluarga Mempelai Pria'
+  if (c === 'family_bride') return 'Keluarga Mempelai Wanita'
   if (c === 'vip') return 'VIP'
   return ''
 }

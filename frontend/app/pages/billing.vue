@@ -66,10 +66,7 @@ function waLinkFor(order: any) {
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Tagihan & Langganan</h1>
-        <p class="mt-1 text-sm leading-relaxed text-slate-500">Kelola paket Premium dan riwayat pembayaran workspace.</p>
       </div>
-      <NuxtLink v-if="!isPremium" to="/upgrade" class="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-slate-800 sm:w-auto sm:py-2.5">Upgrade Premium</NuxtLink>
-      <NuxtLink v-else to="/upgrade" class="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:w-auto sm:py-2.5">Lihat Paket</NuxtLink>
     </div>
 
     <!-- Current plan -->
@@ -96,7 +93,6 @@ function waLinkFor(order: any) {
         <div class="sm:text-right">
           <p v-if="isPremium" class="text-2xl font-extrabold text-slate-900">{{ wedding?.plan?.price ? formatIDR(wedding.plan.price) : 'Rp 150.000' }} <span class="text-sm font-normal text-slate-500">/ 12 bln</span></p>
           <p v-else class="text-2xl font-extrabold text-slate-900">Gratis</p>
-          <NuxtLink v-if="!isPremium" to="/checkout" class="mt-3 inline-flex w-full justify-center rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 sm:w-auto">Checkout QRIS</NuxtLink>
         </div>
       </div>
       <div v-if="isPremium" class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-800">Premium aktif! Semua fitur terbuka. Kamu bisa perpanjang kapan saja sebelum habis.</div>

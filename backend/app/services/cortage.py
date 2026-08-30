@@ -13,6 +13,10 @@ from app.schemas.cortage import CortageUpdate
 def _role_label(category: str | None) -> str:
     if category == "groomsman":
         return "Groomsman"
+    if category == "family_groom":
+        return "Keluarga Mempelai Pria"
+    if category == "family_bride":
+        return "Keluarga Mempelai Wanita"
     return "Bridesmaid"
 
 
@@ -20,7 +24,10 @@ async def list_cortage(db: AsyncSession, wedding_id: uuid.UUID) -> list[dict]:
     # ensure every guest bridesmaid/groomsman has a detail row
     guests_res = await db.execute(
         select(Guest).where(
-            Guest.wedding_id == wedding_id, Guest.category.in_(["bridesmaid", "groomsman"])
+            Guest.wedding_id == wedding_id,
+            Guest.category.in_(
+                ["bridesmaid", "groomsman", "family_groom", "family_bride"]
+            ),
         )
     )
     guests = list(guests_res.scalars().all())

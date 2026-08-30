@@ -207,7 +207,7 @@ function isActive(path: string) {
                   :title="!sidebarOpen ? 'Pengiring' : undefined"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><path d="M6 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4H6v-4z" /><path d="M14 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h-2v-4" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Pengiring</span>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Pengiring & Seragam</span>
                   <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
                 </a>
               </li>

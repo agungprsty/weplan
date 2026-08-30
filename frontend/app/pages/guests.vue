@@ -143,6 +143,8 @@ function categoryLabel(c: string) {
     general: 'Umum',
     bridesmaid: 'Bridesmaid',
     groomsman: 'Groomsman',
+    family_groom: 'Keluarga Mempelai Pria',
+    family_bride: 'Keluarga Mempelai Wanita',
   }
   return map[c] ?? c
 }
@@ -163,6 +165,8 @@ function rowAccent(s: Guest['rsvp_status'], category: string, side?: string) {
   // Pengiring tetap pakai warna kategori
   if (category === 'bridesmaid') return 'border-l-violet-500'
   if (category === 'groomsman') return 'border-l-sky-500'
+  if (category === 'family_groom') return 'border-l-emerald-500'
+  if (category === 'family_bride') return 'border-l-amber-500'
   // Sisi tamu umum: 3 warna berbeda
   if (side === 'bride') return 'border-l-rose-400'
   if (side === 'groom') return 'border-l-blue-500'
@@ -190,7 +194,6 @@ function sideLabel(s: string) {
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Tamu & RSVP</h1>
-        <p class="mt-1 text-sm leading-relaxed text-slate-500">Kelola daftar tamu & RSVP berdasarkan sisi — Umum, Mempelai Wanita, atau Mempelai Pria.</p>
       </div>
       <button class="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800 active:bg-slate-900 sm:w-auto sm:py-2.5" @click="openCreate">Tambah Tamu</button>
     </div>
@@ -202,13 +205,13 @@ function sideLabel(s: string) {
       </div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div><label class="text-xs font-medium text-slate-700">Nama <span class="text-rose-600">*</span></label><input v-model="form.name" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="Nama tamu" /></div>
-        <div><label class="text-xs font-medium text-slate-700">Kategori</label><select v-model="form.category" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="general">Umum</option><option value="family">Keluarga</option><option value="friend">Teman</option><option value="vip">VIP</option><option value="bridesmaid">Bridesmaid</option><option value="groomsman">Groomsman</option></select></div>
+        <div><label class="text-xs font-medium text-slate-700">Kategori</label><select v-model="form.category" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="general">Umum</option><option value="family">Keluarga</option><option value="friend">Teman</option><option value="vip">VIP</option><option value="bridesmaid">Bridesmaid</option><option value="groomsman">Groomsman</option><option value="family_groom">Keluarga Mempelai Pria</option><option value="family_bride">Keluarga Mempelai Wanita</option></select></div>
         <div><label class="text-xs font-medium text-slate-700">Sisi</label><select v-model="form.side" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white"><option value="both">Umum</option><option value="bride">Mempelai Wanita</option><option value="groom">Mempelai Pria</option></select></div>
         <div><label class="text-xs font-medium text-slate-700">Email</label><input v-model="form.email" type="email" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="opsional" /></div>
         <div><label class="text-xs font-medium text-slate-700">Phone/WA</label><input v-model="form.phone" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="08xx" /></div>
         <div><label class="text-xs font-medium text-slate-700">Catatan</label><input v-model="form.notes" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="Opsional — angpao, alergi, dll" /></div>
       </div>
-      <p v-if="form.category === 'bridesmaid' || form.category === 'groomsman'" class="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">{{ form.category === 'groomsman' ? 'Groomsman' : 'Bridesmaid' }}: data orang disimpan di sini. Untuk biaya seragam, kelola di halaman Pengiring lalu otomatis jadi transaksi Keuangan kategori <strong>Busana</strong>.</p>
+      <p v-if="['bridesmaid', 'groomsman', 'family_groom', 'family_bride'].includes(form.category)" class="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">{{ categoryLabel(form.category) }}: data orang disimpan di sini. Untuk biaya seragam, kelola di halaman Pengiring lalu otomatis jadi transaksi Keuangan kategori <strong>Busana</strong>.</p>
       <p v-if="formError" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ formError }}</p>
       <div class="mt-4 flex gap-2"><button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="submit">{{ isEditing ? 'Update' : 'Simpan' }}</button><button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="cancelForm">Batal</button></div>
     </div>
@@ -225,6 +228,8 @@ function sideLabel(s: string) {
         <option value="all">Semua kategori</option>
         <option value="bridesmaid">Bridesmaid</option>
         <option value="groomsman">Groomsman</option>
+        <option value="family_groom">Keluarga Mempelai Pria</option>
+        <option value="family_bride">Keluarga Mempelai Wanita</option>
         <option value="family">Keluarga</option>
         <option value="friend">Teman</option>
         <option value="vip">VIP</option>
@@ -235,12 +240,6 @@ function sideLabel(s: string) {
         <option value="pending">Pending</option>
         <option value="attending">Hadir</option>
         <option value="declined">Tidak hadir</option>
-      </select>
-      <select v-model="filterSide" class="w-full rounded-full border border-slate-200 bg-white px-3.5 py-2.5 text-sm sm:w-auto">
-        <option value="all">Semua Sisi</option>
-        <option value="both">Umum</option>
-        <option value="bride">Mempelai Wanita</option>
-        <option value="groom">Mempelai Pria</option>
       </select>
       <div class="col-span-2 flex items-center justify-between sm:col-span-1 sm:ml-auto sm:gap-3">
         <span class="text-xs text-slate-500">{{ filtered.length }} tamu<span v-if="search || filterCategory!=='all' || filterRsvp!=='all' || filterSide!=='all'" class="text-slate-400"> • filter aktif</span></span>
@@ -294,7 +293,6 @@ function sideLabel(s: string) {
             <tr>
               <th class="px-5 py-3 font-medium">Nama</th>
               <th class="px-5 py-3 font-medium">Kategori</th>
-              <th class="px-5 py-3 font-medium">Sisi</th>
               <th class="px-5 py-3 font-medium">RSVP</th>
               <th class="px-5 py-3 font-medium">Kontak</th>
               <th class="px-5 py-3 font-medium text-right">Aksi</th>
@@ -307,7 +305,6 @@ function sideLabel(s: string) {
                 <p v-if="g.notes" class="mt-0.5 line-clamp-1 max-w-[28ch] text-xs text-slate-500">{{ g.notes }}</p>
               </td>
               <td class="px-5 py-4 text-slate-600">{{ categoryLabel(g.category) }}</td>
-              <td class="px-5 py-4 text-xs" :class="sideBadge(g.side).text">{{ sideBadge(g.side).label }}</td>
               <td class="px-5 py-4 text-xs font-medium text-slate-700">{{ rsvpLabel(g.rsvp_status) }}</td>
               <td class="px-5 py-4 text-xs text-slate-500">{{ g.phone || g.email || '—' }}</td>
               <td class="px-5 py-4">

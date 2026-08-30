@@ -270,6 +270,8 @@ onMounted(async () => {
 function categoryHint(c: string) {
   if (c === 'bridesmaid') return 'Bridesmaid'
   if (c === 'groomsman') return 'Groomsman'
+  if (c === 'family_groom') return 'Keluarga Mempelai Pria'
+  if (c === 'family_bride') return 'Keluarga Mempelai Wanita'
   if (c === 'family') return 'Keluarga'
   if (c === 'vip') return 'VIP'
   return ''
@@ -299,7 +301,6 @@ function typeBadge(t: Gift['type']) {
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Gifts</h1>
-        <p class="mt-1 text-sm leading-relaxed text-slate-500">Catat & track hadiah yang sudah diterima berdasarkan daftar tamu.</p>
       </div>
       <button class="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800 active:bg-slate-900 sm:w-auto sm:py-2.5" @click="openCreate">Catat Gift</button>
     </div>

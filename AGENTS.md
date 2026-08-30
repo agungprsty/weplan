@@ -218,7 +218,7 @@ DELETE /api/resource/{id}         # Delete
 - Always validate input with Pydantic schemas
 - Use parameterized queries (SQLAlchemy handles this)
 - Hash passwords with `bcrypt` via `passlib`
-- JWT tokens must have expiration (default: 30 days)
+- JWT tokens must have expiration (default: 7 days)
 
 ## Git Conventions
 

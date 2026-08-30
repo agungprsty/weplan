@@ -128,7 +128,7 @@ function catStyle(cat: Cat) {
 
           <div class="mt-4 flex flex-wrap justify-center gap-2">
             <button v-for="c in categories" :key="c.key" @click="selectedCat = c.key as CatKey" :class="['inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition', selectedCat===c.key ? 'bg-slate-900 text-white border-slate-900 shadow' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50']">
-              <span>{{ c.icon }}</span> {{ c.label }} <span :class="['ml-1 rounded-full px-1.5 py-0.5 text-[10px]', selectedCat===c.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600']">{{ c.count }}</span>
+              {{ c.label }} <span :class="['ml-1 rounded-full px-1.5 py-0.5 text-[10px]', selectedCat===c.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600']">{{ c.count }}</span>
             </button>
           </div>
         </div>
@@ -144,8 +144,7 @@ function catStyle(cat: Cat) {
             <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Paling Sering Ditanya</p>
             <div class="grid gap-3 sm:grid-cols-3">
               <button v-for="f in popularFaqs.slice(0,3)" :key="f.id" @click="openId = f.id" class="text-left rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4 hover:shadow-md transition">
-                <span class="inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-200">{{ f.cat }}</span>
-                <p class="mt-2 text-sm font-semibold text-slate-900 line-clamp-2">{{ f.q }}</p>
+                <p class="text-sm font-semibold text-slate-900 line-clamp-2">{{ f.q }}</p>
                 <p class="mt-1 text-xs text-amber-700">Lihat jawaban →</p>
               </button>
             </div>
@@ -162,10 +161,7 @@ function catStyle(cat: Cat) {
             <div v-for="f in filtered" :key="f.id" :id="`faq-${f.id}`" class="group rounded-2xl border bg-white transition hover:shadow-sm" :class="openId===f.id ? 'border-slate-900 shadow-sm' : 'border-slate-200'">
               <button class="flex w-full items-start justify-between gap-4 px-5 py-4 text-left" @click="toggle(f.id)">
                 <span class="flex-1 min-w-0">
-                  <span class="flex flex-wrap items-center gap-2 mb-1">
-                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1" :class="catStyle(f.cat)">{{ f.cat }}</span>
-                    <span v-if="f.popular" class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">Populer</span>
-                  </span>
+                  <span v-if="f.popular" class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 mb-1">Populer</span>
                   <span class="block text-sm font-semibold text-slate-900 group-hover:text-slate-900">{{ f.q }}</span>
                 </span>
                 <span class="grid h-8 w-8 place-items-center rounded-full border shrink-0 transition" :class="openId===f.id ? 'bg-slate-900 text-white border-slate-900 rotate-180' : 'bg-slate-50 text-slate-400 border-slate-200 group-hover:bg-slate-900 group-hover:text-white'">

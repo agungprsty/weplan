@@ -1,6 +1,28 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+const authStore = useAuthStore()
+const router = useRouter()
+
+function handlePricingSelect(pkg: typeof packages[number]) {
+  const isPremium = pkg.dark
+  if (isPremium) {
+    if (authStore.isAuthenticated) {
+      router.push('/upgrade')
+    } else {
+      if (import.meta.client) localStorage.setItem('weplan_pending_plan', 'premium')
+      router.push('/register?plan=premium')
+    }
+  } else {
+    // Paket Gratis
+    if (authStore.isAuthenticated) {
+      router.push('/dashboard')
+    } else {
+      router.push('/register')
+    }
+  }
+}
+
 const features = [
   {
     title: 'Checklist Terpadu',
@@ -246,7 +268,7 @@ const packages = [
                 {{ item }}
               </li>
             </ul>
-            <button :class="['w-full py-3 rounded-full font-medium transition', pkg.buttonStyle]">
+            <button :class="['w-full py-3 rounded-full font-medium transition cursor-pointer', pkg.buttonStyle]" @click="handlePricingSelect(pkg)">
               {{ pkg.dark ? 'Pilih Paket Lengkap' : 'Mulai Gratis' }}
             </button>
           </div>

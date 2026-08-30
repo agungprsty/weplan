@@ -63,4 +63,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo('/onboarding')
     }
   }
+
+  // Upgrade / Checkout / Billing wajib punya wedding
+  const weddingRequiredPaths = ['/upgrade', '/checkout', '/billing']
+  const needsWedding = weddingRequiredPaths.some((p) => to.path === p || to.path.startsWith(p + '/'))
+  if (needsWedding && auth.isAuthenticated) {
+    const ok = await safeFetchWedding()
+    if (!ok) return navigateTo('/login')
+    if (!wedding.hasWedding) {
+      return navigateTo('/onboarding')
+    }
+  }
 })

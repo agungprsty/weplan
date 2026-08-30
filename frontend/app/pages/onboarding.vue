@@ -73,6 +73,11 @@ async function onCreateSubmit() {
       ...(weddingDate.value ? { wedding_date: weddingDate.value } : {}),
       ...(totalBudget.value ? { total_budget: parseInt(totalBudget.value) } : {})
     })
+    const pendingPlan = import.meta.client ? localStorage.getItem('weplan_pending_plan') : null
+    if (pendingPlan === 'premium') {
+      await router.push('/checkout')
+      return
+    }
     await router.push('/dashboard')
   } catch (err) {
     if (isAuthExpiredError(err)) {
@@ -96,6 +101,11 @@ async function onJoinSubmit() {
   submitting.value = true
   try {
     await weddingStore.pairWedding(pairCode.value.trim().toUpperCase())
+    const pendingPlan = import.meta.client ? localStorage.getItem('weplan_pending_plan') : null
+    if (pendingPlan === 'premium') {
+      await router.push('/checkout')
+      return
+    }
     await router.push('/dashboard')
   } catch (err) {
     if (isAuthExpiredError(err)) {

@@ -207,7 +207,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Checklist Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk akses checklist & timeline.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk akses checklist & timeline.</p>
           </div>
         </div>
       </div>
@@ -242,7 +242,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Keuangan Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk kelola anggaran & cashflow.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk kelola anggaran & cashflow.</p>
           </div>
         </div>
       </div>
@@ -319,7 +319,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Pengeluaran Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat rincian pengeluaran vendor.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat rincian pengeluaran vendor.</p>
           </div>
         </div>
       </div>
@@ -352,7 +352,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Tugas Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat daftar tugas.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat daftar tugas.</p>
           </div>
         </div>
       </div>
@@ -376,7 +376,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Aktivitas Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat aktivitas terbaru.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat aktivitas terbaru.</p>
           </div>
         </div>
       </div>

@@ -40,7 +40,7 @@ function handleNavClick(path: string) {
 function goToPricing() {
   showUpgradeModal.value = false
   closeSidebarOnMobile()
-  router.push('/#harga')
+  router.push('/upgrade')
 }
 
 function updateIsMobile() {
@@ -55,6 +55,9 @@ onMounted(() => {
   updateIsMobile()
   sidebarOpen.value = !isMobile.value
   window.addEventListener('resize', updateIsMobile)
+  if (!weddingStore.fetched && auth.isAuthenticated) {
+    weddingStore.fetchWedding().catch(() => {})
+  }
 })
 
 onBeforeUnmount(() => {
@@ -311,6 +314,12 @@ function isActive(path: string) {
                   <li><NuxtLink to="/privacy" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Privasi</NuxtLink></li>
                   <li><NuxtLink to="/terms" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Syarat</NuxtLink></li>
                 </ul>
+              </li>
+              <li v-if="!isPremium">
+                <NuxtLink to="/upgrade" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium" :class="[isActive('/upgrade') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50', !sidebarOpen ? 'lg:justify-center lg:px-2' : '']" :title="!sidebarOpen ? 'Upgrade' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 3 3 3-3 3-3 3-3-3-3-3 3-3z" /><path d="M5 16l-1 5 5-1 9-9-4-4z" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Upgrade</span></NuxtLink>
+              </li>
+              <li v-else>
+                <NuxtLink to="/billing" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium" :class="[isActive('/billing') || isActive('/checkout') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50', !sidebarOpen ? 'lg:justify-center lg:px-2' : '']" :title="!sidebarOpen ? 'Tagihan' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M10 13H8" /><path d="M16 17H8" /><path d="M13 13h3" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Tagihan</span></NuxtLink>
               </li>
               <li>
                 <NuxtLink to="/profile" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium" :class="[isActive('/profile') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50', !sidebarOpen ? 'lg:justify-center lg:px-2' : '']" :title="!sidebarOpen ? 'Profil' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3.5" /><path d="M4 18a8 8 0 0 1 16 0" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Profil</span></NuxtLink>

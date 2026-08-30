@@ -65,7 +65,13 @@ async def get_current_wedding(
             detail="Not authorized to access this wedding",
         )
 
-    wedding = await db.get(Wedding, wedding_id)
+    # pakai selectinload(plan) agar tidak MissingGreenlet saat serialisasi response (async lazy load)
+    from sqlalchemy.orm import selectinload
+
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding_id)
+    )
+    wedding = result.scalar_one_or_none()
     if wedding is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

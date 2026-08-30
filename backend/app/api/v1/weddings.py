@@ -82,17 +82,22 @@ async def update_wedding(
         from app.services.wedding import sync_savings_target
 
         await sync_savings_target(db, wedding)
-    await db.refresh(wedding)
+    # Re-load dengan selectinload(plan) agar tidak MissingGreenlet saat serialisasi
+    from sqlalchemy import func, select
+    from sqlalchemy.orm import selectinload
+
+    from app.models.wedding_user import WeddingUser
+
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding.id)
+    )
+    wedding = result.scalar_one()
     # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)
-    if not hasattr(wedding, "member_count"):
-        from sqlalchemy import func, select
 
-        from app.models.wedding_user import WeddingUser
-
-        cnt = await db.scalar(
-            select(func.count())
-            .select_from(WeddingUser)
-            .where(WeddingUser.wedding_id == wedding.id)
-        )
-        wedding.member_count = int(cnt or 0)
+    cnt = await db.scalar(
+        select(func.count())
+        .select_from(WeddingUser)
+        .where(WeddingUser.wedding_id == wedding.id)
+    )
+    wedding.member_count = int(cnt or 0)
     return wedding  # type: ignore[return-value]

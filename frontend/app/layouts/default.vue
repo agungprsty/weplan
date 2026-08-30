@@ -27,6 +27,8 @@ function handleLogout() {
             <a href="#harga" class="hover:text-rose-600 transition-colors">Harga</a>
             <a href="#testimoni" class="hover:text-rose-600 transition-colors">Testimoni</a>
           </template>
+          <NuxtLink to="/docs" class="hover:text-rose-600 transition-colors">Dokumentasi</NuxtLink>
+          <NuxtLink to="/faq" class="hover:text-rose-600 transition-colors">FAQ</NuxtLink>
         </div>
         <div class="flex items-center gap-4">
           <template v-if="authStore.isAuthenticated">
@@ -81,6 +83,8 @@ function handleLogout() {
           We<span class="text-rose-500">Plan.</span>
         </NuxtLink>
         <div class="flex gap-6 text-sm text-slate-400">
+          <NuxtLink to="/docs" class="hover:text-rose-400 transition">Dokumentasi</NuxtLink>
+          <NuxtLink to="/faq" class="hover:text-rose-400 transition">FAQ</NuxtLink>
           <NuxtLink to="/privacy" class="hover:text-rose-400 transition">Kebijakan Privasi</NuxtLink>
           <NuxtLink to="/terms" class="hover:text-rose-400 transition">Syarat & Ketentuan</NuxtLink>
           <NuxtLink to="/contact" class="hover:text-rose-400 transition">Hubungi Kami</NuxtLink>

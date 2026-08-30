@@ -34,7 +34,9 @@ async def authenticate_user(db: AsyncSession, data: LoginRequest) -> User | None
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
-    if user is None or not verify_password(data.password, user.hashed_password):
+    if user is None or not user.hashed_password:
+        return None
+    if not verify_password(data.password, user.hashed_password):
         return None
     return user
 
@@ -89,7 +91,7 @@ async def reset_password_with_token(
 ) -> None:
     from jwt import ExpiredSignatureError, InvalidTokenError
 
-    from app.core.security import create_reset_token, hash_password, verify_token
+    from app.core.security import hash_password, verify_token
 
     if new_password != confirm_password:
         raise ValueError("Konfirmasi password tidak cocok")
@@ -116,3 +118,75 @@ async def reset_password_with_token(
 
     user.hashed_password = hash_password(new_password)
     await db.flush()
+
+
+async def authenticate_google_user(db: AsyncSession, id_token: str) -> User:
+    """Verifikasi Google ID token (GIS) dan cari/buat user. Stateless, tanpa simpan token Google."""
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token as google_id_token
+
+    from app.core.config import settings
+
+    if not settings.GOOGLE_CLIENT_ID:
+        raise ValueError("Google login belum dikonfigurasi (GOOGLE_CLIENT_ID kosong)")
+
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            id_token, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
+    except ValueError as e:
+        raise ValueError(f"Google token tidak valid: {e}")
+
+    # validasi dasar
+    if idinfo.get("aud") != settings.GOOGLE_CLIENT_ID:
+        raise ValueError("Google token audience tidak cocok")
+    if not idinfo.get("email") or not idinfo.get("email_verified"):
+        raise ValueError("Email Google belum terverifikasi")
+
+    google_id = idinfo.get("sub")
+    email = idinfo.get("email")
+    full_name = idinfo.get("name") or email.split("@")[0]
+    avatar_url = idinfo.get("picture")
+    email_verified = bool(idinfo.get("email_verified"))
+
+    # cari by google_id dulu, lalu email
+    result = await db.execute(select(User).where(User.google_id == google_id))
+    user = result.scalar_one_or_none()
+    if user is not None:
+        # update avatar/name jika berubah
+        if avatar_url and user.avatar_url != avatar_url:
+            user.avatar_url = avatar_url
+        if email_verified:
+            user.email_verified = True
+        await db.flush()
+        await db.refresh(user)
+        return user
+
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user is not None:
+        # linking: email sudah ada (daftar manual) → hubungkan google_id
+        if user.google_id and user.google_id != google_id:
+            raise ValueError("Email sudah terhubung dengan akun Google lain")
+        user.google_id = google_id
+        user.provider = "google"
+        user.avatar_url = avatar_url
+        user.email_verified = True
+        await db.flush()
+        await db.refresh(user)
+        return user
+
+    # buat user baru tanpa password
+    user = User(
+        email=email,
+        hashed_password=None,
+        full_name=full_name,
+        google_id=google_id,
+        provider="google",
+        avatar_url=avatar_url,
+        email_verified=email_verified,
+    )
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+    return user

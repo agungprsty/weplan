@@ -35,7 +35,10 @@ useHead({ title: 'Hubungi Kami | WePlan' })
           </div>
           <h3 class="font-serif font-bold text-slate-900 mb-2">Panduan</h3>
           <p class="text-slate-600 text-sm">Dokumentasi lengkap dan FAQ</p>
-          <p class="text-slate-500 text-xs mt-1">Tersedia segera</p>
+          <div class="mt-3 flex gap-2">
+            <NuxtLink to="/docs" class="rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-rose-600">Dokumentasi</NuxtLink>
+            <NuxtLink to="/faq" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">FAQ</NuxtLink>
+          </div>
         </div>
       </div>
 

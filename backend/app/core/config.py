@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     PASSWORD_RESET_EXPIRE_MINUTES: int = 15
 
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     @property

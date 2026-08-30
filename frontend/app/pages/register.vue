@@ -158,6 +158,8 @@ async function onSubmit() {
             {{ submitting ? 'Memproses...' : 'Daftar' }}
           </button>
         </form>
+
+        <GoogleSignInButton mode="register" />
       </div>
 
       <p class="mt-6 text-center text-sm text-slate-600">

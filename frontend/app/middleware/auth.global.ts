@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     auth.restore()
   }
 
-  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/contact', '/privacy', '/terms']
+  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/faq', '/contact', '/privacy', '/terms']
   const isPublic = publicPages.includes(to.path)
 
   if (!auth.isAuthenticated && !isPublic) {

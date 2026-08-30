@@ -305,6 +305,8 @@ function isActive(path: string) {
                   <svg v-if="sidebarOpen" class="ml-auto h-3.5 w-3.5 text-slate-400 transition-transform" :class="authMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
                 </button>
                 <ul v-show="authMenuOpen && sidebarOpen" class="mt-1 space-y-0.5 border-l border-slate-100 pl-4 ml-3">
+                  <li><NuxtLink to="/docs" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Dokumentasi</NuxtLink></li>
+                  <li><NuxtLink to="/faq" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">FAQ</NuxtLink></li>
                   <li><NuxtLink to="/contact" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Hubungi Kami</NuxtLink></li>
                   <li><NuxtLink to="/privacy" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Privasi</NuxtLink></li>
                   <li><NuxtLink to="/terms" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Syarat</NuxtLink></li>

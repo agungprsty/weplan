@@ -12,6 +12,7 @@ from app.core.security import verify_token
 from app.core.config import settings
 from app.schemas.auth import (
     ForgotPasswordRequest,
+    GoogleLoginRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -177,3 +178,17 @@ async def reset_password(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return {"message": "Password berhasil direset, silakan login"}
+
+
+@router.post("/google", response_model=Token)
+async def google_login(
+    data: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> Token:
+    """Login/register via Google ID token (GIS). Stateless, minimal perubahan."""
+    try:
+        user = await auth_service.authenticate_google_user(db, data.id_token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    tokens = auth_service.generate_tokens(str(user.id))
+    return Token(**tokens)

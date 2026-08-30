@@ -191,20 +191,93 @@ function goToPage(p: number) {
         </div>
       </div>
 
-      <!-- List transaksi — pagination 10/halaman -->
+      <!-- List transaksi — kolom informatif, tanpa hapus, pagination 10/halaman (mobile-first) -->
       <div class="col-span-12">
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
-            <h3 class="font-serif font-bold">Transaksi ({{ finance.transactions.length }})</h3>
-            <span class="text-xs text-slate-400">Linkage Vendor/Mahar via kategori · {{ PER_PAGE }}/halaman</span>
+        <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <h3 class="font-serif text-base font-bold text-slate-900">Transaksi</h3>
+          <span class="text-xs text-slate-400">Linkage Mahar, Seragam & Vendor via kategori · {{ PER_PAGE }}/halaman</span>
+        </div>
+
+        <!-- Mobile cards -->
+        <div class="grid gap-3 md:hidden">
+          <div v-if="finance.loading" class="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400">Memuat...</div>
+          <div v-else-if="finance.transactions.length === 0" class="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
+            <p class="text-sm font-medium text-slate-700">Belum ada transaksi</p>
+            <p class="mt-1 text-sm text-slate-500">Gratis hanya target — Premium untuk cashflow.</p>
           </div>
-          <div v-if="finance.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
-          <div v-else-if="finance.transactions.length === 0" class="p-8 text-center text-sm text-slate-500">Belum ada transaksi. Gratis hanya target, Premium untuk cashflow.</div>
-          <div v-else class="divide-y divide-slate-100">
-            <div v-for="t in pagedTransactions" :key="t.id" class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/60">
-              <div><p class="font-medium text-slate-900">{{ t.type === 'masuk' ? '↗ Masuk' : '↘ Keluar' }} {{ formatIDR(t.amount) }} <span class="ml-2 rounded-full px-2 py-0.5 text-xs" :class="t.type==='masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'">{{ t.category }}</span></p><p class="mt-1 text-xs text-slate-500">{{ t.transaction_date }} · {{ t.source ?? '-' }} · {{ t.notes ?? '' }}</p></div>
-              <button class="rounded-lg border bg-white px-3 py-1.5 text-xs hover:bg-slate-50" @click="finance.deleteTransaction(t.id)">Hapus</button>
+          <div
+            v-else
+            v-for="t in pagedTransactions"
+            :key="t.id"
+            class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm border-l-4"
+            :class="t.type === 'masuk' ? 'border-l-emerald-500' : 'border-l-rose-400'"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" :class="t.type === 'masuk' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="t.type === 'masuk' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                    {{ t.type === 'masuk' ? 'Masuk' : 'Keluar' }}
+                  </span>
+                  <span class="inline-flex rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium capitalize text-slate-600 ring-1 ring-slate-200">{{ t.category }}</span>
+                  <span class="text-[11px] text-slate-400">{{ new Date(t.transaction_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }}</span>
+                </div>
+                <p class="mt-2 text-base font-bold tracking-tight" :class="t.type === 'masuk' ? 'text-emerald-700' : 'text-rose-600'">{{ t.type === 'masuk' ? '+' : '−' }} {{ formatIDR(t.amount) }}</p>
+              </div>
+              <span class="shrink-0 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white">{{ t.type === 'masuk' ? '↗' : '↘' }}</span>
             </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div class="rounded-xl bg-slate-50 px-3 py-2">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Sumber</p>
+                <p class="mt-0.5 truncate font-medium text-slate-700">{{ t.source || '—' }}</p>
+              </div>
+              <div class="rounded-xl bg-slate-50 px-3 py-2">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Tanggal</p>
+                <p class="mt-0.5 font-medium text-slate-700">{{ t.transaction_date }}</p>
+              </div>
+            </div>
+            <p v-if="t.notes" class="mt-3 line-clamp-2 rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600">{{ t.notes }}</p>
+            <p v-else class="mt-3 text-xs italic text-slate-400">Tanpa catatan</p>
+          </div>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+          <div v-if="finance.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
+          <div v-else-if="finance.transactions.length === 0" class="p-10 text-center">
+            <p class="text-sm font-medium text-slate-700">Belum ada transaksi</p>
+            <p class="mt-1 text-sm text-slate-500">Gratis hanya target — Premium untuk cashflow.</p>
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+                <tr>
+                  <th class="whitespace-nowrap px-5 py-3 font-medium">Tanggal</th>
+                  <th class="px-5 py-3 font-medium">Tipe</th>
+                  <th class="px-5 py-3 font-medium">Kategori</th>
+                  <th class="px-5 py-3 font-medium">Sumber</th>
+                  <th class="px-5 py-3 font-medium">Keterangan</th>
+                  <th class="whitespace-nowrap px-5 py-3 text-right font-medium">Nominal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="t in pagedTransactions" :key="t.id" class="border-l-4 bg-white transition-colors hover:bg-slate-50/50" :class="t.type === 'masuk' ? 'border-l-emerald-500' : 'border-l-rose-400'">
+                  <td class="whitespace-nowrap px-5 py-4 text-xs font-medium text-slate-700">{{ new Date(t.transaction_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }}</td>
+                  <td class="px-5 py-4">
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" :class="t.type === 'masuk' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'">
+                      <span class="h-1.5 w-1.5 rounded-full" :class="t.type === 'masuk' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                      {{ t.type === 'masuk' ? 'Masuk' : 'Keluar' }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-4">
+                    <span class="inline-flex rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium capitalize text-slate-700 ring-1 ring-slate-200">{{ t.category }}</span>
+                  </td>
+                  <td class="max-w-[18ch] truncate px-5 py-4 text-xs text-slate-600">{{ t.source || '—' }}</td>
+                  <td class="max-w-[28ch] truncate px-5 py-4 text-xs text-slate-500">{{ t.notes || '—' }}</td>
+                  <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-bold" :class="t.type === 'masuk' ? 'text-emerald-700' : 'text-rose-600'">{{ t.type === 'masuk' ? '+' : '−' }} {{ formatIDR(t.amount) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 

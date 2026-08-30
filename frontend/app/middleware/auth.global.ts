@@ -6,8 +6,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     auth.restore()
   }
 
-  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/faq', '/contact', '/privacy', '/terms']
-  const isPublic = publicPages.includes(to.path)
+  // Best practice: jangan redirect unknown route ke /login — biarkan error.vue render 404 hard
+  if (!to.matched.length) {
+    throw createError({ statusCode: 404, statusMessage: 'Page Not Found', fatal: false })
+  }
+
+  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/faq', '/contact', '/privacy', '/terms', '/403', '/404', '/500', '/maintenance']
+  const isPublic = publicPages.includes(to.path) || to.path.startsWith('/_error')
 
   if (!auth.isAuthenticated && !isPublic) {
     return navigateTo('/login')

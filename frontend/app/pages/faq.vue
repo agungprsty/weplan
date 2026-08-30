@@ -16,12 +16,12 @@ const faqs: Faq[] = [
   { id: '4', cat: 'Umum', q: 'Apakah WePlan hanya untuk pernikahan adat tertentu?', a: 'Tidak. Mau nikah adat Jawa, Sunda, Minang, Batak, internasional, intimate, atau besar-besaran — semua template bisa disesuaikan. Mahar & seserahan juga fleksibel.' },
 
   // Akun
-  { id: '5', cat: 'Akun', q: 'Bagaimana cara daftar?', a: 'Buka /register → isi nama, email, kata sandi minimal 8 huruf + angka (contoh: Cinta2026) → klik Daftar. Kamu akan otomatis masuk dan diarahkan ke onboarding. Atau klik “Masuk dengan Google” biar 1 klik jadi.', popular: true },
+  { id: '5', cat: 'Akun', q: 'Bagaimana cara daftar?', a: 'Buka halaman register → isi nama, email, kata sandi minimal 8 huruf + angka (contoh: Cinta2026) → klik Daftar. Kamu akan otomatis masuk dan diarahkan ke onboarding. Atau klik “Masuk dengan Google” biar 1 klik jadi.', popular: true },
   { id: '6', cat: 'Akun', q: 'Login dengan Google aman?', a: 'Aman. Kami pakai Google Identity Services resmi. Kami hanya terima id_token yang sudah diverifikasi Google (cek aud, email_verified). Jika email Google sama dengan akun lama, otomatis terhubung — tidak buat akun dobel.' },
-  { id: '7', cat: 'Akun', q: 'Lupa kata sandi?', a: 'Di /login klik “Lupa password?” → masukkan email → buka link di email (berlaku 15 menit) → buka /reset-password?token=... → buat password baru. Di mode pengembangan, link juga tampil di log backend.' },
-  { id: '8', cat: 'Akun', q: 'Ganti email atau nama?', a: 'Buka /profile → ubah nama/email → Simpan. Jika email sudah dipakai orang lain, akan muncul “Email sudah digunakan”.' },
-  { id: '9', cat: 'Akun', q: 'Kode pasangan hilang?', a: 'Buka Dashboard atau Pengaturan (/settings) → bagian Pair Code → Salin. Kode 8 huruf besar+angka, tidak pernah kedaluwarsa. Kirim via WA ke pasangan, pasangan pilih “Join Wedding Pasangan” di onboarding.' },
-  { id: '10', cat: 'Akun', q: 'Bisa hapus akun?', a: 'Bisa. Hubungi kami via /contact untuk penghapusan permanen. Data wedding akan tetap ada untuk pasangan, tapi akun kamu akan dihapus.' },
+  { id: '7', cat: 'Akun', q: 'Lupa kata sandi?', a: 'Di halaman login klik “Lupa password?” → masukkan email → buka link di email (berlaku 15 menit) → buka halaman reset-password?token=... → buat password baru. Di mode pengembangan, link juga tampil di log backend.' },
+  { id: '8', cat: 'Akun', q: 'Ganti email atau nama?', a: 'Buka halaman profile → ubah nama/email → Simpan. Jika email sudah dipakai orang lain, akan muncul “Email sudah digunakan”.' },
+  { id: '9', cat: 'Akun', q: 'Kode pasangan hilang?', a: 'Buka Dashboard atau Pengaturan → bagian Pair Code → Salin. Kode 8 huruf besar+angka, tidak pernah kedaluwarsa. Kirim via WA ke pasangan, pasangan pilih “Join Wedding Pasangan” di onboarding.' },
+  { id: '10', cat: 'Akun', q: 'Bisa hapus akun?', a: 'Bisa. Hubungi kami via halaman contact untuk penghapusan permanen. Data wedding akan tetap ada untuk pasangan, tapi akun kamu akan dihapus.' },
   { id: '11', cat: 'Akun', q: 'Kok sering diminta login lagi?', a: 'Sesi masuk 30 menit, tapi akan diperpanjang otomatis sampai 7 hari selama kamu masih buka WePlan di background. Hanya perlu login lagi jika 7 hari tidak dibuka sama sekali atau kamu logout manual.' },
 
   // Tamu
@@ -47,13 +47,13 @@ const faqs: Faq[] = [
   // Paket
   { id: '26', cat: 'Paket', q: 'Paket Premium berapa?', a: '50k untuk 6 bulan, perpanjangan 150k/tahun. Sekali bayar buka: Tamu tak terbatas, Vendor, Mahar, Pengiring, Hadiah, Checklist 30 tugas, Keuangan lengkap.', popular: true },
   { id: '27', cat: 'Paket', q: 'Cara upgrade?', a: 'Dashboard → kartu yang terkunci → Upgrade → pilih Paket Lengkap → bayar. Status Premium dan expired-nya terlihat di Dashboard & Pengaturan.' },
-  { id: '28', cat: 'Paket', q: 'Metode bayar apa saja?', a: 'Saat ini via transfer/BRI/QRIS (halaman #harga). Setelah bayar, admin aktivasi dan plan_expires_at akan terisi. Riwayat ada di Orders.' },
+  { id: '28', cat: 'Paket', q: 'Metode bayar apa saja?', a: 'Saat ini via QRIS (halaman #harga). Setelah bayar, admin aktivasi dan plan_expires_at akan terisi. Riwayat ada di Orders.' },
   { id: '29', cat: 'Paket', q: 'Bisa refund?', a: 'Hubungi kami via /contact dalam 7 hari jika ada kendala. Kami bantu case by case.' },
 
   // Keamanan
   { id: '30', cat: 'Keamanan', q: 'Apakah data saya aman?', a: 'Ya. Password di-hash Argon2, login pakai JWT 30m + refresh 7d, isolasi data per wedding_id (hanya kamu & pasangan bisa lihat), CORS dibatasi, link reset 15 menit sekali pakai.' },
   { id: '31', cat: 'Keamanan', q: 'Siapa bisa lihat data wedding saya?', a: 'Hanya kamu dan pasangan yang join via Pair Code. Tim WePlan hanya akses teknis jika kamu lapor bug, dengan kerahasiaan ketat. Tidak dijual ke pihak ketiga.' },
-  { id: '32', cat: 'Keamanan', q: 'Bagaimana hapus data wedding?', a: 'Hubungi /contact untuk hapus permanen. Atau edit di Pengaturan jika hanya mau ubah judul/tanggal/budget.' },
+  { id: '32', cat: 'Keamanan', q: 'Bagaimana hapus data wedding?', a: 'Hubungi via halaman contact untuk hapus permanen. Atau edit di Pengaturan jika hanya mau ubah judul/tanggal/budget.' },
 ]
 
 const categories = [
@@ -111,10 +111,6 @@ function catStyle(cat: Cat) {
     <div class="bg-white border-b border-slate-200">
       <div class="max-w-6xl mx-auto px-6 pt-12 pb-10 md:pt-16 md:pb-12">
         <div class="max-w-3xl mx-auto text-center">
-          <span class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200">
-            <span class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            Dijawab untuk 1.200+ pasangan
-          </span>
           <h1 class="mt-4 font-serif text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Pertanyaan Sering Ditanya</h1>
           <p class="mt-3 text-slate-600 leading-relaxed">Tidak perlu bingung. Cari jawaban dalam detik, atau hubungi kami jika belum ketemu.</p>
 
@@ -195,10 +191,6 @@ function catStyle(cat: Cat) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                   Buka Dokumentasi
                 </NuxtLink>
-              </div>
-              <div class="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                Rata-rata balas 2 jam di jam kerja
               </div>
             </div>
 

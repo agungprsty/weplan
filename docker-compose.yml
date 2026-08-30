@@ -31,8 +31,6 @@ services:
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: 7
       FRONTEND_URL: http://localhost:3000
       PASSWORD_RESET_EXPIRE_MINUTES: 15
-      GOOGLE_CLIENT_ID: ""
-      GOOGLE_CLIENT_SECRET: ""
       ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       db:

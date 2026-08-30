@@ -50,8 +50,8 @@ async function onSubmit() {
       }
     })
 
-    // Auto-login: buat access token lalu set session
-    const res = await $fetch<{ access_token: string }>(`${apiBase}/api/v1/auth/login`, {
+    // Auto-login: buat access + refresh token lalu set session
+    const res = await $fetch<{ access_token: string; refresh_token: string }>(`${apiBase}/api/v1/auth/login`, {
       method: 'POST',
       body: { email: email.value.trim(), password: password.value }
     })
@@ -60,7 +60,7 @@ async function onSubmit() {
       headers: { Authorization: `Bearer ${res.access_token}` }
     })
 
-    authStore.setSession(res.access_token, {
+    authStore.setSession(res.access_token, res.refresh_token, {
       id: me.id,
       name: me.full_name,
       email: me.email

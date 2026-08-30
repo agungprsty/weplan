@@ -22,3 +22,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str

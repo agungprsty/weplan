@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, Token
+from jwt import ExpiredSignatureError, InvalidTokenError
+
+from app.core.security import verify_token
+from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, Token
 from app.schemas.user import ChangePasswordRequest, UserResponse, UserUpdate
 from app.services import auth as auth_service
 
@@ -85,3 +88,47 @@ async def change_password(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return {"message": "Password berhasil diubah"}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh(
+    data: RefreshRequest,
+    db: AsyncSession = Depends(get_db),
+) -> Token:
+    """Stateless refresh: verifikasi refresh_token (type=refresh) lalu terbitkan pasangan baru.
+    Tidak perlu DB, kompatibel dengan token lama. Background retry tanpa ganggu user."""
+    import uuid
+
+    try:
+        payload = verify_token(data.refresh_token)
+        token_type = payload.get("type")
+        user_id = payload.get("sub")
+        if token_type != "refresh" or not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token tidak valid",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token expired, silakan login kembali",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token tidak valid",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await db.get(User, uuid.UUID(str(user_id)))
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User tidak ditemukan atau tidak aktif",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    tokens = auth_service.generate_tokens(str(user.id))
+    return Token(**tokens)

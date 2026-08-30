@@ -45,7 +45,7 @@ async function onSubmit() {
       headers: { Authorization: `Bearer ${res.access_token}` }
     })
 
-    authStore.setSession(res.access_token, {
+    authStore.setSession(res.access_token, res.refresh_token, {
       id: me.id,
       name: me.full_name,
       email: me.email

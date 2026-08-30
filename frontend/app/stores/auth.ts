@@ -9,15 +9,30 @@ export interface AuthUser {
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
+  const refreshToken = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
 
   const isAuthenticated = computed(() => Boolean(token.value))
+  let refreshing: Promise<string | null> | null = null
 
-  function setSession(nextToken: string, nextUser: AuthUser) {
+  // compat: setSession(access, user) lama atau setSession(access, refresh, user) baru
+  function setSession(nextToken: string, nextRefreshOrUser: string | AuthUser, maybeUser?: AuthUser) {
+    let nextRefresh: string | null = null
+    let nextUser: AuthUser
+    if (typeof nextRefreshOrUser === 'string' && maybeUser) {
+      nextRefresh = nextRefreshOrUser
+      nextUser = maybeUser
+    } else {
+      nextUser = nextRefreshOrUser as AuthUser
+      // pertahankan refresh lama jika tidak dikirim (compat)
+      nextRefresh = refreshToken.value
+    }
     token.value = nextToken
+    if (nextRefresh) refreshToken.value = nextRefresh
     user.value = nextUser
     if (import.meta.client) {
       localStorage.setItem('weplan_token', nextToken)
+      if (nextRefresh) localStorage.setItem('weplan_refresh', nextRefresh)
       localStorage.setItem('weplan_user', JSON.stringify(nextUser))
     }
   }
@@ -25,8 +40,10 @@ export const useAuthStore = defineStore('auth', () => {
   function restore() {
     if (!import.meta.client) return
     const storedToken = localStorage.getItem('weplan_token')
+    const storedRefresh = localStorage.getItem('weplan_refresh')
     const storedUser = localStorage.getItem('weplan_user')
     if (storedToken) token.value = storedToken
+    if (storedRefresh) refreshToken.value = storedRefresh
     if (storedUser) {
       try {
         user.value = JSON.parse(storedUser) as AuthUser
@@ -38,11 +55,41 @@ export const useAuthStore = defineStore('auth', () => {
 
   function clearSession() {
     token.value = null
+    refreshToken.value = null
     user.value = null
+    refreshing = null
     if (import.meta.client) {
       localStorage.removeItem('weplan_token')
+      localStorage.removeItem('weplan_refresh')
       localStorage.removeItem('weplan_user')
     }
+  }
+
+  async function doRefresh(): Promise<string | null> {
+    if (!refreshToken.value) return null
+    if (refreshing) return refreshing
+    const config = useRuntimeConfig()
+    refreshing = (async () => {
+      try {
+        const res = await $fetch<{ access_token: string; refresh_token: string }>(
+          `${config.public.apiBase}/api/v1/auth/refresh`,
+          { method: 'POST', body: { refresh_token: refreshToken.value } },
+        )
+        token.value = res.access_token
+        refreshToken.value = res.refresh_token
+        if (import.meta.client) {
+          localStorage.setItem('weplan_token', res.access_token)
+          localStorage.setItem('weplan_refresh', res.refresh_token)
+        }
+        return res.access_token
+      } catch {
+        clearSession()
+        return null
+      } finally {
+        refreshing = null
+      }
+    })()
+    return refreshing
   }
 
   async function fetchMe() {
@@ -86,5 +133,5 @@ export const useAuthStore = defineStore('auth', () => {
     return await api('/api/v1/auth/change-password', { method: 'POST', body: data })
   }
 
-  return { token, user, isAuthenticated, setSession, restore, clearSession, fetchMe, updateProfile, changePassword }
+  return { token, refreshToken, user, isAuthenticated, setSession, restore, clearSession, fetchMe, updateProfile, changePassword, doRefresh }
 })

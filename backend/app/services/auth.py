@@ -82,3 +82,37 @@ async def change_user_password(
 def generate_pair_code(length: int = 8) -> str:
     alphabet = string.ascii_uppercase + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+async def reset_password_with_token(
+    db: AsyncSession, token: str, new_password: str, confirm_password: str
+) -> None:
+    from jwt import ExpiredSignatureError, InvalidTokenError
+
+    from app.core.security import create_reset_token, hash_password, verify_token
+
+    if new_password != confirm_password:
+        raise ValueError("Konfirmasi password tidak cocok")
+    if len(new_password) < 8:
+        raise ValueError("Password baru minimal 8 karakter")
+
+    try:
+        payload = verify_token(token)
+        if payload.get("type") != "reset":
+            raise ValueError("Token tidak valid")
+        user_id = payload.get("sub")
+        if not user_id:
+            raise ValueError("Token tidak valid")
+    except ExpiredSignatureError:
+        raise ValueError("Token reset sudah kadaluarsa, silakan minta link baru")
+    except InvalidTokenError:
+        raise ValueError("Token tidak valid")
+
+    import uuid
+
+    user = await db.get(User, uuid.UUID(str(user_id)))
+    if user is None or not user.is_active:
+        raise ValueError("User tidak ditemukan")
+
+    user.hashed_password = hash_password(new_password)
+    await db.flush()

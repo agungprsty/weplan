@@ -113,6 +113,9 @@ async function onSubmit() {
               placeholder="••••••••"
               class="mt-1.5 block w-full rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm shadow-sm outline-none transition focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-500/20"
             />
+            <div class="mt-2 text-right">
+              <NuxtLink to="/forgot-password" class="text-xs font-medium text-rose-600 hover:text-rose-700">Lupa password?</NuxtLink>
+            </div>
           </div>
 
           <p

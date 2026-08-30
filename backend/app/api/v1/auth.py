@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, Token
-from app.schemas.user import UserResponse
+from app.schemas.user import ChangePasswordRequest, UserResponse, UserUpdate
 from app.services import auth as auth_service
 
 router = APIRouter()
@@ -51,3 +51,37 @@ async def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> UserResponse:
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    data: UserUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    try:
+        updated = await auth_service.update_user_profile(
+            db, current_user, data.full_name, data.email
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return updated
+
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        await auth_service.change_user_password(
+            db,
+            current_user,
+            data.current_password,
+            data.new_password,
+            data.confirm_password,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return {"message": "Password berhasil diubah"}

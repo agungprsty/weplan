@@ -90,5 +90,16 @@ export const useWeddingStore = defineStore('wedding', () => {
     fetched.value = false
   }
 
-  return { wedding, loading, fetched, hasWedding, fetchWedding, createWedding, pairWedding, clearWedding }
+  async function updateWedding(data: Partial<CreateWeddingInput & { title: string }>) {
+    if (!wedding.value?.id) throw new Error('No wedding')
+    const api = useApi()
+    const res = await api<Wedding>(`/api/v1/weddings/${wedding.value.id}`, {
+      method: 'PATCH',
+      body: data,
+    })
+    wedding.value = res as unknown as Wedding
+    return wedding.value
+  }
+
+  return { wedding, loading, fetched, hasWedding, fetchWedding, createWedding, pairWedding, clearWedding, updateWedding }
 })

@@ -5,8 +5,6 @@ const weddingStore = useWeddingStore()
 const finance = useFinanceStore()
 const wedding = computed(() => weddingStore.wedding)
 
-const targetAmount = ref('')
-const deadline = ref('')
 const showAdd = ref(false)
 const formError = ref<string | null>(null)
 const txForm = reactive({
@@ -24,27 +22,7 @@ const isPremium = computed(() => finance.isPremium)
 
 onMounted(async () => {
   await Promise.all([finance.fetchTarget(), finance.fetchTransactions()])
-  if (finance.target?.deadline && !deadline.value) deadline.value = finance.target.deadline
 })
-
-watch(() => finance.target?.deadline, (v) => {
-  if (v && !deadline.value) deadline.value = v
-})
-
-async function saveTarget() {
-  formError.value = null
-  const amount = parseInt(targetAmount.value)
-  if (!amount || amount < 1000) {
-    formError.value = 'Target minimal Rp 1.000'
-    return
-  }
-  try {
-    await finance.saveTarget({ target_amount: amount, deadline: deadline.value || null })
-    targetAmount.value = ''
-  } catch (err: unknown) {
-    formError.value = extractErr(err)
-  }
-}
 
 async function addTx() {
   formError.value = null
@@ -65,6 +43,7 @@ async function addTx() {
     txForm.amount = ''
     txForm.source = ''
     txForm.notes = ''
+    page.value = 1
   } catch (err: unknown) {
     formError.value = extractErr(err)
   }
@@ -84,8 +63,24 @@ function formatIDR(v: number | null | undefined) {
 }
 
 const progress = computed(() => finance.target?.progress_pct ?? 0)
+
+// 12 bulan ke depan dari user daftar (wedding.created_at, fallback ke sekarang)
+const startMonth = computed(() => {
+  const raw = wedding.value?.created_at
+  const base = raw ? new Date(raw) : new Date()
+  // normalisasi ke awal bulan
+  return new Date(base.getFullYear(), base.getMonth(), 1)
+})
+
+const monthKeys = computed(() => {
+  const start = startMonth.value
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
+})
+
 const chartData = computed(() => {
-  // group by month last 6
   const map: Record<string, { masuk: number; keluar: number }> = {}
   for (const t of finance.transactions) {
     const key = t.transaction_date.slice(0, 7) // YYYY-MM
@@ -93,10 +88,33 @@ const chartData = computed(() => {
     if (t.type === 'masuk') map[key].masuk += t.amount
     else map[key].keluar += t.amount
   }
-  return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-6)
+  // selalu 12 bulan ke depan dari daftar, isi 0 jika belum ada transaksi
+  return monthKeys.value.map((k) => [k, map[k] ?? { masuk: 0, keluar: 0 }] as const)
 })
 
 const maxChart = computed(() => Math.max(1, ...chartData.value.map(([, v]) => Math.max(v.masuk, v.keluar))))
+
+function formatMonthLabel(key: string) {
+  const [y, m] = key.split('-')
+  const d = new Date(Number(y), Number(m) - 1, 1)
+  // contoh: "Mar 26" / "Apr 26" – singkat & hemat ruang
+  return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })
+}
+
+// Pagination — 10 per halaman (samakan pattern guests.vue)
+const PER_PAGE = 10
+const page = ref(1)
+const totalPages = computed(() => Math.max(1, Math.ceil(finance.transactions.length / PER_PAGE)))
+const currentPage = computed(() => Math.min(page.value, totalPages.value))
+const pagedTransactions = computed(() =>
+  finance.transactions.slice((currentPage.value - 1) * PER_PAGE, currentPage.value * PER_PAGE),
+)
+watch(() => finance.transactions.length, () => {
+  if (page.value > totalPages.value) page.value = totalPages.value
+})
+function goToPage(p: number) {
+  page.value = Math.min(Math.max(1, p), totalPages.value)
+}
 </script>
 
 <template>
@@ -104,70 +122,56 @@ const maxChart = computed(() => Math.max(1, ...chartData.value.map(([, v]) => Ma
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Keuangan — Target Dana & Cashflow</h1>
-          <p class="mt-1 text-sm text-slate-500">Gratis: atur target dana. Premium: kelola uang masuk/keluar + grafik + linkage Vendor/Mahar/Bridesmaid Busana.</p>
-        <div class="mt-2 flex flex-wrap gap-2 text-xs">
-          <span class="rounded-full bg-slate-900 px-3 py-1 font-medium text-white">Saldo {{ formatIDR(finance.saldo) }}</span>
-          <span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Masuk {{ formatIDR(finance.totalMasuk) }}</span>
-          <span class="rounded-full bg-rose-50 px-3 py-1 text-rose-700">Keluar {{ formatIDR(finance.totalKeluar) }}</span>
-          <span v-if="!isPremium" class="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">Gratis: target saja — Premium untuk cashflow</span>
-          <span v-else class="rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-800">Premium aktif</span>
-        </div>
       </div>
       <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50" :disabled="!isPremium" @click="showAdd = !showAdd">Tambah Transaksi</button>
     </div>
 
-    <!-- Target & Kantong Bersama -->
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-12 xl:col-span-8">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="grid grid-cols-12 gap-4 items-stretch">
+      <!-- Target Dana — tinggi disamakan dengan Grafik Cashflow (h-full flex) -->
+      <div class="col-span-12 lg:col-span-6 flex">
+        <div class="flex h-full w-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Target Dana — Kantong Bersama</p>
           <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p class="text-3xl font-bold text-slate-900">{{ formatIDR(finance.target?.target_amount ?? 0) }}</p>
+              <p class="text-3xl font-bold text-slate-900">{{ formatIDR(finance.target?.target_amount ?? wedding?.total_budget ?? 0) }}</p>
               <p class="mt-1 text-xs text-slate-500">Terkumpul {{ formatIDR(finance.target?.current_amount ?? finance.saldo) }} · {{ progress }}%</p>
             </div>
-            <span v-if="finance.target?.deadline" class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">Deadline {{ new Date(finance.target.deadline).toLocaleDateString('id-ID') }}</span>
+            <span v-if="finance.target?.deadline || wedding?.wedding_date" class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">Deadline {{ new Date((finance.target?.deadline ?? wedding?.wedding_date) as string).toLocaleDateString('id-ID') }}</span>
+            <span v-else class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">Belum ada deadline</span>
           </div>
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
             <div class="h-full rounded-full bg-slate-900 transition-all" :style="{ width: Math.min(100, Math.max(0, progress)) + '%' }"></div>
           </div>
-          <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div><label class="text-xs font-medium text-slate-600">Target Amount</label><input v-model="targetAmount" type="number" :placeholder="String(finance.target?.target_amount ?? 0)" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:bg-white focus:border-slate-300 outline-none" /></div>
-            <div><label class="text-xs font-medium text-slate-600">Deadline</label><input v-model="deadline" type="date" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" /></div>
-            <div class="flex items-end"><button class="w-full rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="saveTarget">Simpan Target (Gratis)</button></div>
+          <div class="mt-auto pt-6">
+            <p class="text-xs text-slate-400">Target & deadline otomatis sinkron dari total budget & tanggal pernikahan saat onboarding.</p>
           </div>
-          <p v-if="formError" class="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ formError }}</p>
-        </div>
-      </div>
-      <div class="col-span-12 xl:col-span-4">
-        <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5">
-          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Kantong Bersama</p>
-          <p class="mt-2 text-sm text-slate-600">Ajak pasangan kelola 1 kantong dengan pair code.</p>
-          <p class="mt-3 font-mono text-xl font-bold tracking-[0.2em] text-slate-900">{{ wedding?.pair_code ?? '—' }}</p>
-          <p class="mt-1 text-xs text-slate-400">{{ wedding?.partner1_name }} & {{ wedding?.partner2_name }}</p>
-          <p class="mt-4 text-xs text-slate-500">Linkage: transaksi bisa dikaitkan ke Vendor & Mahar (kategori vendor/mahar). <span class="font-medium text-violet-700">Bridesmaid seragam → kategori <strong>Busana</strong> (pisah dari daftar Tamu).</span></p>
-          <NuxtLink to="/guests" class="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-200 hover:bg-violet-50">Kelola Bridesmaid di Tamu</NuxtLink>
         </div>
       </div>
 
-      <!-- Grafik Cashflow -->
-      <div class="col-span-12">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Grafik Cashflow (6 bulan)</p>
-            <span v-if="!isPremium" class="text-xs text-amber-700">Premium untuk lihat transaksi</span>
+      <!-- Grafik Cashflow — 12 bulan ke depan dari user daftar -->
+      <div class="col-span-12 lg:col-span-6 flex">
+        <div class="flex h-full w-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Grafik Cashflow</p>
           </div>
-          <div v-if="chartData.length === 0" class="mt-6 rounded-lg bg-slate-50 p-8 text-center text-sm text-slate-400">Belum ada transaksi.</div>
-          <div v-else class="mt-6 grid grid-cols-6 gap-3 items-end h-32">
-            <div v-for="[month, vals] in chartData" :key="month" class="flex flex-col items-center gap-2">
-              <div class="flex w-full gap-1 items-end justify-center h-24">
-                <div class="flex-1 rounded-t bg-emerald-500 transition-all" :style="{ height: (vals.masuk / maxChart * 80 + 8) + 'px' }" :title="'Masuk ' + formatIDR(vals.masuk)"></div>
-                <div class="flex-1 rounded-t bg-rose-400 transition-all" :style="{ height: (vals.keluar / maxChart * 80 + 8) + 'px' }" :title="'Keluar ' + formatIDR(vals.keluar)"></div>
+          <div class="mt-4 flex-1">
+            <div class="-mx-1 overflow-x-auto px-1 pb-1">
+              <div class="flex min-w-[640px] items-end gap-2 lg:min-w-0 lg:grid lg:grid-cols-12 lg:gap-2">
+                <div v-for="[month, vals] in chartData" :key="month" class="flex flex-1 flex-col items-center gap-2">
+                  <div class="flex w-full max-w-[56px] gap-1 items-end justify-center h-24 lg:max-w-none">
+                    <div class="flex-1 rounded-t bg-emerald-500 transition-all" :style="{ height: (vals.masuk / maxChart * 80 + 8) + 'px' }" :title="'Masuk ' + formatIDR(vals.masuk)"></div>
+                    <div class="flex-1 rounded-t bg-rose-400 transition-all" :style="{ height: (vals.keluar / maxChart * 80 + 8) + 'px' }" :title="'Keluar ' + formatIDR(vals.keluar)"></div>
+                  </div>
+                  <span class="whitespace-nowrap text-[10px] font-medium text-slate-500">{{ formatMonthLabel(month) }}</span>
+                </div>
               </div>
-              <span class="text-[11px] text-slate-500">{{ month.slice(5) }}/{{ month.slice(0,4).slice(-2) }}</span>
             </div>
           </div>
-          <div class="mt-4 flex gap-4 text-xs"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Masuk</span><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-400"></span> Keluar</span></div>
+
+          <div class="mt-3 flex gap-4 text-xs">
+            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Masuk</span>
+            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-400"></span> Keluar</span>
+          </div>
         </div>
       </div>
 
@@ -187,18 +191,35 @@ const maxChart = computed(() => Math.max(1, ...chartData.value.map(([, v]) => Ma
         </div>
       </div>
 
-      <!-- List transaksi -->
+      <!-- List transaksi — pagination 10/halaman -->
       <div class="col-span-12">
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h3 class="font-serif font-bold">Transaksi ({{ finance.transactions.length }})</h3><span class="text-xs text-slate-400">Linkage Vendor/Mahar via kategori</span></div>
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+            <h3 class="font-serif font-bold">Transaksi ({{ finance.transactions.length }})</h3>
+            <span class="text-xs text-slate-400">Linkage Vendor/Mahar via kategori · {{ PER_PAGE }}/halaman</span>
+          </div>
           <div v-if="finance.loading" class="p-8 text-center text-sm text-slate-400">Memuat...</div>
           <div v-else-if="finance.transactions.length === 0" class="p-8 text-center text-sm text-slate-500">Belum ada transaksi. Gratis hanya target, Premium untuk cashflow.</div>
           <div v-else class="divide-y divide-slate-100">
-            <div v-for="t in finance.transactions" :key="t.id" class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/60">
+            <div v-for="t in pagedTransactions" :key="t.id" class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/60">
               <div><p class="font-medium text-slate-900">{{ t.type === 'masuk' ? '↗ Masuk' : '↘ Keluar' }} {{ formatIDR(t.amount) }} <span class="ml-2 rounded-full px-2 py-0.5 text-xs" :class="t.type==='masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'">{{ t.category }}</span></p><p class="mt-1 text-xs text-slate-500">{{ t.transaction_date }} · {{ t.source ?? '-' }} · {{ t.notes ?? '' }}</p></div>
               <button class="rounded-lg border bg-white px-3 py-1.5 text-xs hover:bg-slate-50" @click="finance.deleteTransaction(t.id)">Hapus</button>
             </div>
           </div>
+        </div>
+
+        <!-- Pagination controls (samakan pattern guests.vue) -->
+        <div v-if="totalPages > 1" class="mt-4 flex items-center justify-between gap-3">
+          <button class="inline-flex min-w-[44px] flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
+            <span class="mr-1.5 inline-block">‹</span>Sebelumnya
+          </button>
+          <div class="flex shrink-0 flex-col items-center">
+            <span class="text-sm font-medium text-slate-700">Halaman {{ currentPage }} / {{ totalPages }}</span>
+            <span class="text-xs text-slate-400">{{ finance.transactions.length }} transaksi • {{ PER_PAGE }}/halaman</span>
+          </div>
+          <button class="inline-flex min-w-[44px] flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">
+            Selanjutnya<span class="ml-1.5 inline-block">›</span>
+          </button>
         </div>
       </div>
     </div>

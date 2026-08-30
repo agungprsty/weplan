@@ -47,6 +47,38 @@ def generate_tokens(user_id: str) -> dict:
     }
 
 
+async def update_user_profile(
+    db: AsyncSession, user: User, full_name: str | None, email: str | None
+) -> User:
+    if email and email != user.email:
+        existing = await db.execute(select(User).where(User.email == email))
+        if existing.scalar_one_or_none() is not None:
+            raise ValueError("Email sudah digunakan")
+        user.email = email
+    if full_name is not None:
+        user.full_name = full_name.strip()
+    await db.flush()
+    await db.refresh(user)
+    return user
+
+
+async def change_user_password(
+    db: AsyncSession,
+    user: User,
+    current_password: str,
+    new_password: str,
+    confirm_password: str,
+) -> None:
+    if new_password != confirm_password:
+        raise ValueError("Konfirmasi password tidak cocok")
+    if len(new_password) < 8:
+        raise ValueError("Password baru minimal 8 karakter")
+    if not verify_password(current_password, user.hashed_password):
+        raise ValueError("Password saat ini salah")
+    user.hashed_password = hash_password(new_password)
+    await db.flush()
+
+
 def generate_pair_code(length: int = 8) -> str:
     alphabet = string.ascii_uppercase + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))

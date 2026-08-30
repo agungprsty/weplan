@@ -77,6 +77,11 @@ async def update_wedding(
     for field, value in update_data.items():
         setattr(wedding, field, value)
     await db.flush()
+    # Sinkronkan savings_target jika total_budget / wedding_date berubah
+    if "total_budget" in update_data or "wedding_date" in update_data:
+        from app.services.wedding import sync_savings_target
+
+        await sync_savings_target(db, wedding)
     await db.refresh(wedding)
     # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)
     if not hasattr(wedding, "member_count"):

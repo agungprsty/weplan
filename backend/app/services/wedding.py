@@ -26,6 +26,38 @@ async def _attach_member_count(
     return wedding
 
 
+async def sync_savings_target(db: AsyncSession, wedding: Wedding) -> None:
+    """Sinkronkan savings_targets.target_amount & deadline dari weddings.total_budget & wedding_date.
+    Dipanggil saat create / update wedding agar keuangan otomatis mengikuti onboarding.
+    """
+    from app.models.savings_target import SavingsTarget
+
+    result = await db.execute(
+        select(SavingsTarget).where(SavingsTarget.wedding_id == wedding.id)
+    )
+    target = result.scalar_one_or_none()
+    desired_amount = wedding.total_budget or 0
+    desired_deadline = wedding.wedding_date
+    if target is None:
+        target = SavingsTarget(
+            wedding_id=wedding.id,
+            target_amount=desired_amount,
+            deadline=desired_deadline,
+        )
+        db.add(target)
+        await db.flush()
+    else:
+        changed = False
+        if target.target_amount != desired_amount:
+            target.target_amount = desired_amount
+            changed = True
+        if target.deadline != desired_deadline:
+            target.deadline = desired_deadline
+            changed = True
+        if changed:
+            await db.flush()
+
+
 async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> Wedding:
     from app.services.auth import generate_pair_code
 
@@ -47,6 +79,7 @@ async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> W
     )
     db.add(wedding_user)
     await db.flush()
+    await sync_savings_target(db, wedding)
     await db.refresh(wedding)
     # New wedding always has 1 partner, no extra query needed
     wedding.member_count = 1

@@ -178,17 +178,17 @@ function isActive(path: string) {
               </li>
               <li>
                 <a
-                  href="/gifts"
+                  href="/mahar"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click.prevent="handleNavClick('/gifts')"
+                  @click.prevent="handleNavClick('/mahar')"
                   :class="[
-                    isActive('/gifts') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    isActive('/mahar') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
                   ]"
-                  :title="!sidebarOpen ? 'Gifts' : undefined"
+                  :title="!sidebarOpen ? 'Mahar' : undefined"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Gifts</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><circle cx="12" cy="12" r="3" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Mahar & Seserahan</span>
                   <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
                 </a>
               </li>
@@ -226,17 +226,17 @@ function isActive(path: string) {
               </li>
               <li>
                 <a
-                  href="/mahar"
+                  href="/gifts"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click.prevent="handleNavClick('/mahar')"
+                  @click.prevent="handleNavClick('/gifts')"
                   :class="[
-                    isActive('/mahar') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                    isActive('/gifts') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
                     !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
                   ]"
-                  :title="!sidebarOpen ? 'Mahar' : undefined"
+                  :title="!sidebarOpen ? 'Gifts' : undefined"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" /><circle cx="12" cy="12" r="3" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Mahar & Seserahan</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Hadiah</span>
                   <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
                 </a>
               </li>
@@ -252,7 +252,7 @@ function isActive(path: string) {
                   :title="!sidebarOpen ? 'Checklist' : undefined"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 6.5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1Z" /><path d="M6 10.5h12M6 14.5h12M6 18.5h8" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Checklist</span>
+                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Daftar Tugas</span>
                   <span v-if="sidebarOpen && !isPremium" class="ml-auto shrink-0 text-amber-400" title="Premium"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg></span>
                 </a>
               </li>
@@ -311,18 +311,7 @@ function isActive(path: string) {
                 </ul>
               </li>
               <li>
-                <button class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Lainnya' : undefined" @click.stop="sidebarOpen ? errorsMenuOpen = !errorsMenuOpen : sidebarOpen = true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 9v5" /><circle cx="12" cy="16" r="1" fill="currentColor" /><path d="M10.5 3.5l-5.5 9.5a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3l-5.5-9.5a2 2 0 0 0-3.4 0Z" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Lainnya</span>
-                  <svg v-if="sidebarOpen" class="ml-auto h-3.5 w-3.5 text-slate-400 transition-transform" :class="errorsMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
-                </button>
-                <ul v-show="errorsMenuOpen && sidebarOpen" class="mt-1 space-y-0.5 border-l border-slate-100 pl-4 ml-3">
-                  <li><a href="#" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500" @click.prevent>Pair Code</a></li>
-                  <li><a href="#" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500" @click.prevent>Undang Pasangan</a></li>
-                </ul>
-              </li>
-              <li>
-                <NuxtLink to="/" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Profil' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3.5" /><path d="M4 18a8 8 0 0 1 16 0" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Profil</span></NuxtLink>
+                <NuxtLink to="/profile" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium" :class="[isActive('/profile') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50', !sidebarOpen ? 'lg:justify-center lg:px-2' : '']" :title="!sidebarOpen ? 'Profil' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3.5" /><path d="M4 18a8 8 0 0 1 16 0" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Profil</span></NuxtLink>
               </li>
             </ul>
           </div>
@@ -332,7 +321,9 @@ function isActive(path: string) {
       <!-- Footer -->
       <div class="border-t border-slate-100 p-3">
         <ul class="space-y-0.5" :class="!sidebarOpen ? 'lg:space-y-1' : ''">
-          <li><a href="#" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Pengaturan' : undefined" @click.prevent><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Pengaturan</span></a></li>
+          <li>
+            <NuxtLink to="/settings" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium" :class="[isActive('/settings') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50', !sidebarOpen ? 'lg:justify-center lg:px-2' : '']" :title="!sidebarOpen ? 'Pengaturan' : undefined" @click="closeSidebarOnMobile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Pengaturan</span></NuxtLink>
+          </li>
           <li><button class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Keluar' : undefined" @click="handleLogout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Keluar</span></button></li>
         </ul>
         <div class="mt-3 border-t border-slate-100 pt-3" :class="!sidebarOpen ? 'lg:hidden' : ''">
@@ -396,14 +387,15 @@ function isActive(path: string) {
               <span class="grid h-7 w-7 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">{{ auth.user?.name?.charAt(0)?.toUpperCase() ?? 'U' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="text-slate-400"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
             </button>
-            <div v-if="showUserMenu" class="absolute right-0 top-11 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl" @click.stop>
+            <div v-if="showUserMenu" class="absolute right-0 top-11 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl" @click.stop>
               <div class="px-3 py-2">
                 <p class="text-sm font-semibold">{{ auth.user?.name }}</p>
                 <p class="truncate text-xs text-slate-500">{{ auth.user?.email }}</p>
               </div>
               <hr class="my-1 border-slate-100" />
-              <NuxtLink to="/dashboard" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-slate-50" @click="showUserMenu = false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3" /><path d="M5 20a7 7 0 0 1 14 0" /></svg> Profil</NuxtLink>
-              <a href="#" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-slate-50" @click.prevent><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" /></svg> Pengaturan</a>
+              <NuxtLink to="/profile" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-slate-50" @click="showUserMenu = false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3" /><path d="M5 20a7 7 0 0 1 14 0" /></svg> Profil</NuxtLink>
+              <NuxtLink to="/change-password" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-slate-50" @click="showUserMenu = false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/></svg> Ganti Password</NuxtLink>
+              <NuxtLink to="/settings" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-slate-50" @click="showUserMenu = false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" /></svg> Pengaturan</NuxtLink>
               <hr class="my-1 border-slate-100" />
               <button class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" @click="handleLogout">Keluar</button>
             </div>

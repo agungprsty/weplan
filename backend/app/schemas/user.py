@@ -15,3 +15,14 @@ class UserResponse(UserBase):
     id: uuid.UUID
     is_active: bool
     created_at: datetime
+
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str

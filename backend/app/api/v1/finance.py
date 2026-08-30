@@ -28,7 +28,7 @@ def _is_premium(wedding: Wedding) -> bool:
     return wedding.plan_expires_at > now and wedding.plan_id is not None
 
 
-# Savings Target singleton
+# Savings Target singleton — sinkron otomatis dari wedding.total_budget & wedding_date
 @router.get("/savings-target", response_model=SavingsTargetResponse)
 async def get_savings_target(
     wedding_id: uuid.UUID,
@@ -37,16 +37,31 @@ async def get_savings_target(
     db: AsyncSession = Depends(get_db),
 ) -> SavingsTargetResponse:
     target = await savings_service.get_savings_target(db, wedding_id)
+    # Lazy-sync: jika target belum ada atau beda dengan wedding, sinkronkan
+    desired_amount = wedding.total_budget or 0
+    desired_deadline = wedding.wedding_date
+    if target is None:
+        if desired_amount or desired_deadline:
+            from app.services.wedding import sync_savings_target
+
+            await sync_savings_target(db, wedding)
+            target = await savings_service.get_savings_target(db, wedding_id)
+    elif target.target_amount != desired_amount or target.deadline != desired_deadline:
+        from app.services.wedding import sync_savings_target
+
+        await sync_savings_target(db, wedding)
+        target = await savings_service.get_savings_target(db, wedding_id)
+
     total_masuk, total_keluar, current = await savings_service.compute_finance_stats(
         db, wedding_id
     )
     if target is None:
-        # return empty default without persisting
+        # wedding tanpa budget/date → return default virtual (tidak persist)
         return SavingsTargetResponse(
             id=uuid.uuid4(),
             wedding_id=wedding_id,
-            target_amount=0,
-            deadline=None,
+            target_amount=desired_amount,
+            deadline=desired_deadline,
             created_at=datetime.now(UTC).replace(tzinfo=None),
             updated_at=datetime.now(UTC).replace(tzinfo=None),
             current_amount=current,
@@ -80,6 +95,14 @@ async def put_savings_target(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> SavingsTargetResponse:
+    # Sinkron balik ke wedding agar single source of truth terjaga
+    # (frontend baru tidak memanggil PUT lagi; PUT dipertahankan untuk kompatibilitas)
+    update_dict = data.model_dump(exclude_unset=True)
+    if "target_amount" in update_dict:
+        wedding.total_budget = update_dict["target_amount"]
+    if "deadline" in update_dict:
+        wedding.wedding_date = update_dict["deadline"]
+    await db.flush()
     target = await savings_service.upsert_savings_target(db, wedding_id, data)
     total_masuk, total_keluar, current = await savings_service.compute_finance_stats(
         db, wedding_id

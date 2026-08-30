@@ -94,7 +94,6 @@ const checklistBadgeClass = computed(() => {
 })
 
 const isPremium = computed(() => {
-  // sesuaikan dengan deteksi premium app: financeStore.isPremium (slug premium + expiry) fallback ke expiry seperti layout
   if (typeof financeStore.isPremium === 'boolean') return financeStore.isPremium
   const w = weddingStore.wedding as unknown as { plan_expires_at?: string | null } | null
   return Boolean(w?.plan_expires_at && new Date(w.plan_expires_at).getTime() > Date.now())
@@ -105,7 +104,6 @@ const isPaired = computed(() => {
   return typeof c === 'number' ? c >= 2 : false
 })
 
-// Pengeluaran — 4 kolom: inisial, nama vendor, harga, persentase (real vendor, top 5)
 const topVendors = computed(() => {
   const list = [...vendorStore.items].sort((a, b) => b.total_amount - a.total_amount).slice(0, 5)
   const totalBudget = wedding.value?.total_budget ?? 0
@@ -163,11 +161,11 @@ onMounted(async () => {
             </div>
             <div class="border-x border-slate-100">
               <p class="text-[11px] uppercase tracking-wide text-slate-400">Wanita</p>
-              <p class="mt-1 text-lg font-semibold text-rose-600">{{ brideCount }}</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ brideCount }}</p>
             </div>
             <div>
               <p class="text-[11px] uppercase tracking-wide text-slate-400">Pria</p>
-              <p class="mt-1 text-lg font-semibold text-sky-600">{{ groomCount }}</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ groomCount }}</p>
             </div>
           </div>
           <NuxtLink to="/guests" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Kelola tamu →</NuxtLink>
@@ -209,7 +207,7 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Checklist Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-sky-600">Upgrade ke Premium</NuxtLink> untuk akses checklist & timeline.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk akses checklist & timeline.</p>
           </div>
         </div>
       </div>
@@ -219,7 +217,7 @@ onMounted(async () => {
         <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
             <div class="flex items-start justify-between gap-2">
-              <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Keuangan</p>
+              <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Target Keuangan</p>
               <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium" :class="anggaranBadgeClass">{{ anggaranBadgeText }}</span>
             </div>
             <p class="mt-3 font-serif text-2xl font-bold text-slate-900">{{ formattedBudget ?? 'Rp —' }}</p>
@@ -244,12 +242,12 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Keuangan Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-sky-600">Upgrade ke Premium</NuxtLink>  untuk kelola anggaran & cashflow.</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk kelola anggaran & cashflow.</p>
           </div>
         </div>
       </div>
 
-      <!-- Pair code card — sama tinggi dengan Pengeluaran, deteksi pasangan join -->
+      <!-- Pair code card -->
       <div class="col-span-12 xl:col-span-6">
         <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex flex-wrap items-start justify-between gap-3">
@@ -259,7 +257,6 @@ onMounted(async () => {
               <p class="mt-1 text-sm text-slate-500">{{ isPaired ? 'Kode pair tidak perlu ditampilkan lagi. Kalian sudah berkolaborasi di workspace yang sama.' : 'Bagikan kode ke pasangan agar bisa join workspace yang sama. Kode tidak kedaluwarsa.' }}</p>
             </div>
           </div>
-          <!-- jika pasangan sudah join: ganti kode dengan pesan -->
           <div v-if="isPaired" class="mt-5 flex flex-1 flex-col justify-center rounded-xl border border-emerald-200 bg-emerald-50/60 p-5">
             <div class="flex items-center gap-3">
               <span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white">
@@ -294,7 +291,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Card Pengeluaran — 4 kolom: inisial, nama vendor, harga, persentase (premium gated, sama tinggi) -->
+      <!-- Card Pengeluaran -->
       <div class="col-span-12 xl:col-span-6">
         <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
@@ -322,94 +319,64 @@ onMounted(async () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
             </span>
             <p class="mt-3 text-sm font-semibold text-slate-900">Pengeluaran Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600">Butuh Premium untuk melihat rincian pengeluaran vendor.</p>
-            <NuxtLink to="/#harga" class="mt-4 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800">Upgrade ke Premium</NuxtLink>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat rincian pengeluaran vendor.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Tugas — premium gated, sama tinggi dengan Aktivitas -->
+      <div class="col-span-12 lg:col-span-6 xl:col-span-9">
+        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+              <h3 class="font-serif text-base font-bold text-slate-900">Tugas Terbaru</h3>
+              <NuxtLink to="/checklists" class="text-sm font-medium text-slate-500 hover:text-slate-900">Lihat semua</NuxtLink>
+            </div>
+            <div class="flex-1 overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+                  <tr><th class="px-5 py-3 font-medium">Tugas</th><th class="px-5 py-3 font-medium">Penanggung</th><th class="px-5 py-3 font-medium">Tanggal</th><th class="px-5 py-3 font-medium">Status</th><th class="px-5 py-3 font-medium text-right">Biaya</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Survei Venue</span><span class="ml-2 rounded bg-slate-900 px-1.5 py-0.5 text-[11px] font-medium text-white">#01</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">AP</span> Ani & Pasangan</span></td><td class="px-5 py-3.5 text-slate-500">18 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.490.000</td></tr>
+                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Fitting Baju</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#02</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">WO</span> WO Pelangi</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">Dikirim</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 580.000</td></tr>
+                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Kirim Undangan</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#03</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">KL</span> Keluarga</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 8.200.000</td></tr>
+                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Pesan Katering</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#04</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">KT</span> Katering Sari</span></td><td class="px-5 py-3.5 text-slate-500">16 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">Refund</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 240.000</td></tr>
+                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Booking Fotografer</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#05</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs font-bold">IN</span> Fotografer</span></td><td class="px-5 py-3.5 text-slate-500">15 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.120.000</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
+            </span>
+            <p class="mt-3 text-sm font-semibold text-slate-900">Tugas Terkunci</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat daftar tugas.</p>
           </div>
         </div>
       </div>
 
-      <!-- Conversion Funnel -->
+      <!-- Card Aktifitas — premium gated, sama tinggi dengan Tugas -->
       <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Funnel Persiapan</p>
-          <ul class="mt-4 space-y-2.5 text-sm">
-            <li class="flex items-center justify-between"><span class="text-slate-600">Rencana</span><span class="font-medium">18</span></li>
-            <li class="flex items-center justify-between"><span class="text-slate-600">Dipesan</span><span class="font-medium">12 <span class="text-xs text-rose-600">-34%</span></span></li>
-            <li class="flex items-center justify-between"><span class="text-slate-600">Dikonfirmasi</span><span class="font-medium">7 <span class="text-xs text-rose-600">-40%</span></span></li>
-            <li class="flex items-center justify-between"><span class="text-slate-600">DP Terbayar</span><span class="font-medium">4 <span class="text-xs text-rose-600">-45%</span></span></li>
-            <li class="flex items-center justify-between"><span class="text-slate-600">Lunas</span><span class="font-medium">2 <span class="text-xs text-amber-600">-27%</span></span></li>
-            <li class="flex items-center justify-between border-t border-slate-100 pt-2 font-semibold"><span>Selesai</span><span class="text-emerald-600">2</span></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Fulfillment -->
-      <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Pemenuhan</p>
-          <div class="mt-4 grid grid-cols-2 gap-3">
-            <div class="rounded-lg bg-slate-50 p-3 text-center"><p class="text-xs text-slate-500">Rata-rata</p><p class="mt-1 text-lg font-bold">1.2 hari</p><p class="text-xs text-slate-400">respon vendor</p></div>
-            <div class="rounded-lg bg-slate-50 p-3 text-center"><p class="text-xs text-slate-500">Revisi</p><p class="mt-1 text-lg font-bold">0.4%</p><p class="text-xs text-slate-400">per tugas</p></div>
+        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Aktivitas Terbaru</p>
+            <ul class="mt-4 flex-1 space-y-3 text-sm">
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span><span class="flex-1"><span class="font-medium text-slate-900">Tugas dicentang</span> <span class="text-slate-500">Survei venue</span><br><span class="text-xs text-slate-400">2 menit lalu</span></span></li>
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-400"></span><span class="flex-1"><span class="font-medium">Pembayaran DP</span> <span class="text-slate-500">Rp 2.410.000</span><br><span class="text-xs text-slate-400">9 menit lalu</span></span></li>
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-400"></span><span class="flex-1"><span class="font-medium">Peringatan stok</span> <span class="text-slate-500">Souvenir kurang 4</span><br><span class="text-xs text-slate-400">22 menit lalu</span></span></li>
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose-400"></span><span class="flex-1"><span class="font-medium">Refund</span> <span class="text-slate-500">#QC-7802</span><br><span class="text-xs text-slate-400">41 menit lalu</span></span></li>
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-400"></span><span class="flex-1"><span class="font-medium">Tamu baru</span> <span class="text-slate-500">Globex konfirmasi</span><br><span class="text-xs text-slate-400">1 jam lalu</span></span></li>
+              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-400"></span><span class="flex-1"><span class="font-medium">Tamu baru</span> <span class="text-slate-500">Globex konfirmasi</span><br><span class="text-xs text-slate-400">1 jam lalu</span></span></li>
+            </ul>
           </div>
-          <div class="mt-4 space-y-2 text-sm">
-            <div class="flex justify-between"><span class="text-slate-500">Checklist selesai</span><span class="font-medium">4/12</span></div>
-            <div class="h-1.5 rounded-full bg-slate-100"><div class="h-full rounded-full bg-emerald-500" style="width: 33%"></div></div>
-            <div class="flex justify-between"><span class="text-slate-500">Anggaran terpakai</span><span class="font-medium">58%</span></div>
-            <div class="h-1.5 rounded-full bg-slate-100"><div class="h-full rounded-full bg-slate-900" style="width: 58%"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Heatmap + Activity stacked column -->
-      <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Heatmap Tamu</p>
-            <span class="text-xs text-slate-400">Jum · 18.00 peak</span>
-          </div>
-          <div class="mt-4 grid grid-cols-7 gap-1">
-            <template v-for="i in 28" :key="i">
-              <span class="h-5 rounded-sm" :class="i % 7 === 0 ? 'bg-slate-900' : i % 5 === 0 ? 'bg-slate-300' : i % 3 === 0 ? 'bg-slate-200' : 'bg-slate-100'"></span>
-            </template>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-400"><span>Kurang</span><span>Banyak</span></div>
-          <div class="mt-1 flex gap-1"><span class="h-2 flex-1 rounded-full bg-slate-100"></span><span class="h-2 flex-1 rounded-full bg-slate-200"></span><span class="h-2 flex-1 rounded-full bg-slate-300"></span><span class="h-2 flex-1 rounded-full bg-slate-900"></span></div>
-        </div>
-      </div>
-
-      <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Aktivitas Terbaru</p>
-          <ul class="mt-4 space-y-3 text-sm">
-            <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span><span class="flex-1"><span class="font-medium text-slate-900">Tugas dicentang</span> <span class="text-slate-500">Survei venue</span><br><span class="text-xs text-slate-400">2 menit lalu</span></span></li>
-            <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-400"></span><span class="flex-1"><span class="font-medium">Pembayaran DP</span> <span class="text-slate-500">Rp 2.410.000</span><br><span class="text-xs text-slate-400">9 menit lalu</span></span></li>
-            <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-400"></span><span class="flex-1"><span class="font-medium">Peringatan stok</span> <span class="text-slate-500">Souvenir kurang 4</span><br><span class="text-xs text-slate-400">22 menit lalu</span></span></li>
-            <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose-400"></span><span class="flex-1"><span class="font-medium">Refund</span> <span class="text-slate-500">#QC-7802</span><br><span class="text-xs text-slate-400">41 menit lalu</span></span></li>
-            <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-400"></span><span class="flex-1"><span class="font-medium">Tamu baru</span> <span class="text-slate-500">Globex konfirmasi</span><br><span class="text-xs text-slate-400">1 jam lalu</span></span></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Recent Orders Table -> Daftar Tamu/Tugas -->
-      <div class="col-span-12">
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-            <h3 class="font-serif text-base font-bold text-slate-900">Tugas Terbaru</h3>
-            <a href="#" class="text-sm font-medium text-slate-500 hover:text-slate-900" @click.prevent>Lihat semua</a>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-                <tr><th class="px-5 py-3 font-medium">Tugas</th><th class="px-5 py-3 font-medium">Penanggung</th><th class="px-5 py-3 font-medium">Tanggal</th><th class="px-5 py-3 font-medium">Status</th><th class="px-5 py-3 font-medium text-right">Biaya</th></tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Survei Venue</span><span class="ml-2 rounded bg-slate-900 px-1.5 py-0.5 text-[11px] font-medium text-white">#01</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">AP</span> Ani & Pasangan</span></td><td class="px-5 py-3.5 text-slate-500">18 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.490.000</td></tr>
-                <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Fitting Baju</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#02</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">WO</span> WO Pelangi</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">Dikirim</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 580.000</td></tr>
-                <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Kirim Undangan</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#03</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">KL</span> Keluarga</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 8.200.000</td></tr>
-                <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Pesan Katering</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#04</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">KT</span> Katering Sari</span></td><td class="px-5 py-3.5 text-slate-500">16 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">Refund</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 240.000</td></tr>
-                <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Booking Fotografer</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#05</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs font-bold">IN</span> Fotografer</span></td><td class="px-5 py-3.5 text-slate-500">15 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.120.000</td></tr>
-              </tbody>
-            </table>
+          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
+            </span>
+            <p class="mt-3 text-sm font-semibold text-slate-900">Aktivitas Terkunci</p>
+            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/#harga" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat aktivitas terbaru.</p>
           </div>
         </div>
       </div>

@@ -444,8 +444,8 @@ function isActive(path: string) {
             <li class="flex items-center gap-2"><svg class="shrink-0 text-emerald-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>Semua fitur lengkap tanpa batas</li>
             <li class="flex items-center gap-2"><svg class="shrink-0 text-emerald-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>Prioritas dukungan pasangan</li>
           </ul>
-          <button class="mt-5 block w-full rounded-full bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-900" @click="goToPricing">Upgrade Sekarang</button>
-          <button class="mt-2 block w-full rounded-full py-2.5 text-sm text-slate-500 hover:bg-slate-50" @click="showUpgradeModal = false">Nanti saja</button>
+          <button class="mt-5 block w-full rounded-full bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer" @click="goToPricing">Upgrade Sekarang</button>
+          <button class="mt-2 block w-full rounded-full py-2.5 text-sm text-slate-500 hover:bg-slate-50 cursor-pointer" @click="showUpgradeModal = false">Nanti saja</button>
         </div>
       </div>
     </Transition>

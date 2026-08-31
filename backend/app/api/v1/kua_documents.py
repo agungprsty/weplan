@@ -8,7 +8,11 @@ from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_wedding
 from app.models.user import User
 from app.models.wedding import Wedding
-from app.schemas.kua_document import KuaDocumentCreate, KuaDocumentResponse, KuaDocumentUpdate
+from app.schemas.kua_document import (
+    KuaDocumentCreate,
+    KuaDocumentResponse,
+    KuaDocumentUpdate,
+)
 from app.services import kua_document as kua_service
 
 router = APIRouter()
@@ -41,7 +45,9 @@ async def seed_kua(
     return await kua_service.seed_kua_documents(db, wedding_id)
 
 
-@router.post("/", response_model=KuaDocumentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=KuaDocumentResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_kua_document(
     wedding_id: uuid.UUID,
     data: KuaDocumentCreate,
@@ -53,7 +59,9 @@ async def create_kua_document(
     payload = data.model_dump(exclude_unset=True)
     # ensure status defaults to 'belum' if not supplied
     payload.setdefault("status", "belum")
-    doc = await kua_service.create_kua_document(db, wedding_id, payload)
+    doc = await kua_service.create_kua_document(
+        db, wedding_id, payload, actor=current_user
+    )
     return doc
 
 
@@ -68,7 +76,9 @@ async def update_kua_document(
 ) -> KuaDocumentResponse:
     # Jika upload file_url dan bukan premium, tetap izinkan karena Berkas KUA gratis dasar
     # Premium hanya untuk expiry alert — untuk MVP gratis semua
-    doc = await kua_service.update_kua_document(db, wedding_id, doc_id, data)
+    doc = await kua_service.update_kua_document(
+        db, wedding_id, doc_id, data, actor=current_user
+    )
     if doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan"
@@ -84,7 +94,9 @@ async def delete_kua_document(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    ok = await kua_service.delete_kua_document(db, wedding_id, doc_id)
+    ok = await kua_service.delete_kua_document(
+        db, wedding_id, doc_id, actor=current_user
+    )
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Dokumen tidak ditemukan"

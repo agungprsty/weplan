@@ -1,11 +1,19 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.checklist import Checklist
 from app.schemas.checklist import ChecklistCreate, ChecklistUpdate
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
+from app.services.activity import log_activity
 
 # Template 12 bulan default — 30 tugas auto-generate dari wedding_date
 CHECKLIST_TEMPLATE_12BULAN: list[dict] = [
@@ -112,7 +120,10 @@ async def list_checklists(db: AsyncSession, wedding_id: uuid.UUID) -> list[Check
 
 
 async def create_checklist(
-    db: AsyncSession, wedding_id: uuid.UUID, data: ChecklistCreate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: ChecklistCreate,
+    actor: User | None = None,
 ) -> Checklist:
     max_order_result = await db.execute(
         select(Checklist.order)
@@ -130,6 +141,15 @@ async def create_checklist(
     db.add(checklist)
     await db.flush()
     await db.refresh(checklist)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "created",
+        "checklist",
+        checklist.id,
+        checklist.title,
+    )
     return checklist
 
 
@@ -138,6 +158,7 @@ async def update_checklist(
     wedding_id: uuid.UUID,
     checklist_id: uuid.UUID,
     data: ChecklistUpdate,
+    actor: User | None = None,
 ) -> Checklist | None:
     result = await db.execute(
         select(Checklist).where(
@@ -150,12 +171,37 @@ async def update_checklist(
     if checklist is None:
         return None
 
+    old_status = checklist.status
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(checklist, field, value)
 
     await db.flush()
     await db.refresh(checklist)
+
+    new_status = checklist.status
+    if "status" in update_data and old_status != new_status:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "status_changed",
+            "checklist",
+            checklist.id,
+            checklist.title,
+            meta={"from": old_status, "to": new_status},
+        )
+    elif update_data:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "updated",
+            "checklist",
+            checklist.id,
+            checklist.title,
+        )
+
     return checklist
 
 
@@ -171,8 +217,35 @@ async def get_checklist(
     return result.scalar_one_or_none()
 
 
+async def delete_checklist(
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    checklist_id: uuid.UUID,
+    actor: User | None = None,
+) -> bool:
+    checklist = await get_checklist(db, wedding_id, checklist_id)
+    if checklist is None:
+        return False
+    title = checklist.title
+    await db.delete(checklist)
+    await db.flush()
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "deleted",
+        "checklist",
+        checklist_id,
+        title,
+    )
+    return True
+
+
 async def auto_generate_checklists(
-    db: AsyncSession, wedding_id: uuid.UUID, wedding_date: date | None
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    wedding_date: date | None,
+    actor: User | None = None,
 ) -> list[Checklist]:
     existing = await list_checklists(db, wedding_id)
     if existing:
@@ -192,11 +265,19 @@ async def auto_generate_checklists(
         await db.flush()
         for it in items:
             await db.refresh(it)
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "auto_generated",
+            "checklist",
+            None,
+            f"{len(items)} tugas",
+        )
         return items
     items = []
     for idx, tmpl in enumerate(CHECKLIST_TEMPLATE_12BULAN):
         due = wedding_date - timedelta(days=tmpl["offset_days"])
-        # Skip jika due di masa lalu jauh? tetap buat untuk histori
         item = Checklist(
             wedding_id=wedding_id,
             title=tmpl["title"],
@@ -209,4 +290,13 @@ async def auto_generate_checklists(
     await db.flush()
     for it in items:
         await db.refresh(it)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "auto_generated",
+        "checklist",
+        None,
+        f"{len(items)} tugas",
+    )
     return items

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.gift import Gift
 from app.models.guest import Guest
 from app.schemas.gift import GiftCreate, GiftUpdate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 def _to_dict(gift: Gift, guest_name: str | None) -> dict:
@@ -40,21 +47,33 @@ async def list_gifts(db: AsyncSession, wedding_id: uuid.UUID) -> list[dict]:
     ids = [g.guest_id for g in gifts if g.guest_id is not None]
     names: dict[uuid.UUID, str] = {}
     if ids:
-        nres = await db.execute(
-            select(Guest.id, Guest.name).where(Guest.id.in_(ids))
-        )
+        nres = await db.execute(select(Guest.id, Guest.name).where(Guest.id.in_(ids)))
         names = {row[0]: row[1] for row in nres.all()}
     return [_to_dict(g, names.get(g.guest_id)) for g in gifts]
 
 
 async def create_gift(
-    db: AsyncSession, wedding_id: uuid.UUID, data: GiftCreate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: GiftCreate,
+    actor: User | None = None,
 ) -> dict:
     gift = Gift(wedding_id=wedding_id, **data.model_dump())
     db.add(gift)
     await db.flush()
     await db.refresh(gift)
-    return _to_dict(gift, await _guest_name(db, gift.guest_id))
+    guest_name = await _guest_name(db, gift.guest_id)
+    label = f"Hadiah dari {guest_name or '-'}"
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "created",
+        "gift",
+        gift.id,
+        label,
+    )
+    return _to_dict(gift, guest_name)
 
 
 async def get_gift(
@@ -74,6 +93,7 @@ async def update_gift(
     wedding_id: uuid.UUID,
     gift_id: uuid.UUID,
     data: GiftUpdate,
+    actor: User | None = None,
 ) -> dict | None:
     res = await db.execute(
         select(Gift).where(Gift.id == gift_id, Gift.wedding_id == wedding_id)
@@ -85,17 +105,44 @@ async def update_gift(
         setattr(gift, field, value)
     await db.flush()
     await db.refresh(gift)
-    return _to_dict(gift, await _guest_name(db, gift.guest_id))
+    guest_name = await _guest_name(db, gift.guest_id)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "updated",
+        "gift",
+        gift.id,
+        f"Hadiah dari {guest_name or '-'}",
+    )
+    return _to_dict(gift, guest_name)
 
 
 async def delete_gift(
-    db: AsyncSession, wedding_id: uuid.UUID, gift_id: uuid.UUID
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    gift_id: uuid.UUID,
+    actor: User | None = None,
 ) -> bool:
-    gift = await get_gift(db, wedding_id, gift_id)
-    if gift is None:
-        return False
+    # Single query — avoid double fetch (get_gift + select). Also tenant-isolated.
     res = await db.execute(
         select(Gift).where(Gift.id == gift_id, Gift.wedding_id == wedding_id)
     )
-    await db.delete(res.scalar_one())
+    gift = res.scalar_one_or_none()
+    if gift is None:
+        return False
+    # Resolve guest_name before delete (ORM still attached)
+    guest_name = await _guest_name(db, gift.guest_id)
+    label = f"Hadiah dari {guest_name or '-'}"
+    await db.delete(gift)
+    await db.flush()
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "deleted",
+        "gift",
+        gift_id,
+        label,
+    )
     return True

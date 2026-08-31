@@ -33,9 +33,13 @@ async def update_cortage(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> CortageResponse:
-    item = await cortage_service.update_cortage(db, wedding_id, cortage_id, data)
+    item = await cortage_service.update_cortage(
+        db, wedding_id, cortage_id, data, actor=current_user
+    )
     if item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pengiring not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Pengiring not found"
+        )
     return item  # type: ignore[return-value]
 
 
@@ -49,5 +53,7 @@ async def get_cortage(
 ) -> CortageResponse:
     item = await cortage_service.get_cortage(db, wedding_id, cortage_id)
     if item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pengiring not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Pengiring not found"
+        )
     return item  # type: ignore[return-value]

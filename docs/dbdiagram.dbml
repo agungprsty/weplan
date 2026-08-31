@@ -1,7 +1,7 @@
 // Kanikah - Wedding Planner SaaS
 // Generated from alembic migrations + SQLAlchemy models
 // Copy-paste ke https://dbdiagram.io/d
-// Last update: 2026-08-29 (head = b2c3d4e5f6a7)
+// Last update: 2026-08-31 (head = f1e2d3c4b5a6)
 
 Project kanikah {
   database_type: 'PostgreSQL'
@@ -246,12 +246,31 @@ Table cortage_items {
 
 // Legacy name (sudah di-rename): bridesmaid_items -> cortage_items
 
+Table activities {
+  id uuid [pk, not null]
+  wedding_id uuid [not null, ref: > weddings.id]
+  actor_user_id uuid [ref: > users.id, note: 'nullable, SET NULL']
+  action varchar(30) [not null, note: 'created,updated,deleted,status_changed,auto_generated']
+  entity_type varchar(30) [not null, note: 'checklist,guest,vendor,transaction,gift,cortage,kua_document,mahar_item,wedding,savings_target,order']
+  entity_id uuid [note: 'nullable']
+  title varchar(255) [not null, note: 'snapshot judul entitas']
+  meta jsonb [note: 'diff status, meta aksi']
+  created_at datetime [not null, note: 'append-only']
+
+  Indexes {
+    wedding_id
+    actor_user_id
+    created_at
+  }
+}
+
 TableGroup core {
   weddings
   wedding_users
   plans
   orders
   users
+  activities
 }
 
 TableGroup wedding_content {

@@ -34,7 +34,9 @@ async def create_order(
     if pending_order is not None:
         raise HTTPException(status_code=400, detail="You already have a pending order")
 
-    order = await order_service.create_order(db, wedding_id, data, plan.price)
+    order = await order_service.create_order(
+        db, wedding_id, data, plan.price, actor=current_user
+    )
     return order
 
 

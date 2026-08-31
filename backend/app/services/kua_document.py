@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.kua_document import KuaDocument
 from app.schemas.kua_document import KuaDocumentUpdate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 # Template dasar 10 berkas KUA (gratis) — dipakai saat wedding dibuat
 KUA_TEMPLATE = [
@@ -100,7 +107,10 @@ async def seed_kua_documents(
 
 
 async def create_kua_document(
-    db: AsyncSession, wedding_id: uuid.UUID, data: dict
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: dict,
+    actor: User | None = None,
 ) -> KuaDocument:
     # Generate unique document_key for custom docs if not provided or collides
     key = data.get("document_key")
@@ -108,7 +118,10 @@ async def create_kua_document(
         # slug from title + short uuid to avoid collision across regions/jobs
         slug = data["title"].strip().lower().replace(" ", "_")[:30]
         # sanitize: keep alnum and underscore
-        slug = "".join(c if c.isalnum() or c == "_" else "_" for c in slug).strip("_") or "custom"
+        slug = (
+            "".join(c if c.isalnum() or c == "_" else "_" for c in slug).strip("_")
+            or "custom"
+        )
         key = f"custom_{slug}_{uuid.uuid4().hex[:6]}"
         data["document_key"] = key
     else:
@@ -120,11 +133,23 @@ async def create_kua_document(
     db.add(doc)
     await db.flush()
     await db.refresh(doc)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "created",
+        "kua_document",
+        doc.id,
+        doc.title,
+    )
     return doc
 
 
 async def delete_kua_document(
-    db: AsyncSession, wedding_id: uuid.UUID, doc_id: uuid.UUID
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    doc_id: uuid.UUID,
+    actor: User | None = None,
 ) -> bool:
     result = await db.execute(
         select(KuaDocument).where(
@@ -134,13 +159,27 @@ async def delete_kua_document(
     doc = result.scalar_one_or_none()
     if doc is None:
         return False
+    title = doc.title
     await db.delete(doc)
     await db.flush()
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "deleted",
+        "kua_document",
+        doc_id,
+        title,
+    )
     return True
 
 
 async def update_kua_document(
-    db: AsyncSession, wedding_id: uuid.UUID, doc_id: uuid.UUID, data: KuaDocumentUpdate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    doc_id: uuid.UUID,
+    data: KuaDocumentUpdate,
+    actor: User | None = None,
 ) -> KuaDocument | None:
     result = await db.execute(
         select(KuaDocument).where(
@@ -150,10 +189,35 @@ async def update_kua_document(
     doc = result.scalar_one_or_none()
     if doc is None:
         return None
-    for field, value in data.model_dump(exclude_unset=True).items():
+    old_status = doc.status
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(doc, field, value)
     await db.flush()
     await db.refresh(doc)
+
+    new_status = doc.status
+    if "status" in update_data and old_status != new_status:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "status_changed",
+            "kua_document",
+            doc.id,
+            doc.title,
+            meta={"from": old_status, "to": new_status},
+        )
+    elif update_data:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "updated",
+            "kua_document",
+            doc.id,
+            doc.title,
+        )
     return doc
 
 

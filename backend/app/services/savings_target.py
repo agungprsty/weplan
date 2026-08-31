@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.savings_target import SavingsTarget
 from app.models.transaction import Transaction
 from app.schemas.savings_target import SavingsTargetUpdate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 async def get_savings_target(
@@ -18,19 +25,41 @@ async def get_savings_target(
 
 
 async def upsert_savings_target(
-    db: AsyncSession, wedding_id: uuid.UUID, data: SavingsTargetUpdate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: SavingsTargetUpdate,
+    actor: User | None = None,
 ) -> SavingsTarget:
     target = await get_savings_target(db, wedding_id)
-    if target is None:
+    is_new = target is None
+    if is_new:
         target = SavingsTarget(wedding_id=wedding_id, **data.model_dump())
         db.add(target)
         await db.flush()
         await db.refresh(target)
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "created",
+            "savings_target",
+            target.id,
+            "Target Dana",
+        )
         return target
     for k, v in data.model_dump(exclude_unset=True).items():
         setattr(target, k, v)
     await db.flush()
     await db.refresh(target)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "updated",
+        "savings_target",
+        target.id,
+        "Target Dana",
+    )
     return target
 
 

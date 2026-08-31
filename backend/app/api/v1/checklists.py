@@ -36,7 +36,9 @@ async def create_checklist(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> ChecklistResponse:
-    return await checklist_service.create_checklist(db, wedding_id, data)
+    return await checklist_service.create_checklist(
+        db, wedding_id, data, actor=current_user
+    )
 
 
 @router.patch("/{checklist_id}", response_model=ChecklistResponse)
@@ -49,7 +51,7 @@ async def update_checklist(
     db: AsyncSession = Depends(get_db),
 ) -> ChecklistResponse:
     checklist = await checklist_service.update_checklist(
-        db, wedding_id, checklist_id, data
+        db, wedding_id, checklist_id, data, actor=current_user
     )
     if checklist is None:
         raise HTTPException(
@@ -88,7 +90,7 @@ async def auto_generate(
     db: AsyncSession = Depends(get_db),
 ) -> list[ChecklistResponse]:
     return await checklist_service.auto_generate_checklists(
-        db, wedding_id, wedding.wedding_date
+        db, wedding_id, wedding.wedding_date, actor=current_user
     )
 
 
@@ -100,10 +102,11 @@ async def delete_checklist(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    checklist = await checklist_service.get_checklist(db, wedding_id, checklist_id)
-    if checklist is None:
+    ok = await checklist_service.delete_checklist(
+        db, wedding_id, checklist_id, actor=current_user
+    )
+    if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Checklist not found",
         )
-    await db.delete(checklist)

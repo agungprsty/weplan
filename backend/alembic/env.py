@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 from app.models import (  # noqa: F401  # noqa: F401
+    activity,
     checklist,
     cortage,
     guest,

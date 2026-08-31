@@ -52,7 +52,9 @@ async def create_mahar_item(
                     "message": f"Gratis hanya {FREE_MAHAR_LIMIT} item Mahar & Seserahan. Upgrade Premium 50k/6 bulan untuk unlimited + cicilan.",
                 },
             )
-    return await mahar_service.create_mahar_item(db, wedding_id, data)
+    return await mahar_service.create_mahar_item(
+        db, wedding_id, data, actor=current_user
+    )
 
 
 @router.patch("/{item_id}", response_model=MaharItemResponse)
@@ -64,7 +66,9 @@ async def update_mahar_item(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> MaharItemResponse:
-    item = await mahar_service.update_mahar_item(db, wedding_id, item_id, data)
+    item = await mahar_service.update_mahar_item(
+        db, wedding_id, item_id, data, actor=current_user
+    )
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan"
@@ -96,7 +100,9 @@ async def delete_mahar_item(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    ok = await mahar_service.delete_mahar_item(db, wedding_id, item_id)
+    ok = await mahar_service.delete_mahar_item(
+        db, wedding_id, item_id, actor=current_user
+    )
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Item tidak ditemukan"

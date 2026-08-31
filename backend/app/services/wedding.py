@@ -1,4 +1,5 @@
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +9,10 @@ from app.models.user import User
 from app.models.wedding import Wedding
 from app.models.wedding_user import WeddingUser
 from app.schemas.wedding import WeddingCreate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    pass
 
 
 async def _attach_member_count(
@@ -83,6 +88,15 @@ async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> W
     await db.refresh(wedding)
     # New wedding always has 1 partner, no extra query needed
     wedding.member_count = 1
+    await log_activity(
+        db,
+        wedding.id,
+        user,
+        "created",
+        "wedding",
+        wedding.id,
+        wedding.title,
+    )
     return wedding
 
 
@@ -123,6 +137,16 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
     await db.refresh(wedding)
     # After pairing, wedding has 2 partners
     wedding.member_count = 2
+    await log_activity(
+        db,
+        wedding.id,
+        user,
+        "updated",
+        "wedding",
+        wedding.id,
+        wedding.title,
+        meta={"action": "pair_joined"},
+    )
     return wedding
 
 

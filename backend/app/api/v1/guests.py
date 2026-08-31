@@ -32,7 +32,7 @@ async def create_guest(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> GuestResponse:
-    return await guest_service.create_guest(db, wedding_id, data)
+    return await guest_service.create_guest(db, wedding_id, data, actor=current_user)
 
 
 @router.patch("/{guest_id}", response_model=GuestResponse)
@@ -44,7 +44,9 @@ async def update_guest(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> GuestResponse:
-    guest = await guest_service.update_guest(db, wedding_id, guest_id, data)
+    guest = await guest_service.update_guest(
+        db, wedding_id, guest_id, data, actor=current_user
+    )
     if guest is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -78,10 +80,9 @@ async def delete_guest(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    guest = await guest_service.get_guest(db, wedding_id, guest_id)
-    if guest is None:
+    ok = await guest_service.delete_guest(db, wedding_id, guest_id, actor=current_user)
+    if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Guest not found",
         )
-    await db.delete(guest)

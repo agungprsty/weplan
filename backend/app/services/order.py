@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,10 +10,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.order import Order
 from app.models.wedding import Wedding
 from app.schemas.order import OrderCreate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 async def create_order(
-    db: AsyncSession, wedding_id: uuid.UUID, data: OrderCreate, amount: int
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: OrderCreate,
+    amount: int,
+    actor: User | None = None,
 ) -> Order:
     order = Order(
         wedding_id=wedding_id,
@@ -24,6 +35,15 @@ async def create_order(
     db.add(order)
     await db.flush()
     await db.refresh(order)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "created",
+        "order",
+        order.id,
+        f"Order Premium Rp {amount:,}",
+    )
     return order
 
 

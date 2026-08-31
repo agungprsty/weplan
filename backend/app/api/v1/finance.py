@@ -103,7 +103,9 @@ async def put_savings_target(
     if "deadline" in update_dict:
         wedding.wedding_date = update_dict["deadline"]
     await db.flush()
-    target = await savings_service.upsert_savings_target(db, wedding_id, data)
+    target = await savings_service.upsert_savings_target(
+        db, wedding_id, data, actor=current_user
+    )
     total_masuk, total_keluar, current = await savings_service.compute_finance_stats(
         db, wedding_id
     )
@@ -155,7 +157,9 @@ async def create_transaction(
                 "message": "Fitur Cashflow hanya untuk Premium 50k/6 bulan. Gratis hanya input Target Dana.",
             },
         )
-    return await txn_service.create_transaction(db, wedding_id, data)
+    return await txn_service.create_transaction(
+        db, wedding_id, data, actor=current_user
+    )
 
 
 @router.patch("/transactions/{txn_id}", response_model=TransactionResponse)
@@ -172,7 +176,9 @@ async def update_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"code": "PREMIUM_REQUIRED", "message": "Premium required"},
         )
-    txn = await txn_service.update_transaction(db, wedding_id, txn_id, data)
+    txn = await txn_service.update_transaction(
+        db, wedding_id, txn_id, data, actor=current_user
+    )
     if txn is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaksi tidak ditemukan"
@@ -193,7 +199,9 @@ async def delete_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"code": "PREMIUM_REQUIRED", "message": "Premium required"},
         )
-    ok = await txn_service.delete_transaction(db, wedding_id, txn_id)
+    ok = await txn_service.delete_transaction(
+        db, wedding_id, txn_id, actor=current_user
+    )
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaksi tidak ditemukan"

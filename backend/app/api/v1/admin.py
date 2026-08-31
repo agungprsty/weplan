@@ -29,4 +29,16 @@ async def confirm_order(
     )
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
+    from app.services.activity import log_activity
+
+    await log_activity(
+        db,
+        order.wedding_id,
+        current_user,
+        "status_changed",
+        "order",
+        order.id,
+        f"Order Premium Rp {order.amount:,}",
+        meta={"from": "pending", "to": "confirmed"},
+    )
     return order

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -6,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.mahar_item import MaharItem
 from app.schemas.mahar_item import MaharItemCreate, MaharItemUpdate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 def _ensure_selesai_has_actual_cost(
@@ -46,18 +53,34 @@ async def count_mahar_items(db: AsyncSession, wedding_id: uuid.UUID) -> int:
 
 
 async def create_mahar_item(
-    db: AsyncSession, wedding_id: uuid.UUID, data: MaharItemCreate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    data: MaharItemCreate,
+    actor: User | None = None,
 ) -> MaharItem:
     _ensure_selesai_has_actual_cost(data.status, data.actual_cost)
     item = MaharItem(wedding_id=wedding_id, **data.model_dump())
     db.add(item)
     await db.flush()
     await db.refresh(item)
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "created",
+        "mahar_item",
+        item.id,
+        item.title,
+    )
     return item
 
 
 async def update_mahar_item(
-    db: AsyncSession, wedding_id: uuid.UUID, item_id: uuid.UUID, data: MaharItemUpdate
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    item_id: uuid.UUID,
+    data: MaharItemUpdate,
+    actor: User | None = None,
 ) -> MaharItem | None:
     result = await db.execute(
         select(MaharItem).where(
@@ -67,6 +90,7 @@ async def update_mahar_item(
     item = result.scalar_one_or_none()
     if item is None:
         return None
+    old_status = item.status
     payload = data.model_dump(exclude_unset=True)
     merged_status: str = payload.get("status", item.status)  # type: ignore[assignment]
     # actual_cost: None = explicit null, missing = keep existing
@@ -79,6 +103,29 @@ async def update_mahar_item(
         setattr(item, field, value)
     await db.flush()
     await db.refresh(item)
+
+    new_status = item.status
+    if "status" in payload and old_status != new_status:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "status_changed",
+            "mahar_item",
+            item.id,
+            item.title,
+            meta={"from": old_status, "to": new_status},
+        )
+    elif payload:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "updated",
+            "mahar_item",
+            item.id,
+            item.title,
+        )
     return item
 
 
@@ -94,11 +141,24 @@ async def get_mahar_item(
 
 
 async def delete_mahar_item(
-    db: AsyncSession, wedding_id: uuid.UUID, item_id: uuid.UUID
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    item_id: uuid.UUID,
+    actor: User | None = None,
 ) -> bool:
     item = await get_mahar_item(db, wedding_id, item_id)
     if item is None:
         return False
+    title = item.title
     await db.delete(item)
     await db.flush()
+    await log_activity(
+        db,
+        wedding_id,
+        actor,
+        "deleted",
+        "mahar_item",
+        item_id,
+        title,
+    )
     return True

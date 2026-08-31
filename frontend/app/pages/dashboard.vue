@@ -7,6 +7,9 @@ const guestStore = useGuestStore()
 const checklistStore = useChecklistStore()
 const financeStore = useFinanceStore()
 const vendorStore = useVendorStore()
+const activityStore = useActivityStore()
+const { format: relativeTime, formatWIB } = useRelativeTime()
+const { dotClass, formatActivity, activityStatusDetail } = useActivityDisplay()
 
 const copiedPairCode = ref(false)
 
@@ -24,7 +27,7 @@ async function copyPairCode() {
 const formattedDate = computed(() => {
   if (!wedding.value?.wedding_date) return null
   return new Date(wedding.value.wedding_date).toLocaleDateString('id-ID', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
   })
 })
 
@@ -40,9 +43,10 @@ const daysUntil = computed(() => {
   return d > 0 ? d : 0
 })
 
+const idrFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })
 function formatIDR(v: number | null | undefined): string {
   if (v == null) return 'Rp —'
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
+  return idrFmt.format(v)
 }
 
 // Real data computeds
@@ -56,6 +60,39 @@ const todoCount = computed(() => checklistStore.grouped.todo.length)
 const inProgressCount = computed(() => checklistStore.grouped.in_progress.length)
 const doneCount = computed(() => checklistStore.grouped.done.length)
 const checklistProgress = computed(() => checklistStore.progress)
+
+// Tugas Terbaru — memoize parsing tanggal untuk sort stabil O(n log n)
+const tugasTerbaru = computed(() => {
+  const pending = checklistStore.items.filter((c) => c.status !== 'done')
+  // parse sekali per item
+  const withTs = pending.map((c) => ({
+    item: c,
+    ts: c.due_date ? new Date(c.due_date).getTime() : Number.POSITIVE_INFINITY,
+  }))
+  withTs.sort((a, b) => {
+    if (a.ts !== b.ts) return a.ts - b.ts
+    return a.item.order - b.item.order
+  })
+  return withTs.slice(0, 5).map((x) => x.item)
+})
+
+function formatDueDate(d: string | null): string {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
+}
+
+const statusLabel: Record<string, string> = {
+  todo: 'Belum',
+  in_progress: 'Proses',
+  done: 'Selesai',
+}
+const statusClass: Record<string, string> = {
+  todo: 'bg-amber-50 text-amber-700',
+  in_progress: 'bg-sky-50 text-sky-700',
+  done: 'bg-emerald-50 text-emerald-700',
+}
+
+// activityDotClass & actionLabel now from useActivityDisplay (single source)
 
 // Badge — minimalist & relevan (data real)
 const anggaranBadgeText = computed(() => {
@@ -116,17 +153,25 @@ const topVendors = computed(() => {
   })
 })
 
-// Fetch real data when wedding available
+// Single-flight fetch — hindari dobel hit saat watch immediate + onMounted bersamaan
+let fetchedFor: string | null = null
+async function fetchDashboardData(weddingId: string) {
+  if (fetchedFor === weddingId) return
+  fetchedFor = weddingId
+  await Promise.allSettled([
+    guestStore.fetchGuests(),
+    checklistStore.fetchChecklists(),
+    financeStore.fetchTarget(),
+    financeStore.fetchTransactions(),
+    vendorStore.fetchVendors(),
+    activityStore.fetchActivities(),
+  ])
+}
+
 watch(
   () => weddingStore.wedding?.id,
   (id) => {
-    if (id) {
-      guestStore.fetchGuests()
-      checklistStore.fetchChecklists()
-      financeStore.fetchTarget()
-      financeStore.fetchTransactions()
-      vendorStore.fetchVendors()
-    }
+    if (id) void fetchDashboardData(id)
   },
   { immediate: true },
 )
@@ -134,6 +179,9 @@ watch(
 onMounted(async () => {
   // paksa refresh wedding agar member_count (deteksi pasangan join) selalu fresh
   try { await weddingStore.fetchWedding() } catch {}
+  // fetchDashboardData akan auto-trigger via watch; fallback jika wedding sudah ada tapi watch belum fire
+  const id = weddingStore.wedding?.id
+  if (id) void fetchDashboardData(id)
 })
 </script>
 
@@ -253,7 +301,6 @@ onMounted(async () => {
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Pair Code & Workspace</p>
-              <h3 class="mt-2 font-serif text-lg font-bold text-slate-900">{{ wedding?.title }}</h3>
               <p class="mt-1 text-sm text-slate-500">{{ isPaired ? 'Kode pair tidak perlu ditampilkan lagi. Kalian sudah berkolaborasi di workspace yang sama.' : 'Bagikan kode ke pasangan agar bisa join workspace yang sama. Kode tidak kedaluwarsa.' }}</p>
             </div>
           </div>
@@ -264,7 +311,6 @@ onMounted(async () => {
               </span>
               <div>
                 <p class="text-sm font-semibold text-emerald-900">Pasangan sudah bergabung</p>
-                <p class="text-xs text-emerald-700">{{ wedding?.partner1_name }} & {{ wedding?.partner2_name }} · workspace terhubung</p>
               </div>
             </div>
           </div>
@@ -283,10 +329,9 @@ onMounted(async () => {
               <a href="#" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" @click.prevent>Undang Pasangan</a>
             </div>
           </div>
-          <div class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+          <div class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div class="rounded-lg bg-slate-50 px-3 py-3"><p class="text-xs text-slate-500">Pasangan</p><p class="mt-1 font-medium text-slate-900">{{ wedding?.partner1_name }} & {{ wedding?.partner2_name }}</p></div>
             <div class="rounded-lg bg-slate-50 px-3 py-3"><p class="text-xs text-slate-500">Tanggal</p><p class="mt-1 font-medium text-slate-900">{{ formattedDate ?? 'Belum ditentukan' }}</p></div>
-            <div class="rounded-lg bg-slate-50 px-3 py-3"><p class="text-xs text-slate-500">Anggaran</p><p class="mt-1 font-medium text-slate-900">{{ formattedBudget ?? 'Rp —' }}</p></div>
           </div>
         </div>
       </div>
@@ -332,17 +377,23 @@ onMounted(async () => {
               <h3 class="font-serif text-base font-bold text-slate-900">Tugas Terbaru</h3>
               <NuxtLink to="/checklists" class="text-sm font-medium text-slate-500 hover:text-slate-900">Lihat semua</NuxtLink>
             </div>
-            <div class="flex-1 overflow-x-auto">
+           <div v-if="checklistStore.loading" class="flex flex-1 items-center justify-center py-8 text-sm text-slate-400">Memuat...</div>
+            <div v-else-if="tugasTerbaru.length === 0" class="flex flex-1 flex-col items-center justify-center py-8 text-center">
+              <p class="text-sm font-medium text-slate-600">Belum ada tugas mendesak</p>
+              <p class="mt-1 text-xs text-slate-400">Tugas dengan deadline terdekat akan tampil di sini.</p>
+            </div>
+            <div v-else class="flex-1 overflow-x-auto">
               <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-                  <tr><th class="px-5 py-3 font-medium">Tugas</th><th class="px-5 py-3 font-medium">Penanggung</th><th class="px-5 py-3 font-medium">Tanggal</th><th class="px-5 py-3 font-medium">Status</th><th class="px-5 py-3 font-medium text-right">Biaya</th></tr>
+                  <tr><th class="px-5 py-3 font-medium">Tugas</th><th class="px-5 py-3 font-medium">Kategori</th><th class="px-5 py-3 font-medium">Deadline</th><th class="px-5 py-3 font-medium">Status</th></tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Survei Venue</span><span class="ml-2 rounded bg-slate-900 px-1.5 py-0.5 text-[11px] font-medium text-white">#01</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-rose-100 text-xs font-bold text-rose-700">AP</span> Ani & Pasangan</span></td><td class="px-5 py-3.5 text-slate-500">18 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.490.000</td></tr>
-                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Fitting Baju</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#02</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">WO</span> WO Pelangi</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">Dikirim</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 580.000</td></tr>
-                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Kirim Undangan</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#03</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">KL</span> Keluarga</span></td><td class="px-5 py-3.5 text-slate-500">17 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 8.200.000</td></tr>
-                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Pesan Katering</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#04</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">KT</span> Katering Sari</span></td><td class="px-5 py-3.5 text-slate-500">16 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">Refund</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 240.000</td></tr>
-                  <tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5"><span class="font-medium text-slate-900">Booking Fotografer</span><span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">#05</span></td><td class="px-5 py-3.5"><span class="inline-flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs font-bold">IN</span> Fotografer</span></td><td class="px-5 py-3.5 text-slate-500">15 Jun</td><td class="px-5 py-3.5"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Selesai</span></td><td class="px-5 py-3.5 text-right font-medium">Rp 1.120.000</td></tr>
+                  <tr v-for="t in tugasTerbaru" :key="t.id" class="hover:bg-slate-50/60">
+                    <td class="px-5 py-3.5"><span class="font-medium text-slate-900">{{ t.title }}</span></td>
+                    <td class="px-5 py-3.5"><span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">{{ t.category }}</span></td>
+                    <td class="px-5 py-3.5 text-slate-500">{{ formatDueDate(t.due_date) }}</td>
+                    <td class="px-5 py-3.5"><span class="rounded-full px-2.5 py-1 text-xs font-medium" :class="statusClass[t.status] ?? 'bg-slate-100 text-slate-600'">{{ statusLabel[t.status] ?? t.status }}</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -357,27 +408,34 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Card Aktifitas — premium gated, sama tinggi dengan Tugas -->
+      <!-- Card Aktivitas — gratis, real data -->
       <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-        <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex h-full flex-col" :class="!isPremium ? 'pointer-events-none select-none opacity-40 blur-[2px]' : ''">
+        <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-2">
             <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Aktivitas Terbaru</p>
-            <ul class="mt-4 flex-1 space-y-3 text-sm">
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span><span class="flex-1"><span class="font-medium text-slate-900">Tugas dicentang</span> <span class="text-slate-500">Survei venue</span><br><span class="text-xs text-slate-400">2 menit lalu</span></span></li>
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-400"></span><span class="flex-1"><span class="font-medium">Pembayaran DP</span> <span class="text-slate-500">Rp 2.410.000</span><br><span class="text-xs text-slate-400">9 menit lalu</span></span></li>
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-400"></span><span class="flex-1"><span class="font-medium">Peringatan stok</span> <span class="text-slate-500">Souvenir kurang 4</span><br><span class="text-xs text-slate-400">22 menit lalu</span></span></li>
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose-400"></span><span class="flex-1"><span class="font-medium">Refund</span> <span class="text-slate-500">#QC-7802</span><br><span class="text-xs text-slate-400">41 menit lalu</span></span></li>
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-400"></span><span class="flex-1"><span class="font-medium">Tamu baru</span> <span class="text-slate-500">Globex konfirmasi</span><br><span class="text-xs text-slate-400">1 jam lalu</span></span></li>
-              <li class="flex gap-3"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-400"></span><span class="flex-1"><span class="font-medium">Tamu baru</span> <span class="text-slate-500">Globex konfirmasi</span><br><span class="text-xs text-slate-400">1 jam lalu</span></span></li>
-            </ul>
+            <NuxtLink to="/activities" class="shrink-0 text-xs font-medium text-slate-500 hover:text-slate-900">Lihat semua →</NuxtLink>
           </div>
-          <div v-if="!isPremium" class="absolute inset-0 flex flex-col items-center justify-center bg-white/75 p-5 text-center backdrop-blur-[2px]">
-            <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-amber-100">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill="currentColor" stroke="none" /></svg>
-            </span>
-            <p class="mt-3 text-sm font-semibold text-slate-900">Aktivitas Terkunci</p>
-            <p class="mt-1 max-w-[24ch] text-xs leading-relaxed text-slate-600"><NuxtLink to="/upgrade" class="text-rose-600">Upgrade ke Premium</NuxtLink> untuk melihat aktivitas terbaru.</p>
+          <div v-if="activityStore.loading" class="mt-4 flex flex-1 items-center justify-center py-8 text-sm text-slate-400">Memuat...</div>
+          <div v-else-if="activityStore.items.length === 0" class="mt-4 flex flex-1 flex-col items-center justify-center py-8 text-center">
+            <p class="text-sm font-medium text-slate-600">Belum ada aktivitas</p>
+            <p class="mt-1 text-xs text-slate-400">Aktivitas workspace akan tercatat di sini.</p>
           </div>
+          <ul v-else class="mt-4 flex-1 space-y-3 overflow-y-auto text-sm">
+            <li v-for="a in activityStore.items.slice(0, 6)" :key="a.id" class="flex gap-3">
+              <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" :class="dotClass(a.action)"></span>
+              <span class="flex-1 min-w-0">
+                <p class="leading-snug">
+                  <span class="font-medium text-slate-900"><span v-if="a.actor_name" class="capitalize">{{ a.actor_name }}</span> {{ formatActivity(a as never) }}</span>
+                </p>
+                <p v-if="activityStatusDetail(a as never)" class="mt-0.5 text-xs font-medium text-amber-700">
+                  {{ activityStatusDetail(a as never) }}
+                </p>
+                <p class="mt-0.5 text-xs text-slate-400" :title="formatWIB(a.created_at)">
+                  {{ relativeTime(a.created_at) }}
+                </p>
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

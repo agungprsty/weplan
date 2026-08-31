@@ -70,6 +70,7 @@ async def get_my_wedding(
 async def update_wedding(
     wedding_id: uuid.UUID,
     data: WeddingUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> WeddingResponse:
@@ -89,7 +90,9 @@ async def update_wedding(
     from app.models.wedding_user import WeddingUser
 
     result = await db.execute(
-        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding.id)
+        select(Wedding)
+        .options(selectinload(Wedding.plan))
+        .where(Wedding.id == wedding.id)
     )
     wedding = result.scalar_one()
     # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)
@@ -100,4 +103,16 @@ async def update_wedding(
         .where(WeddingUser.wedding_id == wedding.id)
     )
     wedding.member_count = int(cnt or 0)
+    from app.services.activity import log_activity
+
+    if update_data:
+        await log_activity(
+            db,
+            wedding.id,
+            current_user,
+            "updated",
+            "wedding",
+            wedding.id,
+            wedding.title,
+        )
     return wedding  # type: ignore[return-value]

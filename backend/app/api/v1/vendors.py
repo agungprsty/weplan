@@ -49,7 +49,7 @@ async def create_vendor(
                 "message": "Fitur Vendor hanya untuk Paket Premium 50k/6 bulan. Silakan upgrade.",
             },
         )
-    return await vendor_service.create_vendor(db, wedding_id, data)
+    return await vendor_service.create_vendor(db, wedding_id, data, actor=current_user)
 
 
 @router.patch("/{vendor_id}", response_model=VendorResponse)
@@ -61,7 +61,9 @@ async def update_vendor(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> VendorResponse:
-    vendor = await vendor_service.update_vendor(db, wedding_id, vendor_id, data)
+    vendor = await vendor_service.update_vendor(
+        db, wedding_id, vendor_id, data, actor=current_user
+    )
     if vendor is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
@@ -93,7 +95,9 @@ async def delete_vendor(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    ok = await vendor_service.delete_vendor(db, wedding_id, vendor_id)
+    ok = await vendor_service.delete_vendor(
+        db, wedding_id, vendor_id, actor=current_user
+    )
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"

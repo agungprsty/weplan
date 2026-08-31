@@ -32,7 +32,7 @@ async def create_gift(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    return await gift_service.create_gift(db, wedding_id, data)
+    return await gift_service.create_gift(db, wedding_id, data, actor=current_user)
 
 
 @router.get("/{gift_id}", response_model=GiftResponse)
@@ -61,7 +61,9 @@ async def update_gift(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    gift = await gift_service.update_gift(db, wedding_id, gift_id, data)
+    gift = await gift_service.update_gift(
+        db, wedding_id, gift_id, data, actor=current_user
+    )
     if gift is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -78,7 +80,9 @@ async def delete_gift(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    deleted = await gift_service.delete_gift(db, wedding_id, gift_id)
+    deleted = await gift_service.delete_gift(
+        db, wedding_id, gift_id, actor=current_user
+    )
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

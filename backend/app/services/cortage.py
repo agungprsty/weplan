@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,16 +11,22 @@ from app.models.cortage import CortageItem
 from app.models.guest import Guest
 from app.models.transaction import Transaction
 from app.schemas.cortage import CortageUpdate
+from app.services.activity import log_activity
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
+
+_ROLE_LABELS: dict[str, str] = {
+    "groomsman": "Groomsman",
+    "family_groom": "Keluarga Mempelai Pria",
+    "family_bride": "Keluarga Mempelai Wanita",
+    "bridesmaid": "Bridesmaid",
+}
 
 
 def _role_label(category: str | None) -> str:
-    if category == "groomsman":
-        return "Groomsman"
-    if category == "family_groom":
-        return "Keluarga Mempelai Pria"
-    if category == "family_bride":
-        return "Keluarga Mempelai Wanita"
-    return "Bridesmaid"
+    return _ROLE_LABELS.get(category or "", "Bridesmaid")
 
 
 async def list_cortage(db: AsyncSession, wedding_id: uuid.UUID) -> list[dict]:
@@ -83,6 +92,7 @@ async def update_cortage(
     wedding_id: uuid.UUID,
     cortage_id: uuid.UUID,
     data: CortageUpdate,
+    actor: User | None = None,
 ) -> dict | None:
     res = await db.execute(
         select(CortageItem).where(
@@ -105,6 +115,52 @@ async def update_cortage(
     g = g_res.scalar_one_or_none()
     guest_name = g.name if g else ""
     guest_category = g.category if g else None
+
+    # activity: log each status field independently (fix elif bug — previously fitting change ignored when both changed)
+    title = f"{_role_label(guest_category)} - {guest_name}"
+    status_logged = False
+    if "payment_status" in payload and old_payment != item.payment_status:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "status_changed",
+            "cortage",
+            item.id,
+            title,
+            meta={
+                "field": "payment_status",
+                "from": old_payment,
+                "to": item.payment_status,
+            },
+        )
+        status_logged = True
+    if "fitting_status" in payload and old_fitting != item.fitting_status:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "status_changed",
+            "cortage",
+            item.id,
+            title,
+            meta={
+                "field": "fitting_status",
+                "from": old_fitting,
+                "to": item.fitting_status,
+            },
+        )
+        status_logged = True
+    if payload and not status_logged:
+        await log_activity(
+            db,
+            wedding_id,
+            actor,
+            "updated",
+            "cortage",
+            item.id,
+            title,
+        )
 
     is_payment_done = item.payment_status == "lunas" and old_payment != "lunas"
     is_fitting_done = item.fitting_status == "done" and old_fitting != "done"

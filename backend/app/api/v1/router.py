@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     admin,
+    analytics,
     auth,
     bridesmaids,
     checklists,
@@ -73,4 +74,9 @@ api_router.include_router(
     finance.router,
     prefix="/weddings/{wedding_id}",
     tags=["finance"],
+)
+api_router.include_router(
+    analytics.router,
+    prefix="/weddings/{wedding_id}",
+    tags=["analytics"],
 )

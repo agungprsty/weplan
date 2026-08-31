@@ -54,6 +54,7 @@ function closeSidebarOnMobile() {
 onMounted(() => {
   updateIsMobile()
   sidebarOpen.value = !isMobile.value
+  if (route.path.startsWith('/laporan')) reportsOpen.value = true
   window.addEventListener('resize', updateIsMobile)
   if (!weddingStore.fetched && auth.isAuthenticated) {
     weddingStore.fetchWedding().catch(() => {})
@@ -64,7 +65,8 @@ onBeforeUnmount(() => {
   if (typeof window !== 'undefined') window.removeEventListener('resize', updateIsMobile)
 })
 
-watch(() => route.path, () => {
+watch(() => route.path, (p) => {
+  if (p.startsWith('/laporan')) reportsOpen.value = true
   closeSidebarOnMobile()
   mobileSearchOpen.value = false
 })
@@ -289,9 +291,9 @@ function isActive(path: string) {
                   <svg v-if="sidebarOpen" class="ml-auto h-3.5 w-3.5 text-slate-400 transition-transform" :class="reportsOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
                 </button>
                 <ul v-show="reportsOpen && sidebarOpen" class="mt-1 space-y-0.5 border-l border-slate-100 pl-4 ml-3">
-                  <li><a href="#" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click.prevent>Anggaran</a></li>
-                  <li><a href="#" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click.prevent>Kehadiran Tamu</a></li>
-                  <li><a href="#" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click.prevent>Progress</a></li>
+                  <li><NuxtLink to="/laporan/anggaran" class="block rounded-md px-2.5 py-1.5 text-sm" :class="isActive('/laporan/anggaran') ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'" @click="closeSidebarOnMobile">Anggaran</NuxtLink></li>
+                  <li><NuxtLink to="/laporan/tamu" class="block rounded-md px-2.5 py-1.5 text-sm" :class="isActive('/laporan/tamu') ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'" @click="closeSidebarOnMobile">Kehadiran Tamu</NuxtLink></li>
+                  <li><NuxtLink to="/laporan/progress" class="block rounded-md px-2.5 py-1.5 text-sm" :class="isActive('/laporan/progress') ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'" @click="closeSidebarOnMobile">Progress</NuxtLink></li>
                 </ul>
               </li>
             </ul>

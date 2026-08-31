@@ -153,21 +153,6 @@ function isActive(path: string) {
               </li>
               <li>
                 <NuxtLink
-                  to="/activities"
-                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
-                  @click="closeSidebarOnMobile"
-                  :class="[
-                    isActive('/activities') ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
-                    !sidebarOpen ? 'lg:justify-center lg:px-2' : ''
-                  ]"
-                  :title="!sidebarOpen ? 'Aktivitas' : undefined"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 8a6 6 0 0 1 6 6c0 3.5-3 6.5-6 9-3-2.5-6-5.5-6-9a6 6 0 0 1 6-6z" /><path d="M12 8v6l4 2" /></svg>
-                  <span :class="!sidebarOpen ? 'lg:hidden' : ''">Aktivitas</span>
-                </NuxtLink>
-              </li>
-              <li>
-                <NuxtLink
                   to="/kua"
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium"
                   @click="closeSidebarOnMobile"

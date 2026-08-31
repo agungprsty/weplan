@@ -153,6 +153,48 @@ const topVendors = computed(() => {
   })
 })
 
+// Countdown pernikahan — WIB, card besar
+const nowTick = ref(Date.now())
+let countdownTimer: number | null = null
+onMounted(() => {
+  countdownTimer = window.setInterval(() => { nowTick.value = Date.now() }, 60_000)
+})
+onBeforeUnmount(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
+
+const weddingCountdown = computed(() => {
+  const raw = wedding.value?.wedding_date
+  if (!raw) return { state: 'no_date' as const }
+  let wDate: Date
+  if (raw.includes('T')) {
+    const hasTZ = /[zZ]$/.test(raw) || /[+-]\d{2}:?\d{2}$/.test(raw)
+    wDate = hasTZ ? new Date(raw) : new Date(raw + '+07:00')
+  } else {
+    wDate = new Date(raw + 'T00:00:00+07:00')
+  }
+  if (Number.isNaN(wDate.getTime())) return { state: 'no_date' as const }
+  // hitung selisih hari WIB
+  const diffMs = wDate.getTime() - nowTick.value
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays > 0) return { state: 'countdown' as const, days: diffDays, date: wDate }
+  if (diffDays === 0) return { state: 'today' as const, date: wDate }
+  return { state: 'passed' as const, daysOver: Math.abs(diffDays), date: wDate }
+})
+
+const countdownDateWIB = computed(() => {
+  if (!wedding.value?.wedding_date) return null
+  const raw = wedding.value.wedding_date
+  let d: Date
+  if (raw.includes('T')) {
+    const hasTZ = /[zZ]$/.test(raw) || /[+-]\d{2}:\d{2}$/.test(raw)
+    d = hasTZ ? new Date(raw) : new Date(raw + '+07:00')
+  } else {
+    d = new Date(raw + 'T00:00:00+07:00')
+  }
+  return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })
+})
+
 // Single-flight fetch — hindari dobel hit saat watch immediate + onMounted bersamaan
 let fetchedFor: string | null = null
 async function fetchDashboardData(weddingId: string) {
@@ -190,6 +232,79 @@ onMounted(async () => {
     <!-- Page header -->
     <div class="mb-6">
       <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Welcome back, {{ auth.user?.name?.split(' ')[0] ?? 'Steven' }}!</h1>
+    </div>
+
+    <!-- Countdown Pernikahan — card besar -->
+    <div class="mb-6">
+      <!-- No date -->
+      <div v-if="weddingCountdown.state === 'no_date'" class="relative overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm sm:p-8">
+        <div class="mx-auto max-w-2xl">
+          <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Hitung Mundur Pernikahan</p>
+          <h2 class="mt-2 font-serif text-2xl font-bold text-slate-900 sm:text-3xl">Tentukan Tanggal Pernikahan</h2>
+          <p class="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-500">Atur tanggal akad di pengaturan agar hitung mundur dan timeline persiapan bisa kami sesuaikan untuk kamu dan pasangan.</p>
+          <NuxtLink to="/settings" class="mt-4 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800">Atur tanggal →</NuxtLink>
+        </div>
+      </div>
+
+      <!-- Countdown -->
+      <div v-else-if="weddingCountdown.state === 'countdown'" class="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-6 shadow-sm sm:p-8">
+        <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-rose-100/60 blur-2xl" />
+        <div class="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-amber-100/60 blur-2xl" />
+        <div class="relative flex flex-col items-center text-center">
+          <p class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 shadow-sm ring-1 ring-rose-100">Menuju Hari Bahagia · WIB</p>
+          <h2 class="mt-3 font-serif text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <span v-if="wedding?.partner1_name && wedding?.partner2_name">{{ wedding.partner1_name }} & {{ wedding.partner2_name }}</span>
+            <span v-else>{{ wedding?.title ?? 'Pernikahan' }}</span>
+          </h2>
+          <p class="mt-1 text-sm text-slate-500">{{ countdownDateWIB }} · {{ weddingCountdown.days }} hari lagi</p>
+          <div class="mt-6 flex items-baseline gap-2">
+            <span class="font-serif text-6xl font-bold tracking-tight text-slate-900 sm:text-7xl">{{ weddingCountdown.days }}</span>
+            <span class="text-lg font-medium text-slate-600">hari</span>
+          </div>
+          <p class="mt-2 text-sm font-medium text-slate-700">Semangat persiapannya! ✨</p>
+          <div class="mt-5 flex flex-wrap justify-center gap-2 text-xs">
+            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">Tamu: {{ guestTotal }}</span>
+            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">Tugas: {{ doneCount }}/{{ totalTasks }} selesai</span>
+            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">{{ formattedDate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today -->
+      <div v-else-if="weddingCountdown.state === 'today'" class="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-6 text-center shadow-sm sm:p-10">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-100/40 to-transparent" />
+        <div class="relative">
+          <p class="mx-auto inline-flex h-14 w-14 place-items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-6-4.5-6-9a6 6 0 0 1 12 0c0 4.5-6 9-6 9z" /><path d="M12 9v6" /></svg>
+          </p>
+          <h2 class="mt-4 font-serif text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Hari Ini Harinya! 🎉</h2>
+          <p class="mt-2 text-sm font-medium text-emerald-800">{{ countdownDateWIB }} — Selamat menempuh hidup baru!</p>
+          <p class="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+            <span v-if="wedding?.partner1_name && wedding?.partner2_name">{{ wedding.partner1_name }} & {{ wedding.partner2_name }}</span>
+            <span v-else>Pasangan berbahagia</span> — semoga menjadi keluarga sakinah, mawaddah, warahmah.
+          </p>
+          <p class="mt-4 text-xs font-semibold uppercase tracking-widest text-emerald-700">Semoga lancar akad & resepsinya</p>
+        </div>
+      </div>
+
+      <!-- Passed -->
+      <div v-else-if="weddingCountdown.state === 'passed'" class="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-center shadow-sm sm:p-10">
+        <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div class="relative">
+          <p class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-200 ring-1 ring-white/20">Alhamdulillah</p>
+          <h2 class="mt-3 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">Selamat! 🤍</h2>
+          <p class="mt-2 text-sm font-medium text-amber-100">Pernikahan telah berlangsung pada {{ countdownDateWIB }}</p>
+          <p class="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
+            <span v-if="wedding?.partner1_name && wedding?.partner2_name">{{ wedding.partner1_name }} & {{ wedding.partner2_name }}</span>
+            <span v-else>Pasangan berbahagia</span> — semoga menjadi keluarga sakinah, mawaddah, warahmah, dan penuh kebahagiaan.
+          </p>
+          <p class="mt-3 text-xs text-slate-400">{{ weddingCountdown.daysOver }} hari yang lalu · Terima kasih telah menggunakan Kanikah</p>
+          <div class="mt-5 flex flex-wrap justify-center gap-2">
+            <NuxtLink to="/laporan/progress" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50">Lihat progress →</NuxtLink>
+            <NuxtLink to="/guests" class="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/20 hover:bg-white/20">Kelola tamu</NuxtLink>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Grid 12 -->

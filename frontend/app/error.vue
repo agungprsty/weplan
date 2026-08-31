@@ -39,11 +39,11 @@ function reload() {
 
 useHead({
   title: computed(() => {
-    if (code.value === 403) return '403 — Akses Ditolak | WePlan'
-    if (code.value === 404) return '404 — Halaman Tidak Ditemukan | WePlan'
-    if (code.value === 500) return '500 — Gangguan Server | WePlan'
-    if (code.value === 503) return '503 — Pemeliharaan | WePlan'
-    return `${status.value} — Terjadi Kesalahan | WePlan`
+    if (code.value === 403) return '403 — Akses Ditolak | Kanikah'
+    if (code.value === 404) return '404 — Halaman Tidak Ditemukan | Kanikah'
+    if (code.value === 500) return '500 — Gangguan Server | Kanikah'
+    if (code.value === 503) return '503 — Pemeliharaan | Kanikah'
+    return `${status.value} — Terjadi Kesalahan | Kanikah`
   })
 })
 </script>

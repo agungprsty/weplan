@@ -29,14 +29,14 @@ const configMap: Record<number, { title: string; description: string; icon: stri
   },
   500: {
     title: 'Terjadi Gangguan Server',
-    description: 'Yah, server kami sedang bermasalah. Tim WePlan sudah mendapat laporan dan sedang memperbaikinya. Coba muat ulang beberapa saat lagi.',
+    description: 'Yah, server kami sedang bermasalah. Tim Kanikah sudah mendapat laporan dan sedang memperbaikinya. Coba muat ulang beberapa saat lagi.',
     icon: 'server',
     accent: 'from-slate-700 to-slate-900',
     blob: 'bg-slate-200/60'
   },
   503: {
     title: 'Sedang Dalam Pemeliharaan',
-    description: 'WePlan sedang menjalani pemeliharaan terjadwal untuk meningkatkan pengalamanmu. Kami akan kembali segera — biasanya hanya beberapa menit. Terima kasih atas kesabaranmu.',
+    description: 'Kanikah sedang menjalani pemeliharaan terjadwal untuk meningkatkan pengalamanmu. Kami akan kembali segera — biasanya hanya beberapa menit. Terima kasih atas kesabaranmu.',
     icon: 'wrench',
     accent: 'from-amber-400 to-orange-500',
     blob: 'bg-amber-200/30'
@@ -65,7 +65,7 @@ const displayDesc = computed(() => props.description ?? cfg.value.description)
     <!-- minimal header -->
     <header class="relative z-10 flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
       <NuxtLink to="/" class="font-serif text-xl font-bold tracking-tight text-slate-900">
-        We<span class="text-rose-600">Plan.</span>
+        <span class="text-slate-900">Ka</span><span class="text-rose-600">nikah</span>
       </NuxtLink>
       <NuxtLink to="/" class="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 sm:inline-flex">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M15 18l-6-6 6-6" /></svg>
@@ -168,7 +168,7 @@ const displayDesc = computed(() => props.description ?? cfg.value.description)
             </NuxtLink>
           </div>
           <p v-if="code === 403" class="mt-3 text-xs leading-relaxed text-slate-500">
-            Jika kamu merasa ini kesalahan, minta pasanganmu untuk mengirim ulang undangan workspace atau <NuxtLink to="/contact" class="font-medium text-rose-600 underline-offset-2 hover:underline">hubungi tim WePlan</NuxtLink>.
+            Jika kamu merasa ini kesalahan, minta pasanganmu untuk mengirim ulang undangan workspace atau <NuxtLink to="/contact" class="font-medium text-rose-600 underline-offset-2 hover:underline">hubungi tim Kanikah</NuxtLink>.
           </p>
         </div>
 
@@ -187,7 +187,7 @@ const displayDesc = computed(() => props.description ?? cfg.value.description)
     </main>
 
     <footer class="relative z-10 border-t border-slate-100 bg-white/60 px-4 py-4 text-center backdrop-blur-sm sm:px-6">
-      <p class="text-xs text-slate-400">&copy; 2026 WePlan. Dibuat dengan cinta untuk hari bahagiamu.</p>
+      <p class="text-xs text-slate-400">&copy; 2026 Kanikah. Dibuat dengan cinta untuk hari bahagiamu.</p>
     </footer>
   </div>
 </template>

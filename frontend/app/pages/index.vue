@@ -10,7 +10,7 @@ function handlePricingSelect(pkg: typeof packages[number]) {
     if (authStore.isAuthenticated) {
       router.push('/upgrade')
     } else {
-      if (import.meta.client) localStorage.setItem('weplan_pending_plan', 'premium')
+      if (import.meta.client) localStorage.setItem('kanikah_pending_plan', 'premium')
       router.push('/register?plan=premium')
     }
   } else {
@@ -205,7 +205,7 @@ const packages = [
       <div class="max-w-6xl mx-auto px-6">
         <div class="text-center mb-16 max-w-3xl mx-auto">
           <h2 class="font-serif text-3xl md:text-5xl font-bold text-slate-900 mb-6">Satu tempat untuk mewujudkan segalanya.</h2>
-          <p class="text-slate-600 text-lg">Tinggalkan buku catatan fisik dan spreadsheet yang membingungkan. WePlan menyatukan seluruh elemen persiapan pernikahan Anda.</p>
+          <p class="text-slate-600 text-lg">Tinggalkan buku catatan fisik dan spreadsheet yang membingungkan. Kanikah menyatukan seluruh elemen persiapan pernikahan Anda.</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
@@ -281,7 +281,7 @@ const packages = [
       <div class="max-w-6xl mx-auto px-6">
         <div class="text-center mb-16">
           <h2 class="font-serif text-3xl md:text-5xl font-bold text-slate-900 mb-4">Kisah Bebas Stres.</h2>
-          <p class="text-slate-600 text-lg">Dengarkan pengalaman mereka yang telah menggunakan WePlan.</p>
+          <p class="text-slate-600 text-lg">Dengarkan pengalaman mereka yang telah menggunakan Kanikah.</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-6">

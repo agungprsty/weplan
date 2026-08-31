@@ -18,7 +18,7 @@ const registeredNotice = computed(() => route.query.registered === '1')
 
 onMounted(() => {
   const plan = route.query.plan as string | undefined
-  if (plan && import.meta.client) localStorage.setItem('weplan_pending_plan', plan)
+  if (plan && import.meta.client) localStorage.setItem('kanikah_pending_plan', plan)
 })
 
 function validate(): string | null {
@@ -59,7 +59,7 @@ async function onSubmit() {
     await weddingStore.fetchWedding()
 
     // jika ada intent premium dari landing pricing, prioritas ke checkout flow
-    const pendingPlan = import.meta.client ? localStorage.getItem('weplan_pending_plan') : null
+    const pendingPlan = import.meta.client ? localStorage.getItem('kanikah_pending_plan') : null
     const planParam = route.query.plan as string | undefined
     if ((pendingPlan === 'premium' || planParam === 'premium') && weddingStore.hasWedding) {
       await router.push('/checkout')

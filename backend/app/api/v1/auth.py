@@ -161,8 +161,8 @@ async def forgot_password(
         # best-praktis minimal: log ke console, ganti dengan kirim email via SMTP di prod
         import logging
 
-        logging.getLogger("weplan.auth").info("Reset link for %s: %s", user.email, reset_link)
-        print(f"[weplan] Reset link for {user.email}: {reset_link}")
+        logging.getLogger("kanikah.auth").info("Reset link for %s: %s", user.email, reset_link)
+        print(f"[kanikah] Reset link for {user.email}: {reset_link}")
     return {"message": "Jika email terdaftar, link reset telah dikirim"}
 
 

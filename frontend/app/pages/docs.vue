@@ -1,9 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'Panduan Lengkap | WePlan' })
+useHead({ title: 'Panduan Lengkap | Kanikah' })
 
 const sections = [
-  { id: 'apa-itu', label: 'Apa itu WePlan?' },
+  { id: 'apa-itu', label: 'Apa itu Kanikah?' },
   { id: 'daftar', label: '1. Daftar & Masuk' },
   { id: 'wedding', label: '2. Buat & Gabung Wedding' },
   { id: 'dashboard', label: '3. Dashboard' },
@@ -29,8 +29,8 @@ const sections = [
         <span class="h-2 w-2 rounded-full bg-rose-500"></span>
         Panduan untuk Calon Pengantin
       </span>
-      <h1 class="mt-4 font-serif text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Panduan Lengkap WePlan</h1>
-      <p class="mt-4 text-lg leading-relaxed text-slate-600">WePlan membantu kamu dan pasangan merencanakan pernikahan <strong>tanpa ribet, tanpa miskomunikasi</strong>. Semua ada di satu tempat: daftar tamu, budget, vendor, tugas, sampai berkas KUA.</p>
+      <h1 class="mt-4 font-serif text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Panduan Lengkap Kanikah</h1>
+      <p class="mt-4 text-lg leading-relaxed text-slate-600">Kanikah membantu kamu dan pasangan merencanakan pernikahan <strong>tanpa ribet, tanpa miskomunikasi</strong>. Semua ada di satu tempat: daftar tamu, budget, vendor, tugas, sampai berkas KUA.</p>
       <p class="mt-3 text-sm text-slate-500">Terakhir diperbarui: 30 Agustus 2026 · Bacaan 10 menit · Cocok untuk yang baru pertama kali merencanakan pernikahan.</p>
       <div class="mt-6 flex flex-wrap gap-3">
         <NuxtLink to="/register" class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-rose-600">Mulai Gratis</NuxtLink>
@@ -61,7 +61,7 @@ const sections = [
           <!-- Apa itu -->
           <section id="apa-itu" class="scroll-mt-24">
             <div class="rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
-              <h2 class="font-serif text-2xl font-bold text-slate-900">Apa itu WePlan?</h2>
+              <h2 class="font-serif text-2xl font-bold text-slate-900">Apa itu Kanikah?</h2>
               <p class="mt-3 leading-relaxed text-slate-600">Bayangkan satu buku catatan digital yang bisa dibuka berdua. Kamu atur tamu, pasangan cek vendor, semua langsung sinkron — tidak perlu kirim screenshot atau Excel bolak-balik.</p>
               <div class="mt-6 grid gap-4 sm:grid-cols-3">
                 <div class="rounded-xl bg-slate-50 p-4">
@@ -116,7 +116,7 @@ const sections = [
 
             <div class="mt-4 flex items-start gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
               <span class="text-emerald-600 mt-0.5">✓</span>
-              <p class="text-sm text-emerald-800"><strong>Tidak perlu re-login terus.</strong> Sesi masuk 30 menit, tapi akan diperpanjang otomatis sampai 7 hari selama kamu masih buka WePlan. Hanya perlu login lagi jika 7 hari tidak dibuka.</p>
+              <p class="text-sm text-emerald-800"><strong>Tidak perlu re-login terus.</strong> Sesi masuk 30 menit, tapi akan diperpanjang otomatis sampai 7 hari selama kamu masih buka Kanikah. Hanya perlu login lagi jika 7 hari tidak dibuka.</p>
             </div>
           </section>
 
@@ -243,7 +243,7 @@ const sections = [
           <!-- Checklist -->
           <section id="checklist" class="scroll-mt-24">
             <h2 class="font-serif text-2xl font-bold text-slate-900">9. Checklist 12 Bulan — Tugas Otomatis</h2>
-            <p class="mt-3 text-slate-600">Ini yang bikin WePlan spesial. Begitu kamu isi <strong>tanggal pernikahan</strong> di Pengaturan, sistem otomatis buatkan <strong>30 tugas</strong> untuk 12 bulan ke depan.</p>
+            <p class="mt-3 text-slate-600">Ini yang bikin Kanikah spesial. Begitu kamu isi <strong>tanggal pernikahan</strong> di Pengaturan, sistem otomatis buatkan <strong>30 tugas</strong> untuk 12 bulan ke depan.</p>
             <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p class="text-sm font-semibold text-slate-900">Contoh:</p>
               <p class="text-xs text-slate-600 mt-1">Jika nikah 31 Agustus 2026 → tugas “Booking Gedung” otomatis jatuh tempo H-90 (sekitar 1 Juni), “Cetak Undangan” H-30, dll. Kamu tinggal geser status: Belum → Proses → Selesai.</p>
@@ -300,7 +300,7 @@ const sections = [
 
           <!-- Tips -->
           <section id="tips" class="scroll-mt-24">
-            <h2 class="font-serif text-2xl font-bold text-slate-900">13. Tips Sukses Pakai WePlan</h2>
+            <h2 class="font-serif text-2xl font-bold text-slate-900">13. Tips Sukses Pakai Kanikah</h2>
             <ol class="mt-3 space-y-2 text-sm text-slate-600 list-decimal list-inside">
               <li><strong>Isi tanggal & budget dulu</strong> — biar semua otomatis.</li>
               <li><strong>Bagi tugas</strong> — satu urus tamu, satu urus vendor. Cek Dashboard tiap minggu.</li>

@@ -75,7 +75,7 @@ function goCheckout() {
   }
   if (premiumPlan.value) {
     // simpan intent
-    if (import.meta.client) localStorage.setItem('weplan_pending_plan', premiumPlan.value.id)
+    if (import.meta.client) localStorage.setItem('kanikah_pending_plan', premiumPlan.value.id)
     router.push(`/checkout?plan=${premiumPlan.value.id}`)
   } else {
     router.push('/checkout')

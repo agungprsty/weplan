@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
-useHead({ title: '500 — Gangguan Server | WePlan' })
+useHead({ title: '500 — Gangguan Server | Kanikah' })
 </script>
 
 <template>

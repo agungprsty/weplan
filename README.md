@@ -80,7 +80,7 @@ Frontend available at: `http://localhost:3000`
 ## Project Structure
 
 ```
-weplan/
+kanikah/
 ├── frontend/                 # Nuxt.js application
 │   ├── app/
 │   │   ├── pages/           # File-based routing

@@ -1,6 +1,6 @@
 ---
 name: mobile-first
-description: Panduan wajib Mobile-First untuk setiap halaman baru di WePlan - layout, tabel, form, filter dan interaksi harus didesain untuk HP terlebih dahulu
+description: Panduan wajib Mobile-First untuk setiap halaman baru di Kanikah - layout, tabel, form, filter dan interaksi harus didesain untuk HP terlebih dahulu
 license: MIT
 metadata:
   framework: nuxt.js
@@ -101,7 +101,7 @@ metadata:
 
 ## Contoh Referensi
 
-Lihat `frontend/app/pages/guests.vue` (refactor 2026-08-29) dan `frontend/app/pages/pengiring.vue` sebagai canonical mobile-first di WePlan.
+Lihat `frontend/app/pages/guests.vue` (refactor 2026-08-29) dan `frontend/app/pages/pengiring.vue` sebagai canonical mobile-first di Kanikah.
 
 ## Larangan
 

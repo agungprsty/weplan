@@ -11,7 +11,7 @@ const authStore = useAuthStore()
 // persist plan intent dari pricing (landing) jika ada
 onMounted(() => {
   const plan = route.query.plan as string | undefined
-  if (plan && import.meta.client) localStorage.setItem('weplan_pending_plan', plan)
+  if (plan && import.meta.client) localStorage.setItem('kanikah_pending_plan', plan)
 })
 
 const name = ref('')
@@ -75,7 +75,7 @@ async function onSubmit() {
 
     // simpan intent plan untuk flow pricing → register → onboarding → checkout
     const planParam = route.query.plan as string | undefined
-    if (planParam && import.meta.client) localStorage.setItem('weplan_pending_plan', planParam)
+    if (planParam && import.meta.client) localStorage.setItem('kanikah_pending_plan', planParam)
 
     await router.push('/onboarding')
   } catch (err) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
-useHead({ title: 'Kebijakan Privasi | WePlan' })
+useHead({ title: 'Kebijakan Privasi | Kanikah' })
 </script>
 
 <template>
@@ -12,7 +12,7 @@ useHead({ title: 'Kebijakan Privasi | WePlan' })
     <div class="prose-custom space-y-8 text-slate-600 leading-relaxed">
       <section>
         <h2 class="font-serif text-xl font-bold text-slate-900 mb-3">1. Pengantar</h2>
-        <p>WePlan ("kami") menghargai privasi Anda. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda saat menggunakan platform kami.</p>
+        <p>Kanikah ("kami") menghargai privasi Anda. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda saat menggunakan platform kami.</p>
       </section>
 
       <section>
@@ -29,7 +29,7 @@ useHead({ title: 'Kebijakan Privasi | WePlan' })
         <h2 class="font-serif text-xl font-bold text-slate-900 mb-3">3. Penggunaan Informasi</h2>
         <p>Data Anda digunakan untuk:</p>
         <ul class="list-disc list-inside mt-2 space-y-1">
-          <li>Menyediakan dan memelihara layanan WePlan</li>
+          <li>Menyediakan dan memelihara layanan Kanikah</li>
           <li>Memfasilitasi kolaborasi antar pasangan dalam workspace</li>
           <li>Mengirim notifikasi terkait aktivitas workspace Anda</li>
           <li>Meningkatkan kualitas layanan dan pengalaman pengguna</li>
@@ -41,7 +41,7 @@ useHead({ title: 'Kebijakan Privasi | WePlan' })
         <p>Kami tidak menjual atau menyewakan data pribadi Anda kepada pihak ketiga. Data Anda hanya dapat diakses oleh:</p>
         <ul class="list-disc list-inside mt-2 space-y-1">
           <li>Pasangan yang tergabung dalam workspace pernikahan yang sama</li>
-          <li>Tim WePlan yang membutuhkan akses untuk pemeliharaan teknis (dengan kerahasiaan yang ketat)</li>
+          <li>Tim Kanikah yang membutuhkan akses untuk pemeliharaan teknis (dengan kerahasiaan yang ketat)</li>
         </ul>
       </section>
 

@@ -14,7 +14,7 @@ const successOrder = ref<{ id: string; amount: number } | null>(null)
 
 const premiumPlan = ref<{ id: string; name: string; slug: string; price: number; duration_months: number; max_guests: number } | null>(null)
 const notes = ref('')
-const waNumber = '628123456789' // nomor WA admin WePlan — ditampilkan di placeholder & helper
+const waNumber = '628123456789' // nomor WA admin Kanikah — ditampilkan di placeholder & helper
 
 const isNotesValid = computed(() => notes.value.trim().length >= 10)
 
@@ -37,7 +37,7 @@ async function load() {
     await weddingStore.fetchWedding()
     if (!weddingStore.wedding) {
       // belum punya wedding → harus onboarding dulu
-      if (import.meta.client) localStorage.setItem('weplan_pending_plan', planIdFromQuery.value || 'premium')
+      if (import.meta.client) localStorage.setItem('kanikah_pending_plan', planIdFromQuery.value || 'premium')
       router.replace('/onboarding')
       return
     }
@@ -97,7 +97,7 @@ async function submitOrder() {
     // jika backend mengembalikan order, simpan
     const created = order as any
     successOrder.value = { id: created.id, amount: created.amount ?? premiumPlan.value.price }
-    if (import.meta.client) localStorage.removeItem('weplan_pending_plan')
+    if (import.meta.client) localStorage.removeItem('kanikah_pending_plan')
   } catch (err: any) {
     const detail = err?.data?.detail as string | undefined
     if (detail && detail.toLowerCase().includes('pending')) {
@@ -120,7 +120,7 @@ async function submitOrder() {
 
 function waLink(orderId: string) {
   const w = wedding.value
-  const text = encodeURIComponent(`Halo WePlan, saya sudah transfer QRIS untuk Premium.\n\nOrder ID: ${orderId}\nWedding: ${w?.title ?? ''} (${w?.pair_code ?? ''})\nNominal: ${premiumPlan.value ? formatIDR(premiumPlan.value.price) : 'Rp 150.000'}\n\nMohon verifikasi. Terima kasih!`)
+  const text = encodeURIComponent(`Halo Kanikah, saya sudah transfer QRIS untuk Premium.\n\nOrder ID: ${orderId}\nWedding: ${w?.title ?? ''} (${w?.pair_code ?? ''})\nNominal: ${premiumPlan.value ? formatIDR(premiumPlan.value.price) : 'Rp 150.000'}\n\nMohon verifikasi. Terima kasih!`)
   return `https://wa.me/${waNumber}?text=${text}`
 }
 
@@ -216,7 +216,7 @@ watch(() => route.query.plan, load)
             <ul class="mt-4 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-slate-600">
               <li>Buka aplikasi e-wallet / m-banking.</li>
               <li>Pilih <span class="font-medium">Scan QRIS</span> & arahkan ke kode di atas.</li>
-              <li>Pastikan nominal {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }} & nama merchant WePlan benar.</li>
+              <li>Pastikan nominal {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }} & nama merchant Kanikah benar.</li>
               <li>Bayar, simpan bukti, lalu tulis catatan di form.</li>
             </ul>
           </div>

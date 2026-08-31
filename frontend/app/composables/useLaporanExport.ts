@@ -25,7 +25,7 @@ type ProgressData = {
 function formatIDR(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
 }
-function fileSafeName(s: string) { return s.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 40) || 'WePlan' }
+function fileSafeName(s: string) { return s.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 40) || 'Kanikah' }
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
@@ -40,7 +40,7 @@ async function exportToPdf(title: string, filename: string, head: string[], body
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(title, 14, 16)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100)
-  doc.text(`Diekspor ${new Date().toLocaleString('id-ID')} • WePlan`, 14, 22)
+  doc.text(`Diekspor ${new Date().toLocaleString('id-ID')} • Kanikah`, 14, 22)
   autoTable(doc, {
     startY: 26,
     head: [head],
@@ -56,11 +56,11 @@ async function exportToPdf(title: string, filename: string, head: string[], body
 async function exportToExcel(title: string, filename: string, head: string[], body: (string|number)[][]) {
   const ExcelJS = await import('exceljs')
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'WePlan'; wb.created = new Date()
+  wb.creator = 'Kanikah'; wb.created = new Date()
   const ws = wb.addWorksheet(title.slice(0, 30))
   ws.addRow([title])
   ws.getRow(1).font = { bold: true, size: 13, color: { argb: 'FF0F172A' } }
-  ws.addRow([`Diekspor ${new Date().toLocaleString('id-ID')} • WePlan`])
+  ws.addRow([`Diekspor ${new Date().toLocaleString('id-ID')} • Kanikah`])
   ws.getRow(2).font = { size: 9, color: { argb: 'FF64748B' } }
   ws.addRow([])
   const headerRow = ws.addRow(head)
@@ -88,7 +88,7 @@ export function useLaporanExport() {
     const w = weddingStore.wedding as unknown as { plan_expires_at?: string | null } | null
     return Boolean(w?.plan_expires_at && new Date(w.plan_expires_at).getTime() > Date.now())
   })
-  const weddingTitle = computed(() => weddingStore.wedding?.title ?? 'WePlan')
+  const weddingTitle = computed(() => weddingStore.wedding?.title ?? 'Kanikah')
 
   function guardPremium(): boolean {
     if (!isPremium.value) {

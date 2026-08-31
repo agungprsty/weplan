@@ -31,17 +31,17 @@ export const useAuthStore = defineStore('auth', () => {
     if (nextRefresh) refreshToken.value = nextRefresh
     user.value = nextUser
     if (import.meta.client) {
-      localStorage.setItem('weplan_token', nextToken)
-      if (nextRefresh) localStorage.setItem('weplan_refresh', nextRefresh)
-      localStorage.setItem('weplan_user', JSON.stringify(nextUser))
+      localStorage.setItem('kanikah_token', nextToken)
+      if (nextRefresh) localStorage.setItem('kanikah_refresh', nextRefresh)
+      localStorage.setItem('kanikah_user', JSON.stringify(nextUser))
     }
   }
 
   function restore() {
     if (!import.meta.client) return
-    const storedToken = localStorage.getItem('weplan_token')
-    const storedRefresh = localStorage.getItem('weplan_refresh')
-    const storedUser = localStorage.getItem('weplan_user')
+    const storedToken = localStorage.getItem('kanikah_token')
+    const storedRefresh = localStorage.getItem('kanikah_refresh')
+    const storedUser = localStorage.getItem('kanikah_user')
     if (storedToken) token.value = storedToken
     if (storedRefresh) refreshToken.value = storedRefresh
     if (storedUser) {
@@ -59,9 +59,9 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     refreshing = null
     if (import.meta.client) {
-      localStorage.removeItem('weplan_token')
-      localStorage.removeItem('weplan_refresh')
-      localStorage.removeItem('weplan_user')
+      localStorage.removeItem('kanikah_token')
+      localStorage.removeItem('kanikah_refresh')
+      localStorage.removeItem('kanikah_user')
     }
   }
 
@@ -78,8 +78,8 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = res.access_token
         refreshToken.value = res.refresh_token
         if (import.meta.client) {
-          localStorage.setItem('weplan_token', res.access_token)
-          localStorage.setItem('weplan_refresh', res.refresh_token)
+          localStorage.setItem('kanikah_token', res.access_token)
+          localStorage.setItem('kanikah_refresh', res.refresh_token)
         }
         return res.access_token
       } catch {
@@ -104,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
         name: (u as { name?: string; full_name?: string }).name ?? (u as { full_name?: string }).full_name ?? '',
       }
       user.value = normalized
-      if (import.meta.client) localStorage.setItem('weplan_user', JSON.stringify(normalized))
+      if (import.meta.client) localStorage.setItem('kanikah_user', JSON.stringify(normalized))
       return normalized
     } catch {
       return null
@@ -124,7 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
       name: raw.full_name ?? raw.name ?? data.full_name ?? user.value?.name ?? '',
     }
     user.value = normalized
-    if (import.meta.client) localStorage.setItem('weplan_user', JSON.stringify(normalized))
+    if (import.meta.client) localStorage.setItem('kanikah_user', JSON.stringify(normalized))
     return normalized
   }
 

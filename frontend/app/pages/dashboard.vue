@@ -382,6 +382,6 @@ onMounted(async () => {
       </div>
     </div>
 
-    <p class="mt-8 text-center text-xs text-slate-400">© 2026 WePlan. Dibuat dengan cinta. · Terinspirasi oleh Meridian by Stisla.</p>
+    <p class="mt-8 text-center text-xs text-slate-400">© 2026 Kanikah. Dibuat dengan cinta. · Terinspirasi oleh Meridian by Stisla.</p>
   </div>
 </template>

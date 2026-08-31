@@ -110,7 +110,7 @@ function isActive(path: string) {
               <path d="M12 1.5l3.4 7.1L12 12 8.6 8.6z" />
             </svg>
           </span>
-          We<span class="text-rose-600">Plan.</span>
+          <span class="text-slate-900">Ka<span class="text-rose-600">nikah</span></span>
         </NuxtLink>
         <NuxtLink v-else to="/" class="hidden lg:grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white" @click="closeSidebarOnMobile">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -340,7 +340,7 @@ function isActive(path: string) {
           <li><button class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-600 hover:bg-slate-50" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''" :title="!sidebarOpen ? 'Keluar' : undefined" @click="handleLogout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg><span :class="!sidebarOpen ? 'lg:hidden' : ''">Keluar</span></button></li>
         </ul>
         <div class="mt-3 border-t border-slate-100 pt-3" :class="!sidebarOpen ? 'lg:hidden' : ''">
-          <p class="px-2 text-xs leading-relaxed text-slate-400">Designed by WePlan · Dibuat dengan cinta.</p>
+          <p class="px-2 text-xs leading-relaxed text-slate-400">Designed by Kanikah · Dibuat dengan cinta.</p>
         </div>
       </div>
     </aside>

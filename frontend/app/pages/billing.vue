@@ -56,7 +56,7 @@ onMounted(load)
 
 const waNumber = '628123456789'
 function waLinkFor(order: any) {
-  const text = encodeURIComponent(`Halo WePlan, mau tanya status pesanan ${order.id} status ${order.status}. Wedding ${wedding.value?.title ?? ''} (${wedding.value?.pair_code ?? ''})`)
+  const text = encodeURIComponent(`Halo Kanikah, mau tanya status pesanan ${order.id} status ${order.status}. Wedding ${wedding.value?.title ?? ''} (${wedding.value?.pair_code ?? ''})`)
   return `https://wa.me/${waNumber}?text=${text}`
 }
 </script>

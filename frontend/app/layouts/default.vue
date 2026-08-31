@@ -19,7 +19,7 @@ function handleLogout() {
     <nav class="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-rose-100 transition-all">
       <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         <NuxtLink to="/" class="font-serif font-bold text-2xl tracking-tight text-slate-900">
-          We<span class="text-rose-600">Plan.</span>
+          <span class="text-slate-900">Ka</span><span class="text-rose-600">nikah</span>
         </NuxtLink>
         <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
           <template v-if="route.path === '/'">
@@ -80,7 +80,7 @@ function handleLogout() {
     <footer class="bg-slate-900 py-12 border-t border-slate-800">
       <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
         <NuxtLink to="/" class="font-serif font-bold text-2xl tracking-tight text-white">
-          We<span class="text-rose-500">Plan.</span>
+          <span class="text-white">Ka</span><span class="text-rose-500">nikah</span>
         </NuxtLink>
         <div class="flex gap-6 text-sm text-slate-400">
           <NuxtLink to="/docs" class="hover:text-rose-400 transition">Dokumentasi</NuxtLink>
@@ -89,7 +89,7 @@ function handleLogout() {
           <NuxtLink to="/terms" class="hover:text-rose-400 transition">Syarat & Ketentuan</NuxtLink>
           <NuxtLink to="/contact" class="hover:text-rose-400 transition">Hubungi Kami</NuxtLink>
         </div>
-        <p class="text-sm text-slate-500">&copy; 2026 WePlan. Dibuat dengan cinta.</p>
+        <p class="text-sm text-slate-500">&copy; 2026 Kanikah. Dibuat dengan cinta.</p>
       </div>
     </footer>
   </div>

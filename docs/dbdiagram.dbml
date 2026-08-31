@@ -1,11 +1,11 @@
-// WePlan - Wedding Planner SaaS
+// Kanikah - Wedding Planner SaaS
 // Generated from alembic migrations + SQLAlchemy models
 // Copy-paste ke https://dbdiagram.io/d
 // Last update: 2026-08-29 (head = b2c3d4e5f6a7)
 
-Project weplan {
+Project kanikah {
   database_type: 'PostgreSQL'
-  note: 'WePlan DB - multi-tenant via weddings.id, row-level isolation via wedding_id'
+  note: 'Kanikah DB - multi-tenant via weddings.id, row-level isolation via wedding_id'
 }
 
 Table plans {

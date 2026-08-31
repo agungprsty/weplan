@@ -1,6 +1,6 @@
-# WePlan Design System
+# Kanikah Design System
 
-Design patterns dan style guide untuk semua halaman WePlan (index.html, dashboard.html, dll).
+Design patterns dan style guide untuk semua halaman Kanikah (index.html, dashboard.html, dll).
 
 ## CDN & Font
 

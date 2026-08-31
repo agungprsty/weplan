@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
-useHead({ title: '404 — Halaman Tidak Ditemukan | WePlan' })
+useHead({ title: '404 — Halaman Tidak Ditemukan | Kanikah' })
 </script>
 
 <template>

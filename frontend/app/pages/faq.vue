@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'FAQ — Pertanyaan Sering Ditanya | WePlan' })
+useHead({ title: 'FAQ — Pertanyaan Sering Ditanya | Kanikah' })
 
 const search = ref('')
 const openId = ref<string | null>('1')
@@ -10,10 +10,10 @@ type Faq = { id: string; q: string; a: string; cat: Cat; popular?: boolean }
 
 const faqs: Faq[] = [
   // Umum
-  { id: '1', cat: 'Umum', q: 'Apa itu WePlan dan kenapa harus pakai?', a: 'WePlan itu buku nikah digital untuk berdua. Daripada Excel bolak-balik atau grup WA berantakan, semua ada di satu tempat: daftar tamu, budget, vendor, tugas, sampai berkas KUA. Kamu atur tamu, pasangan cek vendor — langsung sinkron tanpa screenshot.', popular: true },
-  { id: '2', cat: 'Umum', q: 'Apakah harus download aplikasi?', a: 'Tidak. WePlan jalan langsung di browser HP atau laptop. Buka weplan.id, login, langsung pakai. Bisa juga “Add to Home Screen” biar seperti aplikasi.' },
+  { id: '1', cat: 'Umum', q: 'Apa itu Kanikah dan kenapa harus pakai?', a: 'Kanikah itu buku nikah digital untuk berdua. Daripada Excel bolak-balik atau grup WA berantakan, semua ada di satu tempat: daftar tamu, budget, vendor, tugas, sampai berkas KUA. Kamu atur tamu, pasangan cek vendor — langsung sinkron tanpa screenshot.', popular: true },
+  { id: '2', cat: 'Umum', q: 'Apakah harus download aplikasi?', a: 'Tidak. Kanikah jalan langsung di browser HP atau laptop. Buka kanikah.id, login, langsung pakai. Bisa juga “Add to Home Screen” biar seperti aplikasi.' },
   { id: '3', cat: 'Umum', q: 'Bisa dipakai untuk LDR?', a: 'Bisa banget. Justru dibuat untuk LDR. Satu wedding bisa dibuka 2 akun berbeda dari 2 HP berbeda. Semua perubahan muncul real-time untuk pasangan.' },
-  { id: '4', cat: 'Umum', q: 'Apakah WePlan hanya untuk pernikahan adat tertentu?', a: 'Tidak. Mau nikah adat Jawa, Sunda, Minang, Batak, internasional, intimate, atau besar-besaran — semua template bisa disesuaikan. Mahar & seserahan juga fleksibel.' },
+  { id: '4', cat: 'Umum', q: 'Apakah Kanikah hanya untuk pernikahan adat tertentu?', a: 'Tidak. Mau nikah adat Jawa, Sunda, Minang, Batak, internasional, intimate, atau besar-besaran — semua template bisa disesuaikan. Mahar & seserahan juga fleksibel.' },
 
   // Akun
   { id: '5', cat: 'Akun', q: 'Bagaimana cara daftar?', a: 'Buka halaman register → isi nama, email, kata sandi minimal 8 huruf + angka (contoh: Cinta2026) → klik Daftar. Kamu akan otomatis masuk dan diarahkan ke onboarding. Atau klik “Masuk dengan Google” biar 1 klik jadi.', popular: true },
@@ -22,7 +22,7 @@ const faqs: Faq[] = [
   { id: '8', cat: 'Akun', q: 'Ganti email atau nama?', a: 'Buka halaman profile → ubah nama/email → Simpan. Jika email sudah dipakai orang lain, akan muncul “Email sudah digunakan”.' },
   { id: '9', cat: 'Akun', q: 'Kode pasangan hilang?', a: 'Buka Dashboard atau Pengaturan → bagian Pair Code → Salin. Kode 8 huruf besar+angka, tidak pernah kedaluwarsa. Kirim via WA ke pasangan, pasangan pilih “Join Wedding Pasangan” di onboarding.' },
   { id: '10', cat: 'Akun', q: 'Bisa hapus akun?', a: 'Bisa. Hubungi kami via halaman contact untuk penghapusan permanen. Data wedding akan tetap ada untuk pasangan, tapi akun kamu akan dihapus.' },
-  { id: '11', cat: 'Akun', q: 'Kok sering diminta login lagi?', a: 'Sesi masuk 30 menit, tapi akan diperpanjang otomatis sampai 7 hari selama kamu masih buka WePlan di background. Hanya perlu login lagi jika 7 hari tidak dibuka sama sekali atau kamu logout manual.' },
+  { id: '11', cat: 'Akun', q: 'Kok sering diminta login lagi?', a: 'Sesi masuk 30 menit, tapi akan diperpanjang otomatis sampai 7 hari selama kamu masih buka Kanikah di background. Hanya perlu login lagi jika 7 hari tidak dibuka sama sekali atau kamu logout manual.' },
 
   // Tamu
   { id: '12', cat: 'Tamu', q: 'Berapa tamu gratis?', a: 'Paket Gratis maksimal 50 tamu. Premium tidak terbatas (9999). Cocok untuk yang undangannya 300-500 orang.', popular: true },
@@ -34,7 +34,7 @@ const faqs: Faq[] = [
   // Vendor & Mahar
   { id: '17', cat: 'Vendor', q: 'Bagaimana catat vendor & DP?', a: 'Menu Vendor (Premium) → isi nama, kategori (catering/dekor/foto...), kontak WA, total tagihan, DP, sudah dibayar, status (Belum Bayar/DP/Lunas). Otomatis masuk pengeluaran terbesar di Dashboard.', popular: true },
   { id: '18', cat: 'Vendor', q: 'Jika vendor batal, bagaimana?', a: 'Edit vendor → status jadi Batal atau hapus, lalu catat transaksi keluar/masuk di Keuangan untuk refund. Saldo akan otomatis menyesuaikan.' },
-  { id: '19', cat: 'Vendor', q: 'Apa bedanya Mahar, Seserahan, dan Hantaran?', a: 'Mahar = dari mempelai pria untuk wanita (wajib). Seserahan = parsel hadiah (CPP/CPW). Hantaran = istilah umum. Di WePlan ada 4 tab: Mahar, Seserahan Pihak Pria, Seserahan Pihak Wanita, Hantaran. Isi judul, jumlah, estimasi vs aktual.' },
+  { id: '19', cat: 'Vendor', q: 'Apa bedanya Mahar, Seserahan, dan Hantaran?', a: 'Mahar = dari mempelai pria untuk wanita (wajib). Seserahan = parsel hadiah (CPP/CPW). Hantaran = istilah umum. Di Kanikah ada 4 tab: Mahar, Seserahan Pihak Pria, Seserahan Pihak Wanita, Hantaran. Isi judul, jumlah, estimasi vs aktual.' },
   { id: '20', cat: 'Vendor', q: 'Harus isi semua mahar?', a: 'Tidak. Isi yang relevan saja. Pratinjau gratis 5 item, Premium baru bisa tambah tidak terbatas. Bisa di-link ke Keuangan kategori mahar.' },
 
   // Keuangan
@@ -52,7 +52,7 @@ const faqs: Faq[] = [
 
   // Keamanan
   { id: '30', cat: 'Keamanan', q: 'Apakah data saya aman?', a: 'Ya. Password di-hash Argon2, login pakai JWT 30m + refresh 7d, isolasi data per wedding_id (hanya kamu & pasangan bisa lihat), CORS dibatasi, link reset 15 menit sekali pakai.' },
-  { id: '31', cat: 'Keamanan', q: 'Siapa bisa lihat data wedding saya?', a: 'Hanya kamu dan pasangan yang join via Pair Code. Tim WePlan hanya akses teknis jika kamu lapor bug, dengan kerahasiaan ketat. Tidak dijual ke pihak ketiga.' },
+  { id: '31', cat: 'Keamanan', q: 'Siapa bisa lihat data wedding saya?', a: 'Hanya kamu dan pasangan yang join via Pair Code. Tim Kanikah hanya akses teknis jika kamu lapor bug, dengan kerahasiaan ketat. Tidak dijual ke pihak ketiga.' },
   { id: '32', cat: 'Keamanan', q: 'Bagaimana hapus data wedding?', a: 'Hubungi via halaman contact untuk hapus permanen. Atau edit di Pengaturan jika hanya mau ubah judul/tanggal/budget.' },
 ]
 
@@ -181,7 +181,7 @@ function catStyle(cat: Cat) {
           <div class="sticky top-24 space-y-4">
             <div class="rounded-2xl border border-slate-200 bg-white p-5">
               <p class="text-sm font-semibold text-slate-900">Butuh bantuan manusia?</p>
-              <p class="mt-1 text-xs leading-relaxed text-slate-500">Tim WePlan balas dalam 1x24 jam. Kami bantu setup wedding pertama kamu.</p>
+              <p class="mt-1 text-xs leading-relaxed text-slate-500">Tim Kanikah balas dalam 1x24 jam. Kami bantu setup wedding pertama kamu.</p>
               <div class="mt-4 space-y-2">
                 <NuxtLink to="/contact" class="flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-rose-600">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v12H4z"/><path d="M4 4l8 7 8-7"/></svg>

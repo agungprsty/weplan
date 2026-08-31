@@ -73,7 +73,7 @@ async function onCreateSubmit() {
       ...(weddingDate.value ? { wedding_date: weddingDate.value } : {}),
       ...(totalBudget.value ? { total_budget: parseInt(totalBudget.value) } : {})
     })
-    const pendingPlan = import.meta.client ? localStorage.getItem('weplan_pending_plan') : null
+    const pendingPlan = import.meta.client ? localStorage.getItem('kanikah_pending_plan') : null
     if (pendingPlan === 'premium') {
       await router.push('/checkout')
       return
@@ -101,7 +101,7 @@ async function onJoinSubmit() {
   submitting.value = true
   try {
     await weddingStore.pairWedding(pairCode.value.trim().toUpperCase())
-    const pendingPlan = import.meta.client ? localStorage.getItem('weplan_pending_plan') : null
+    const pendingPlan = import.meta.client ? localStorage.getItem('kanikah_pending_plan') : null
     if (pendingPlan === 'premium') {
       await router.push('/checkout')
       return
@@ -145,7 +145,7 @@ onMounted(async () => {
   <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
     <div class="w-full max-w-2xl">
       <div class="text-center mb-8 sm:mb-10">
-        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">Selamat datang di WePlan!</h1>
+        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">Selamat datang di Kanikah!</h1>
         <p class="mt-3 text-sm sm:text-base text-slate-600">
           Mulai merencanakan pernikahan impian kalian. Pilih langkah pertama di bawah.
         </p>

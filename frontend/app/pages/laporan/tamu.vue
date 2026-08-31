@@ -58,22 +58,16 @@ async function doExportExcel() { exporting.value='excel'; try{ await exporter.ex
           <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Laporan — Kehadiran Tamu</h1>
           <p class="mt-1 text-sm text-slate-500">RSVP funnel, sebaran sisi & kategori tamu.</p>
         </div>
-        <div class="flex gap-2 text-xs">
-          <NuxtLink to="/laporan/anggaran" class="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">Anggaran</NuxtLink>
-          <NuxtLink to="/laporan/tamu" class="rounded-full bg-slate-900 px-4 py-2 font-medium text-white">Tamu</NuxtLink>
-          <NuxtLink to="/laporan/progress" class="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">Progress</NuxtLink>
-        </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50" :disabled="loading || !data" @click="doExportPdf">
+        <button class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer disabled:opacity-50" :disabled="loading || !data" @click="doExportPdf">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H8"/><path d="M16 17H8"/><path d="M13 13h3"/></svg>
           {{ exporting==='pdf' ? 'Memproses...' : 'Export PDF' }}
         </button>
-        <button class="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50" :disabled="loading || !data" @click="doExportExcel">
+        <button class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer disabled:opacity-50" :disabled="loading || !data" @click="doExportExcel">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           {{ exporting==='excel' ? 'Memproses...' : 'Export Excel' }}
         </button>
-        <span v-if="!isPremium" class="self-center text-xs text-amber-600">Premium untuk export</span>
       </div>
     </div>
 

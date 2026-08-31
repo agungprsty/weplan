@@ -1,9 +1,10 @@
 export function useApi() {
   const config = useRuntimeConfig()
   const auth = useAuthStore()
+  const baseURL = config.public.apiBase as string
 
   return $fetch.create({
-    baseURL: config.public.apiBase,
+    baseURL,
     onRequest({ options }) {
       if (auth.token) {
         const headers = new Headers(options.headers as HeadersInit)

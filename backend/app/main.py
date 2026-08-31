@@ -30,9 +30,15 @@ if origins == ["*"]:
     allow_origin_regex = None
 else:
     allow_origins = origins
-    # juga izinkan localhost/127.0.0.1 dengan port berapa pun (http/https) selama dev,
-    # serta fallback regex luas untuk mencegah false CORS saat akses via LAN IP
-    allow_origin_regex = r"https?://(localhost|127\.0\.0\.1)(:\d+)?"
+    # juga izinkan localhost/127.0.0.1 + 0.0.0.0 + LAN private IP (172.16-31.x, 192.168.x, 10.x)
+    # dengan port berapa pun (http/https) — untuk dev via Network/QR code
+    allow_origin_regex = (
+        r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0"
+        r"|10\.\d+\.\d+\.\d+"
+        r"|192\.168\.\d+\.\d+"
+        r"|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+"
+        r")(:\d+)?"
+    )
 
 app.add_middleware(
     CORSMiddleware,

@@ -40,9 +40,17 @@ onMounted(async () => {
 })
 
 async function handleAutoGenerate() {
+  if (!weddingStore.wedding?.wedding_date) {
+    toast.error('Atur tanggal pernikahan di Pengaturan dulu agar jatuh tempo bisa dihitung dinamis')
+    return
+  }
+  if (checklistStore.items.length > 0) {
+    toast.info('Checklist sudah ada — tombol auto-generate disembunyikan')
+    return
+  }
   try {
     await checklistStore.autoGenerate()
-    toast.success('Template checklist berhasil digenerate')
+    toast.success('Template 12 bulan berhasil digenerate — jatuh tempo dihitung dari tanggal pernikahan')
   } catch {
     toast.error('Gagal generate checklist')
   }
@@ -180,7 +188,7 @@ const visibleTimelineGroups = computed(() => groupedTimeline.value.filter((g) =>
         <h1 class="font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Checklist & Timeline</h1>
       </div>
       <div class="flex gap-2">
-        <button class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm hover:bg-slate-50" @click="handleAutoGenerate">Auto-generate 12 bulan</button>
+        <button v-if="checklistStore.items.length === 0" class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm hover:bg-slate-50" @click="handleAutoGenerate">Auto-generate 12 bulan</button>
         <button class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800" @click="showForm = !showForm">Tambah Tugas</button>
       </div>
     </div>
@@ -246,7 +254,7 @@ const visibleTimelineGroups = computed(() => groupedTimeline.value.filter((g) =>
       <div v-else-if="filtered.length===0" class="p-10 text-center">
         <p class="text-sm font-medium text-slate-700">Belum ada tugas</p>
         <p class="mt-1 text-sm text-slate-500">Klik Auto-generate untuk template 12 bulan atau tambah tugas manual.</p>
-        <button class="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" @click="handleAutoGenerate">Generate 30 tugas</button>
+        <button v-if="checklistStore.items.length === 0" class="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" @click="handleAutoGenerate">Generate 30 tugas</button>
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-sm">

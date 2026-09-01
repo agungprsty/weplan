@@ -153,15 +153,19 @@ const topVendors = computed(() => {
   })
 })
 
-// Countdown pernikahan — WIB, card besar
+// Countdown pernikahan — WIB, presisi detik + animasi
 const nowTick = ref(Date.now())
 let countdownTimer: number | null = null
 onMounted(() => {
-  countdownTimer = window.setInterval(() => { nowTick.value = Date.now() }, 60_000)
+  countdownTimer = window.setInterval(() => { nowTick.value = Date.now() }, 1000)
 })
 onBeforeUnmount(() => {
   if (countdownTimer) clearInterval(countdownTimer)
 })
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
 
 const weddingCountdown = computed(() => {
   const raw = wedding.value?.wedding_date
@@ -174,10 +178,18 @@ const weddingCountdown = computed(() => {
     wDate = new Date(raw + 'T00:00:00+07:00')
   }
   if (Number.isNaN(wDate.getTime())) return { state: 'no_date' as const }
-  // hitung selisih hari WIB
   const diffMs = wDate.getTime() - nowTick.value
+  // jika masih di masa depan -> hitung H:J:M:D presisi detik
+  if (diffMs > 0) {
+    const totalSec = Math.floor(diffMs / 1000)
+    const days = Math.floor(totalSec / 86400)
+    const hours = Math.floor((totalSec % 86400) / 3600)
+    const minutes = Math.floor((totalSec % 3600) / 60)
+    const seconds = totalSec % 60
+    return { state: 'countdown' as const, days, hours, minutes, seconds, date: wDate }
+  }
+  // diffMs <= 0 : cek apakah masih hari H (ceil hari == 0)
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  if (diffDays > 0) return { state: 'countdown' as const, days: diffDays, date: wDate }
   if (diffDays === 0) return { state: 'today' as const, date: wDate }
   return { state: 'passed' as const, daysOver: Math.abs(diffDays), date: wDate }
 })
@@ -246,27 +258,70 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Countdown -->
+      <!-- Countdown — Hari • Jam • Menit • Detik dengan animasi -->
       <div v-else-if="weddingCountdown.state === 'countdown'" class="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-6 shadow-sm sm:p-8">
-        <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-rose-100/60 blur-2xl" />
-        <div class="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-amber-100/60 blur-2xl" />
+        <!-- decorative blobs with float animation -->
+        <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-rose-100/60 blur-2xl animate-float" />
+        <div class="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-amber-100/60 blur-2xl animate-float-delayed" />
+        <!-- subtle shimmer sweep -->
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
         <div class="relative flex flex-col items-center text-center">
-          <p class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 shadow-sm ring-1 ring-rose-100">Menuju Hari Bahagia · WIB</p>
+          <p class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 shadow-sm ring-1 ring-rose-100">
+            Menuju Hari Bahagia
+            <span class="hidden h-3 w-px bg-rose-200 sm:block"></span>
+            <span class="hidden font-normal normal-case tracking-normal text-slate-500 sm:inline">{{ countdownDateWIB }}</span>
+          </p>
           <h2 class="mt-3 font-serif text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             <span v-if="wedding?.partner1_name && wedding?.partner2_name">{{ wedding.partner1_name }} & {{ wedding.partner2_name }}</span>
             <span v-else>{{ wedding?.title ?? 'Pernikahan' }}</span>
           </h2>
-          <p class="mt-1 text-sm text-slate-500">{{ countdownDateWIB }} · {{ weddingCountdown.days }} hari lagi</p>
-          <div class="mt-6 flex items-baseline gap-2">
-            <span class="font-serif text-6xl font-bold tracking-tight text-slate-900 sm:text-7xl">{{ weddingCountdown.days }}</span>
-            <span class="text-lg font-medium text-slate-600">hari</span>
+          <p class="mt-1 text-xs text-slate-500 sm:hidden">{{ countdownDateWIB }}</p>
+
+          <!-- Grid Hari Jam Menit Detik -->
+          <div class="mt-6 grid w-full max-w-[560px] grid-cols-4 gap-2 sm:gap-3">
+            <!-- Hari -->
+            <div class="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+              <div class="absolute inset-0 bg-gradient-to-br from-rose-500/[0.06] to-transparent opacity-60" />
+              <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-200 to-transparent" />
+              <div class="relative flex flex-col items-center px-2 py-4 sm:px-3 sm:py-5">
+                <div :key="weddingCountdown.days" class="count-tick font-serif text-3xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-5xl">{{ pad2(weddingCountdown.days) }}</div>
+                <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Hari</div>
+              </div>
+            </div>
+            <!-- Jam -->
+            <div class="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+              <div class="absolute inset-0 bg-gradient-to-br from-amber-500/[0.06] to-transparent opacity-60" />
+              <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
+              <div class="relative flex flex-col items-center px-2 py-4 sm:px-3 sm:py-5">
+                <div :key="weddingCountdown.hours" class="count-tick font-serif text-3xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-5xl">{{ pad2(weddingCountdown.hours) }}</div>
+                <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Jam</div>
+              </div>
+            </div>
+            <!-- Menit -->
+            <div class="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+              <div class="absolute inset-0 bg-gradient-to-br from-sky-500/[0.06] to-transparent opacity-60" />
+              <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200 to-transparent" />
+              <div class="relative flex flex-col items-center px-2 py-4 sm:px-3 sm:py-5">
+                <div :key="weddingCountdown.minutes" class="count-tick font-serif text-3xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-5xl">{{ pad2(weddingCountdown.minutes) }}</div>
+                <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Menit</div>
+              </div>
+            </div>
+            <!-- Detik — pulse highlight -->
+            <div class="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-rose-200">
+              <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.07] to-transparent opacity-60" />
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-emerald-200/50 animate-pulse-soft" />
+              <div class="relative flex flex-col items-center px-2 py-4 sm:px-3 sm:py-5">
+                <div :key="weddingCountdown.seconds" class="count-tick-tick font-serif text-3xl font-bold tracking-tight tabular-nums sm:text-5xl">{{ pad2(weddingCountdown.seconds) }}</div>
+                <div class="mt-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">
+                  <span class="h-1 w-1 rounded-full animate-blink"></span> Detik
+                </div>
+              </div>
+            </div>
           </div>
-          <p class="mt-2 text-sm font-medium text-slate-700">Semangat persiapannya! ✨</p>
-          <div class="mt-5 flex flex-wrap justify-center gap-2 text-xs">
-            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">Tamu: {{ guestTotal }}</span>
-            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">Tugas: {{ doneCount }}/{{ totalTasks }} selesai</span>
-            <span class="rounded-full bg-white px-3 py-1 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">{{ formattedDate }}</span>
-          </div>
+
+          <p class="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 sm:text-sm">
+            Semangat persiapannya! Setiap detik sangat berarti, semoga selalu dimudahkan.
+          </p>
         </div>
       </div>
 
@@ -558,3 +613,55 @@ onMounted(async () => {
     <p class="mt-8 text-center text-xs text-slate-400">© 2026 Kanikah. Dibuat dengan cinta. · Terinspirasi oleh Meridian by Stisla.</p>
   </div>
 </template>
+
+<style scoped>
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  100% { transform: translateX(200%); }
+}
+@keyframes tick {
+  0% { transform: translateY(6px) scale(0.96); opacity: 0.6; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes tickPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.2; }
+}
+@keyframes pulseSoft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 7s ease-in-out infinite 1s;
+}
+.animate-shimmer {
+  animation: shimmer 3.5s ease-in-out infinite;
+}
+.animate-shimmer-bar {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+.animate-blink {
+  animation: blink 1s steps(1) infinite;
+}
+.animate-pulse-soft {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+.count-tick {
+  animation: tick 0.35s ease-out, tickPulse 0.6s ease-out;
+}
+.count-tick-tick {
+  animation: tick 0.25s ease-out, tickPulse 0.45s ease-out;
+}
+</style>

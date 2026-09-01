@@ -3,9 +3,108 @@ definePageMeta({ layout: 'default' })
 
 const authStore = useAuthStore()
 const router = useRouter()
+const api = useApi()
 
-function handlePricingSelect(pkg: typeof packages[number]) {
-  const isPremium = pkg.dark
+function formatIDR(n: number) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
+}
+function formatDuration(months: number) {
+  if (!months || months === 0) return ''
+  if (months % 12 === 0) return `${months / 12} Tahun`
+  return `${months} bulan`
+}
+
+// Fallback sesuai DB seed: gratis 0/50/0 bulan, premium 50000/9999/6 bulan — selalu 2 plan
+const fallbackPackages = [
+  {
+    name: 'Paket Dasar',
+    desc: 'Untuk pasangan yang mulai merencanakan.',
+    price: 'Gratis',
+    suffix: undefined as string | undefined,
+    badge: undefined as string | undefined,
+    items: [
+      'Kolaborasi 2 akun pasangan',
+      'Dashboard & Berkas KUA',
+      'Manajemen tamu & RSVP',
+      'Maksimal 50 tamu',
+    ],
+    buttonStyle: 'border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
+    dark: false,
+  },
+  {
+    name: 'Paket Lengkap',
+    desc: 'Untuk resepsi dan acara berskala besar.',
+    price: 'Rp 50.000',
+    suffix: '/ 6 bulan',
+    badge: 'Paling Populer',
+    items: [
+      'Semua fitur di Paket Dasar',
+      'Daftar tamu tanpa batas',
+      'Checklist lengkap & bagi tugas',
+      'Modul Keuangan & Anggaran',
+      'Manajemen Vendor',
+      'Gifts, Mahar & Seserahan',
+      'Pengiring & seragam',
+    ],
+    buttonStyle: 'bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-600/30',
+    dark: true,
+  },
+]
+
+const fetchedPlans = ref<{ id: string; name: string; slug: string; price: number; max_guests: number; duration_months: number; is_active: boolean }[]>([])
+
+async function fetchPlans() {
+  try {
+    const data = await api<{ id: string; name: string; slug: string; price: number; max_guests: number; duration_months: number; is_active: boolean }[]>('/api/v1/plans/')
+    // hanya plan aktif, urut harga termurah dulu, ambil 2 teratas
+    const active = (Array.isArray(data) ? data : []).filter(p => p.is_active).sort((a, b) => a.price - b.price).slice(0, 2)
+    if (active.length) fetchedPlans.value = active
+  } catch {
+    // biarkan fallback
+  }
+}
+
+onMounted(fetchPlans)
+
+const packages = computed(() => {
+  if (!fetchedPlans.value.length) return fallbackPackages
+  // map DB plans -> UI packages, jamin hanya 2 plan
+  const sorted = [...fetchedPlans.value].sort((a, b) => a.price - b.price).slice(0, 2)
+  return sorted.map((plan) => {
+    const isFree = plan.price === 0 || plan.slug === 'gratis'
+    const dur = formatDuration(plan.duration_months)
+    return {
+      name: plan.name,
+      desc: isFree ? 'Untuk pasangan yang mulai merencanakan.' : 'Untuk resepsi dan acara berskala besar.',
+      price: isFree ? 'Gratis' : formatIDR(plan.price),
+      suffix: isFree || !dur ? undefined : `/ ${dur}`,
+      badge: isFree ? undefined : 'Paling Populer',
+      items: isFree
+        ? [
+            'Kolaborasi 2 akun pasangan',
+            'Dashboard & Berkas KUA',
+            'Manajemen tamu & RSVP',
+            plan.max_guests >= 9999 ? 'Tamu tanpa batas' : `Maksimal ${plan.max_guests} tamu`,
+          ]
+        : [
+            'Semua fitur di Paket Dasar',
+            'Daftar tamu tanpa batas',
+            'Checklist lengkap & bagi tugas',
+            'Modul Keuangan & Anggaran',
+            'Manajemen Vendor',
+            'Gifts, Mahar & Seserahan',
+            'Pengiring & seragam',
+          ],
+      buttonStyle: isFree
+        ? 'border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+        : 'bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-600/30',
+      dark: !isFree,
+    }
+  })
+})
+
+function handlePricingSelect(pkg: (typeof fallbackPackages)[number] | ReturnType<typeof packages.value>[number]) {
+  const isPremium = (pkg as any).dark
   if (isPremium) {
     if (authStore.isAuthenticated) {
       router.push('/upgrade')
@@ -87,40 +186,6 @@ const testimonials = [
     date: 'Menikah Jan 2027',
     initials: 'SB',
     quote: 'Gabungin daftar tamu dari pihak aku dan suami jadi sangat gampang. Tampilannya cantik dan nggak bikin pusing.'
-  }
-]
-
-const packages = [
-  {
-    name: 'Paket Dasar',
-    desc: 'Untuk pasangan yang mulai merencanakan.',
-    price: 'Gratis',
-    items: [
-      'Kolaborasi 2 akun pasangan',
-      'Dashboard & Berkas KUA',
-      'Manajemen tamu & RSVP',
-      'Maksimal 50 tamu'
-    ],
-    buttonStyle: 'border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-    dark: false
-  },
-  {
-    name: 'Paket Lengkap',
-    desc: 'Untuk resepsi dan acara berskala besar.',
-    price: 'Rp 150.000',
-    suffix: '/ 1 Tahun',
-    badge: 'Paling Populer',
-    items: [
-      'Semua fitur di Paket Dasar',
-      'Daftar tamu tanpa batas',
-      'Checklist lengkap & bagi tugas',
-      'Modul Keuangan & Anggaran',
-      'Manajemen Vendor',
-      'Gifts, Mahar & Seserahan',
-      'Pengiring & seragam'
-    ],
-    buttonStyle: 'bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-600/30',
-    dark: true
   }
 ]
 </script>

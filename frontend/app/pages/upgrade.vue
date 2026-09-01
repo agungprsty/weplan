@@ -61,8 +61,8 @@ async function fetchPremiumPlan() {
     if (found) premiumPlan.value = found
     else if ((plans as any[]).length) premiumPlan.value = (plans as any[])[0]
   } catch (e: unknown) {
-    // fallback ke paket default 150k jika API belum ready / plans belum seed 150k
-    premiumPlan.value = { id: 'fallback-premium', name: 'Premium', slug: 'premium', price: 150000, max_guests: 9999, duration_months: 12 }
+    // fallback sesuai DB seed: premium 50k/6bln (2 plan)
+    premiumPlan.value = { id: 'fallback-premium', name: 'Premium', slug: 'premium', price: 50000, max_guests: 9999, duration_months: 6 }
   } finally {
     loadingPlan.value = false
   }
@@ -148,8 +148,8 @@ const heroSubtitle = computed(() => {
         <div class="mt-6 flex items-baseline gap-2">
           <span v-if="loadingPlan" class="h-9 w-32 animate-pulse rounded bg-slate-700"></span>
           <template v-else>
-            <span class="text-4xl font-extrabold text-white">{{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }}</span>
-            <span class="text-sm text-slate-400">/ 12 bulan</span>
+            <span class="text-4xl font-extrabold text-white">{{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 50.000' }}</span>
+            <span class="text-sm text-slate-400">/ {{ premiumPlan ? (premiumPlan.duration_months % 12 === 0 ? `${premiumPlan.duration_months/12} Tahun` : `${premiumPlan.duration_months} bulan`) : '6 bulan' }}</span>
           </template>
         </div>
         <p v-if="isPremium && premiumUntil" class="mt-2 text-xs font-medium text-emerald-400">Aktif hingga {{ premiumUntil }}</p>
@@ -161,7 +161,7 @@ const heroSubtitle = computed(() => {
           <li class="flex items-center gap-2.5"><svg class="h-5 w-5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Manajemen Vendor</li>
           <li class="flex items-center gap-2.5"><svg class="h-5 w-5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gifts, Mahar & Seserahan + Pengiring</li>
         </ul>
-        <button v-if="!isPremium" class="mt-6 w-full rounded-full bg-rose-600 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-600/30 hover:bg-rose-500 sm:py-3 cursor-pointer" @click="goCheckout">Upgrade Sekarang — {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }}</button>
+        <button v-if="!isPremium" class="mt-6 w-full rounded-full bg-rose-600 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-600/30 hover:bg-rose-500 sm:py-3 cursor-pointer" @click="goCheckout">Upgrade Sekarang — {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 50.000' }}</button>
         <div v-else class="mt-6 w-full rounded-full bg-emerald-600 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-600/30">✓ Premium Aktif hingga {{ premiumUntil }}</div>
         <p class="mt-3 text-center text-xs" :class="isPremium ? 'text-emerald-200/60' : 'text-slate-400'">{{ isPremium ? 'Kelola di Tagihan' : 'Pembayaran QRIS · Verifikasi manual via WhatsApp' }}</p>
       </div>
@@ -237,7 +237,7 @@ const heroSubtitle = computed(() => {
 
     <!-- Sticky CTA mobile -->
     <div v-if="!isPremium" class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:hidden">
-      <button class="w-full rounded-full bg-slate-900 py-3 text-sm font-semibold text-white shadow-md" @click="goCheckout">Upgrade — {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }} / 12 bulan</button>
+      <button class="w-full rounded-full bg-slate-900 py-3 text-sm font-semibold text-white shadow-md" @click="goCheckout">Upgrade — {{ premiumPlan ? `${formatIDR(premiumPlan.price)} / ${premiumPlan.duration_months % 12 === 0 ? `${premiumPlan.duration_months/12} Tahun` : `${premiumPlan.duration_months} bulan`}` : 'Rp 50.000 / 6 bulan' }}</button>
       <p class="mt-2 text-center text-xs text-slate-400">QRIS · Aktivasi 1x24 jam</p>
     </div>
     <div class="h-20 md:hidden" v-if="!isPremium"></div>

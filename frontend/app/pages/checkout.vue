@@ -52,7 +52,7 @@ async function load() {
       const found = plans.find((p: any) => p.id === planIdFromQuery.value) ?? plans.find((p: any) => p.slug === 'premium' && p.is_active) ?? plans.find((p: any) => p.price > 0) ?? plans[0]
       if (found) premiumPlan.value = found
     } catch {
-      premiumPlan.value = { id: planIdFromQuery.value || 'fallback-premium', name: 'Premium', slug: 'premium', price: 150000, duration_months: 12, max_guests: 9999 }
+      premiumPlan.value = { id: planIdFromQuery.value || 'fallback-premium', name: 'Premium', slug: 'premium', price: 50000, duration_months: 6, max_guests: 9999 }
     } finally {
       planLoading.value = false
     }
@@ -120,7 +120,7 @@ async function submitOrder() {
 
 function waLink(orderId: string) {
   const w = wedding.value
-  const text = encodeURIComponent(`Halo Kanikah, saya sudah transfer QRIS untuk Premium.\n\nOrder ID: ${orderId}\nWedding: ${w?.title ?? ''} (${w?.pair_code ?? ''})\nNominal: ${premiumPlan.value ? formatIDR(premiumPlan.value.price) : 'Rp 150.000'}\n\nMohon verifikasi. Terima kasih!`)
+  const text = encodeURIComponent(`Halo Kanikah, saya sudah transfer QRIS untuk Premium.\n\nOrder ID: ${orderId}\nWedding: ${w?.title ?? ''} (${w?.pair_code ?? ''})\nNominal: ${premiumPlan.value ? formatIDR(premiumPlan.value.price) : 'Rp 50.000'}\n\nMohon verifikasi. Terima kasih!`)
   return `https://wa.me/${waNumber}?text=${text}`
 }
 
@@ -197,8 +197,8 @@ watch(() => route.query.plan, load)
         <div class="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-6 flex flex-col h-full">
           <h3 class="font-serif text-base font-bold text-slate-900">Ringkasan pesanan</h3>
           <div class="mt-4 space-y-3 text-sm">
-            <div class="flex justify-between"><span class="text-slate-500">Paket</span><span class="font-medium text-slate-900">{{ premiumPlan?.name ?? 'Premium' }} · 12 bulan</span></div>
-            <div class="flex justify-between"><span class="text-slate-500">Harga</span><span class="font-bold text-slate-900">{{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Paket</span><span class="font-medium text-slate-900">{{ premiumPlan?.name ?? 'Premium' }} · {{ premiumPlan ? (premiumPlan.duration_months % 12 === 0 ? `${premiumPlan.duration_months/12} Tahun` : `${premiumPlan.duration_months} bulan`) : '6 bulan' }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Harga</span><span class="font-bold text-slate-900">{{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 50.000' }}</span></div>
           </div>
           <hr class="my-4 border-slate-100" />
           <div class="rounded-xl bg-slate-50 p-4">
@@ -216,7 +216,7 @@ watch(() => route.query.plan, load)
             <ul class="mt-4 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-slate-600">
               <li>Buka aplikasi e-wallet / m-banking.</li>
               <li>Pilih <span class="font-medium">Scan QRIS</span> & arahkan ke kode di atas.</li>
-              <li>Pastikan nominal {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 150.000' }} & nama merchant Kanikah benar.</li>
+              <li>Pastikan nominal {{ premiumPlan ? formatIDR(premiumPlan.price) : 'Rp 50.000' }} & nama merchant Kanikah benar.</li>
               <li>Bayar, simpan bukti, lalu tulis catatan di form.</li>
             </ul>
           </div>

@@ -19,7 +19,11 @@ class KuaDocumentCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     owner_type: Literal["cpp", "cpw", "both"] = "both"
     is_required: bool = False
-    document_key: str | None = Field(default=None, max_length=50, description="Optional custom key; auto-generated if empty")
+    document_key: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Optional custom key; auto-generated if empty",
+    )  # noqa: E501
     file_url: str | None = Field(default=None, max_length=500)
     expiry_date: date | None = None
 

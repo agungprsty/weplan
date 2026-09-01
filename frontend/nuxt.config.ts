@@ -5,12 +5,30 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   modules: ['@pinia/nuxt'],
   css: ['~/assets/css/main.css'],
+  // hindari duplicated auto-import warning untuk types: hanya composables/stores yang auto-import, types folder di-skip
+  imports: {
+    dirs: ['composables', 'stores', 'utils'],
+  },
   vite: {
     plugins: [tailwindcss()],
     server: {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
         'Cross-Origin-Embedder-Policy': 'credentialless'
+      }
+    },
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('chart.js') || id.includes('vue-chartjs')) return 'chart'
+              if (id.includes('jspdf') || id.includes('exceljs')) return 'export'
+              if (id.includes('pinia')) return 'pinia'
+            }
+          }
+        }
       }
     }
   },

@@ -19,7 +19,7 @@ async def list_cortage(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[CortageResponse]:
     return await cortage_service.list_cortage(db, wedding_id)  # type: ignore[return-value]
 
@@ -31,7 +31,7 @@ async def update_cortage(
     data: CortageUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CortageResponse:
     item = await cortage_service.update_cortage(
         db, wedding_id, cortage_id, data, actor=current_user
@@ -49,7 +49,7 @@ async def get_cortage(
     cortage_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CortageResponse:
     item = await cortage_service.get_cortage(db, wedding_id, cortage_id)
     if item is None:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
@@ -16,13 +18,15 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superadmin: Mapped[bool] = mapped_column(Boolean, default=False)
-    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
+    google_id: Mapped[str | None] = mapped_column(
+        String(255), unique=True, index=True, nullable=True
+    )
     provider: Mapped[str] = mapped_column(String(20), default="email")
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding_users: Mapped[list["WeddingUser"]] = relationship(
+    wedding_users: Mapped[list[WeddingUser]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )

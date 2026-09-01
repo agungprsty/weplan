@@ -28,7 +28,7 @@ async def list_vendors(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[VendorResponse]:
     return await vendor_service.list_vendors(db, wedding_id)
 
@@ -39,14 +39,17 @@ async def create_vendor(
     data: VendorCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> VendorResponse:
     if not _is_premium(wedding):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "PREMIUM_REQUIRED",
-                "message": "Fitur Vendor hanya untuk Paket Premium 50k/6 bulan. Silakan upgrade.",
+                "message": (
+                    "Fitur Vendor hanya untuk Paket Premium "
+                    "50k/6 bulan. Silakan upgrade."
+                ),
             },
         )
     return await vendor_service.create_vendor(db, wedding_id, data, actor=current_user)
@@ -59,7 +62,7 @@ async def update_vendor(
     data: VendorUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> VendorResponse:
     vendor = await vendor_service.update_vendor(
         db, wedding_id, vendor_id, data, actor=current_user
@@ -77,7 +80,7 @@ async def get_vendor(
     vendor_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> VendorResponse:
     vendor = await vendor_service.get_vendor(db, wedding_id, vendor_id)
     if vendor is None:
@@ -93,7 +96,7 @@ async def delete_vendor(
     vendor_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     ok = await vendor_service.delete_vendor(
         db, wedding_id, vendor_id, actor=current_user

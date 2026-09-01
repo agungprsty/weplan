@@ -11,7 +11,9 @@ from app.models.base import Base, utcnow
 
 class CortageItem(Base):
     __tablename__ = "cortage_items"
-    __table_args__ = (UniqueConstraint("guest_id", name="bridesmaid_items_guest_id_key"),)
+    __table_args__ = (
+        UniqueConstraint("guest_id", name="bridesmaid_items_guest_id_key"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     wedding_id: Mapped[uuid.UUID] = mapped_column(

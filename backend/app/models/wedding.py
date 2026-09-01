@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
 
@@ -24,43 +26,43 @@ class Wedding(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding_users: Mapped[list["WeddingUser"]] = relationship(
+    wedding_users: Mapped[list[WeddingUser]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    guests: Mapped[list["Guest"]] = relationship(
+    guests: Mapped[list[Guest]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    checklists: Mapped[list["Checklist"]] = relationship(
+    checklists: Mapped[list[Checklist]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    vendors: Mapped[list["Vendor"]] = relationship(
+    vendors: Mapped[list[Vendor]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    kua_documents: Mapped[list["KuaDocument"]] = relationship(
+    kua_documents: Mapped[list[KuaDocument]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    mahar_items: Mapped[list["MaharItem"]] = relationship(
+    mahar_items: Mapped[list[MaharItem]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    savings_target: Mapped["SavingsTarget | None"] = relationship(
+    savings_target: Mapped[SavingsTarget | None] = relationship(
         back_populates="wedding", cascade="all, delete-orphan", uselist=False
     )
-    transactions: Mapped[list["Transaction"]] = relationship(
+    transactions: Mapped[list[Transaction]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    cortage_items: Mapped[list["CortageItem"]] = relationship(
+    cortage_items: Mapped[list[CortageItem]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
-    activities: Mapped[list["Activity"]] = relationship(
+    activities: Mapped[list[Activity]] = relationship(
         back_populates="wedding", cascade="all, delete-orphan"
     )
 
     @property
-    def bridesmaid_items(self) -> list["CortageItem"]:  # backwards compat
+    def bridesmaid_items(self) -> list[CortageItem]:  # backwards compat
         return self.cortage_items
 
     @bridesmaid_items.setter
-    def bridesmaid_items(self, value: list["CortageItem"]) -> None:
+    def bridesmaid_items(self, value: list[CortageItem]) -> None:
         self.cortage_items = value
 
-    plan: Mapped["Plan | None"] = relationship()
+    plan: Mapped[Plan | None] = relationship()

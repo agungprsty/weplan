@@ -23,7 +23,7 @@ router = APIRouter()
 async def create_wedding(
     data: WeddingCreate,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> WeddingResponse:
     existing = await wedding_service.get_user_wedding(db, current_user)
     if existing is not None:
@@ -39,7 +39,7 @@ async def create_wedding(
 async def pair_wedding(
     data: WeddingPairRequest,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> WeddingResponse:
     existing = await wedding_service.get_user_wedding(db, current_user)
     if existing is not None:
@@ -53,14 +53,14 @@ async def pair_wedding(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     return wedding  # type: ignore[return-value]
 
 
 @router.get("/me", response_model=WeddingResponse | None)
 async def get_my_wedding(
     current_user: Annotated[User, Depends(get_current_user)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> WeddingResponse | None:
     wedding = await wedding_service.get_user_wedding(db, current_user)
     return wedding  # type: ignore[return-value]
@@ -72,7 +72,7 @@ async def update_wedding(
     data: WeddingUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> WeddingResponse:
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -95,7 +95,7 @@ async def update_wedding(
         .where(Wedding.id == wedding.id)
     )
     wedding = result.scalar_one()
-    # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)
+    # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)  # noqa: E501
 
     cnt = await db.scalar(
         select(func.count())

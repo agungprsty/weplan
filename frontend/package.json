@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "dev": "NODE_NO_WARNINGS=1 nuxt dev",
+    "build": "NODE_NO_WARNINGS=1 nuxt build",
+    "generate": "NODE_NO_WARNINGS=1 nuxt generate",
+    "preview": "NODE_NO_WARNINGS=1 nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -23,5 +23,11 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.8.0",
     "vue-tsc": "^3.3.11"
+  },
+  "overrides": {
+    "supports-color": "9.4.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

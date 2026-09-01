@@ -11,7 +11,7 @@ authors = [
 
 dependencies = [
     "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.30.0",
+    "uvicorn[standard]>=0.34.0",
     "pydantic>=2.7.0",
     "pydantic-settings>=2.4.0",
     "sqlalchemy[asyncio]>=2.0.0",
@@ -23,6 +23,7 @@ dependencies = [
     "email-validator>=2.1.0",
     "google-auth>=2.30.0",
     "cachecontrol>=0.14.0",
+    "websockets>=14.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,20 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy Mapped string annotations: false-positive F821 when using "future.annotations"
+"app/models/*.py" = ["F821"]
+# Alembic migrations are auto-generated
+"alembic/**/*.py" = ["E501", "I"]
+# allow longer lines for docstrings/comments if needed via noqa, but keep 88 default
+
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning:websockets.*",
+    "ignore::DeprecationWarning:uvicorn.*",
+]
+

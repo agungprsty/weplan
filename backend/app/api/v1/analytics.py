@@ -27,7 +27,7 @@ async def finance_analytics(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> FinanceAnalyticsResponse:
     return await get_finance_analytics(db, wedding)
 
@@ -37,7 +37,7 @@ async def guest_analytics(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> GuestAnalyticsResponse:
     return await get_guest_analytics(db, wedding)
 
@@ -47,6 +47,6 @@ async def checklist_analytics(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChecklistAnalyticsResponse:
     return await get_checklist_analytics(db, wedding)

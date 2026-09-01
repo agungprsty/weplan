@@ -32,14 +32,14 @@ async def get_current_user(
         token_type: str | None = payload.get("type")
         if user_id is None or token_type != "access":
             raise credentials_exception
-    except ExpiredSignatureError:
+    except ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    except InvalidTokenError:
-        raise credentials_exception
+        ) from exc
+    except InvalidTokenError as exc:
+        raise credentials_exception from exc
 
     user = await db.get(User, uuid.UUID(user_id))
     if user is None or not user.is_active:
@@ -65,11 +65,13 @@ async def get_current_wedding(
             detail="Not authorized to access this wedding",
         )
 
-    # pakai selectinload(plan) agar tidak MissingGreenlet saat serialisasi response (async lazy load)
+    # pakai selectinload(plan) agar tidak MissingGreenlet saat serialisasi response (async lazy load)  # noqa: E501
     from sqlalchemy.orm import selectinload
 
     result = await db.execute(
-        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding_id)
+        select(Wedding)
+        .options(selectinload(Wedding.plan))
+        .where(Wedding.id == wedding_id)  # noqa: E501
     )
     wedding = result.scalar_one_or_none()
     if wedding is None:

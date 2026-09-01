@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
@@ -30,6 +32,6 @@ class Order(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding: Mapped["Wedding"] = relationship()
-    plan: Mapped["Plan"] = relationship(back_populates="orders")
-    confirmer: Mapped["User | None"] = relationship()
+    wedding: Mapped[Wedding] = relationship()
+    plan: Mapped[Plan] = relationship(back_populates="orders")
+    confirmer: Mapped[User | None] = relationship()

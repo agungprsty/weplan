@@ -101,14 +101,16 @@ async def reset_password_with_token(
     try:
         payload = verify_token(token)
         if payload.get("type") != "reset":
-            raise ValueError("Token tidak valid")
+            raise ValueError("Token tidak valid")  # noqa: TRY301
         user_id = payload.get("sub")
         if not user_id:
             raise ValueError("Token tidak valid")
-    except ExpiredSignatureError:
-        raise ValueError("Token reset sudah kadaluarsa, silakan minta link baru")
-    except InvalidTokenError:
-        raise ValueError("Token tidak valid")
+    except ExpiredSignatureError as exc:
+        raise ValueError(
+            "Token reset sudah kadaluarsa, silakan minta link baru"
+        ) from exc
+    except InvalidTokenError as exc:
+        raise ValueError("Token tidak valid") from exc
 
     import uuid
 
@@ -121,7 +123,7 @@ async def reset_password_with_token(
 
 
 async def authenticate_google_user(db: AsyncSession, id_token: str) -> User:
-    """Verifikasi Google ID token (GIS) dan cari/buat user. Stateless, tanpa simpan token Google."""
+    """Verifikasi Google ID token (GIS) dan cari/buat user. Stateless, tanpa simpan token Google."""  # noqa: E501
     from google.auth.transport import requests as google_requests
     from google.oauth2 import id_token as google_id_token
 
@@ -135,7 +137,7 @@ async def authenticate_google_user(db: AsyncSession, id_token: str) -> User:
             id_token, google_requests.Request(), settings.GOOGLE_CLIENT_ID
         )
     except ValueError as e:
-        raise ValueError(f"Google token tidak valid: {e}")
+        raise ValueError(f"Google token tidak valid: {e}") from e
 
     # validasi dasar
     if idinfo.get("aud") != settings.GOOGLE_CLIENT_ID:

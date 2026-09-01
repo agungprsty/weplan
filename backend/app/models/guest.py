@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
@@ -24,15 +26,15 @@ class Guest(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding: Mapped["Wedding"] = relationship(back_populates="guests")
-    cortage_detail: Mapped["CortageItem | None"] = relationship(
+    wedding: Mapped[Wedding] = relationship(back_populates="guests")
+    cortage_detail: Mapped[CortageItem | None] = relationship(
         back_populates="guest", cascade="all, delete-orphan", uselist=False
     )
 
     @property
-    def bridesmaid_detail(self) -> "CortageItem | None":  # backwards compat
+    def bridesmaid_detail(self) -> CortageItem | None:  # backwards compat
         return self.cortage_detail
 
     @bridesmaid_detail.setter
-    def bridesmaid_detail(self, value: "CortageItem | None") -> None:
+    def bridesmaid_detail(self, value: CortageItem | None) -> None:
         self.cortage_detail = value

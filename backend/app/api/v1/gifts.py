@@ -19,7 +19,7 @@ async def list_gifts(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[dict]:
     return await gift_service.list_gifts(db, wedding_id)
 
@@ -30,7 +30,7 @@ async def create_gift(
     data: GiftCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     return await gift_service.create_gift(db, wedding_id, data, actor=current_user)
 
@@ -41,7 +41,7 @@ async def get_gift(
     gift_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     gift = await gift_service.get_gift(db, wedding_id, gift_id)
     if gift is None:
@@ -59,7 +59,7 @@ async def update_gift(
     data: GiftUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     gift = await gift_service.update_gift(
         db, wedding_id, gift_id, data, actor=current_user
@@ -78,7 +78,7 @@ async def delete_gift(
     gift_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     deleted = await gift_service.delete_gift(
         db, wedding_id, gift_id, actor=current_user

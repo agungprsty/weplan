@@ -34,7 +34,7 @@ async def get_savings_target(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SavingsTargetResponse:
     target = await savings_service.get_savings_target(db, wedding_id)
     # Lazy-sync: jika target belum ada atau beda dengan wedding, sinkronkan
@@ -93,7 +93,7 @@ async def put_savings_target(
     data: SavingsTargetUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SavingsTargetResponse:
     # Sinkron balik ke wedding agar single source of truth terjaga
     # (frontend baru tidak memanggil PUT lagi; PUT dipertahankan untuk kompatibilitas)
@@ -132,7 +132,7 @@ async def list_transactions(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[TransactionResponse]:
     return await txn_service.list_transactions(db, wedding_id)
 
@@ -147,14 +147,14 @@ async def create_transaction(
     data: TransactionCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TransactionResponse:
     if not _is_premium(wedding):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "PREMIUM_REQUIRED",
-                "message": "Fitur Cashflow hanya untuk Premium 50k/6 bulan. Gratis hanya input Target Dana.",
+                "message": "Fitur Cashflow hanya untuk Premium 50k/6 bulan. Gratis hanya input Target Dana.",  # noqa: E501
             },
         )
     return await txn_service.create_transaction(
@@ -169,7 +169,7 @@ async def update_transaction(
     data: TransactionUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TransactionResponse:
     if not _is_premium(wedding):
         raise HTTPException(
@@ -192,7 +192,7 @@ async def delete_transaction(
     txn_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     if not _is_premium(wedding):
         raise HTTPException(

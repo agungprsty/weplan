@@ -23,7 +23,7 @@ async def list_checklists(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[ChecklistResponse]:
     return await checklist_service.list_checklists(db, wedding_id)
 
@@ -34,7 +34,7 @@ async def create_checklist(
     data: ChecklistCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChecklistResponse:
     return await checklist_service.create_checklist(
         db, wedding_id, data, actor=current_user
@@ -48,7 +48,7 @@ async def update_checklist(
     data: ChecklistUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChecklistResponse:
     checklist = await checklist_service.update_checklist(
         db, wedding_id, checklist_id, data, actor=current_user
@@ -67,7 +67,7 @@ async def get_checklist(
     checklist_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChecklistResponse:
     checklist = await checklist_service.get_checklist(db, wedding_id, checklist_id)
     if checklist is None:
@@ -87,7 +87,7 @@ async def auto_generate(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[ChecklistResponse]:
     return await checklist_service.auto_generate_checklists(
         db, wedding_id, wedding.wedding_date, actor=current_user
@@ -100,7 +100,7 @@ async def delete_checklist(
     checklist_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     ok = await checklist_service.delete_checklist(
         db, wedding_id, checklist_id, actor=current_user

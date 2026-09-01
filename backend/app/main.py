@@ -22,7 +22,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Harden CORS: support multiple origins from env and fallback regex for localhost/127.0.0.1 any port
+# Harden CORS: support multiple origins from env and fallback regex for localhost/127.0.0.1 any port  # noqa: E501
 origins = settings.allowed_origins_list
 # if single wildcard configured, allow all
 if origins == ["*"]:
@@ -30,7 +30,7 @@ if origins == ["*"]:
     allow_origin_regex = None
 else:
     allow_origins = origins
-    # juga izinkan localhost/127.0.0.1 + 0.0.0.0 + LAN private IP (172.16-31.x, 192.168.x, 10.x)
+    # juga izinkan localhost/127.0.0.1 + 0.0.0.0 + LAN private IP (172.16-31.x, 192.168.x, 10.x)  # noqa: E501
     # dengan port berapa pun (http/https) — untuk dev via Network/QR code
     allow_origin_regex = (
         r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0"

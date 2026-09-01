@@ -19,7 +19,7 @@ async def list_guests(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[GuestResponse]:
     return await guest_service.list_guests(db, wedding_id)
 
@@ -30,7 +30,7 @@ async def create_guest(
     data: GuestCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> GuestResponse:
     return await guest_service.create_guest(db, wedding_id, data, actor=current_user)
 
@@ -42,7 +42,7 @@ async def update_guest(
     data: GuestUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> GuestResponse:
     guest = await guest_service.update_guest(
         db, wedding_id, guest_id, data, actor=current_user
@@ -61,7 +61,7 @@ async def get_guest(
     guest_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> GuestResponse:
     guest = await guest_service.get_guest(db, wedding_id, guest_id)
     if guest is None:
@@ -78,7 +78,7 @@ async def delete_guest(
     guest_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     ok = await guest_service.delete_guest(db, wedding_id, guest_id, actor=current_user)
     if not ok:

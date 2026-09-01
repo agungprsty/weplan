@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia'
-import type { ActivityAction, ActivityEntity } from '~/composables/useActivityDisplay'
-
-export type { ActivityAction, ActivityEntity }
+import type { ActivityAction, ActivityEntity } from '~/types/activity'
 
 export interface Activity {
   id: string

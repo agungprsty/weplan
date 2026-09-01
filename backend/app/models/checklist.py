@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
 
@@ -26,5 +28,5 @@ class Checklist(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    wedding: Mapped["Wedding"] = relationship(back_populates="checklists")
-    assignee: Mapped["User | None"] = relationship()
+    wedding: Mapped[Wedding] = relationship(back_populates="checklists")
+    assignee: Mapped[User | None] = relationship()

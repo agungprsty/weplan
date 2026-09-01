@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 async def _attach_member_count(
     db: AsyncSession, wedding: Wedding | None
 ) -> Wedding | None:
-    """Best practice: centralize count logic in service, not API. Single place, type-safe via setattr."""
+    """Best practice: centralize count logic in service, not API. Single place, type-safe via setattr."""  # noqa: E501
     if wedding is None:
         return None
     cnt = await db.scalar(
@@ -32,8 +32,10 @@ async def _attach_member_count(
 
 
 async def sync_savings_target(db: AsyncSession, wedding: Wedding) -> None:
-    """Sinkronkan savings_targets.target_amount & deadline dari weddings.total_budget & wedding_date.
-    Dipanggil saat create / update wedding agar keuangan otomatis mengikuti onboarding.
+    """Sinkronkan savings_targets.target_amount & deadline
+    dari weddings.total_budget & wedding_date.
+    Dipanggil saat create / update wedding agar keuangan otomatis
+    mengikuti onboarding.
     """
     from app.models.savings_target import SavingsTarget
 

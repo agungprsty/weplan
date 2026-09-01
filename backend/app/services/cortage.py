@@ -116,7 +116,7 @@ async def update_cortage(
     guest_name = g.name if g else ""
     guest_category = g.category if g else None
 
-    # activity: log each status field independently (fix elif bug — previously fitting change ignored when both changed)
+    # activity: log each status field independently (fix elif bug — previously fitting change ignored when both changed)  # noqa: E501
     title = f"{_role_label(guest_category)} - {guest_name}"
     status_logged = False
     if "payment_status" in payload and old_payment != item.payment_status:
@@ -186,7 +186,10 @@ async def update_cortage(
                 category="busana",
                 source=source,
                 transaction_date=date.today(),
-                notes=f"Seragam {item.uniform_size or '-'} · fitting {item.fitting_status}",
+                notes=(
+                    f"Seragam {item.uniform_size or '-'} · "
+                    f"fitting {item.fitting_status}"
+                ),
             )
             db.add(tx)
             await db.flush()

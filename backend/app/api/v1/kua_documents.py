@@ -23,7 +23,7 @@ async def list_kua_documents(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[KuaDocumentResponse]:
     docs = await kua_service.list_kua_documents(db, wedding_id)
     if not docs:
@@ -40,7 +40,7 @@ async def seed_kua(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[KuaDocumentResponse]:
     return await kua_service.seed_kua_documents(db, wedding_id)
 
@@ -53,7 +53,7 @@ async def create_kua_document(
     data: KuaDocumentCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> KuaDocumentResponse:
     """Tambah berkas custom — untuk kebutuhan per daerah / pekerjaan masing-masing."""
     payload = data.model_dump(exclude_unset=True)
@@ -72,9 +72,9 @@ async def update_kua_document(
     data: KuaDocumentUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> KuaDocumentResponse:
-    # Jika upload file_url dan bukan premium, tetap izinkan karena Berkas KUA gratis dasar
+    # Jika upload file_url dan bukan premium, tetap izinkan karena Berkas KUA gratis dasar  # noqa: E501
     # Premium hanya untuk expiry alert — untuk MVP gratis semua
     doc = await kua_service.update_kua_document(
         db, wedding_id, doc_id, data, actor=current_user
@@ -92,7 +92,7 @@ async def delete_kua_document(
     doc_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     ok = await kua_service.delete_kua_document(
         db, wedding_id, doc_id, actor=current_user
@@ -109,7 +109,7 @@ async def get_kua_document(
     doc_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> KuaDocumentResponse:
     doc = await kua_service.get_kua_document(db, wedding_id, doc_id)
     if doc is None:

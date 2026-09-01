@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
@@ -20,6 +22,6 @@ class Plan(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    orders: Mapped[list["Order"]] = relationship(
+    orders: Mapped[list[Order]] = relationship(
         back_populates="plan", cascade="all, delete-orphan"
     )

@@ -29,7 +29,7 @@ async def list_mahar_items(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[MaharItemResponse]:
     return await mahar_service.list_mahar_items(db, wedding_id)
 
@@ -40,7 +40,7 @@ async def create_mahar_item(
     data: MaharItemCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MaharItemResponse:
     if not _is_premium(wedding):
         count = await mahar_service.count_mahar_items(db, wedding_id)
@@ -49,7 +49,7 @@ async def create_mahar_item(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "PREMIUM_REQUIRED",
-                    "message": f"Gratis hanya {FREE_MAHAR_LIMIT} item Mahar & Seserahan. Upgrade Premium 50k/6 bulan untuk unlimited + cicilan.",
+                    "message": f"Gratis hanya {FREE_MAHAR_LIMIT} item Mahar & Seserahan. Upgrade Premium 50k/6 bulan untuk unlimited + cicilan.",  # noqa: E501
                 },
             )
     return await mahar_service.create_mahar_item(
@@ -64,7 +64,7 @@ async def update_mahar_item(
     data: MaharItemUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MaharItemResponse:
     item = await mahar_service.update_mahar_item(
         db, wedding_id, item_id, data, actor=current_user
@@ -82,7 +82,7 @@ async def get_mahar_item(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MaharItemResponse:
     item = await mahar_service.get_mahar_item(db, wedding_id, item_id)
     if item is None:
@@ -98,7 +98,7 @@ async def delete_mahar_item(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     ok = await mahar_service.delete_mahar_item(
         db, wedding_id, item_id, actor=current_user

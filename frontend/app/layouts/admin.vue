@@ -43,7 +43,7 @@ function handleLogout() {
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:w-[64px] lg:translate-x-0'"
     >
       <div class="flex h-[64px] shrink-0 items-center gap-3 border-b border-slate-800 px-4">
-        <span v-if="sidebarOpen" class="text-lg font-bold tracking-tight">WePlan <span class="font-normal text-slate-400">Admin</span></span>
+        <span v-if="sidebarOpen" class="text-lg font-bold tracking-tight">Kanikah <span class="font-normal text-slate-400">Admin</span></span>
         <span v-else class="hidden lg:grid h-8 w-8 place-items-center rounded-lg bg-slate-800 text-sm font-bold">WA</span>
         <button
           class="ml-auto grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-800"

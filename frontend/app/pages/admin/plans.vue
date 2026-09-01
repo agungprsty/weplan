@@ -8,32 +8,57 @@ const loading = computed(() => adminStore.plansLoading)
 const plans = computed(() => adminStore.plans || [])
 
 const editing = ref<any>(null)
-const form = ref({ name: '', price: 0, max_guests: 50, duration_months: 6, is_active: true })
+const creating = ref(false)
+const form = ref({ name: '', slug: '', price: 0, max_guests: 50, duration_months: 6, is_active: true })
 const saving = ref(false)
 
 onMounted(async () => { await adminStore.fetchPlans() })
 
 function startEdit(p: any) {
   editing.value = p
-  form.value = { name: p.name, price: p.price, max_guests: p.max_guests, duration_months: p.duration_months, is_active: p.is_active }
+  creating.value = false
+  form.value = { name: p.name, slug: p.slug, price: p.price, max_guests: p.max_guests, duration_months: p.duration_months, is_active: p.is_active }
+}
+
+function startCreate() {
+  editing.value = null
+  creating.value = true
+  form.value = { name: '', slug: '', price: 50000, max_guests: 100, duration_months: 6, is_active: true }
 }
 
 async function save() {
   if (!editing.value) return
   saving.value = true
   try {
-    await api.updatePlan(editing.value.id, form.value)
+    await api.updatePlan(editing.value.id, { name: form.value.name, price: form.value.price, max_guests: form.value.max_guests, duration_months: form.value.duration_months, is_active: form.value.is_active })
     editing.value = null
     await adminStore.fetchPlans()
   } catch (e: any) { alert(e?.data?.detail || 'Gagal') }
+  finally { saving.value = false }
+}
+
+async function create() {
+  saving.value = true
+  try {
+    const payload = { name: form.value.name.trim(), slug: form.value.slug.trim().toLowerCase(), price: form.value.price, max_guests: form.value.max_guests, duration_months: form.value.duration_months, is_active: form.value.is_active }
+    if (!payload.name || !payload.slug) { alert('Nama dan slug wajib diisi'); return }
+    await api.createPlan(payload)
+    creating.value = false
+    await adminStore.fetchPlans()
+  } catch (e: any) { alert(e?.data?.detail || e?.message || 'Gagal buat plan') }
   finally { saving.value = false }
 }
 </script>
 
 <template>
   <div class="p-4 lg:p-6">
-    <h1 class="text-xl font-bold text-slate-900">Plans</h1>
-    <p class="text-xs text-slate-500">Kelola paket — harga, max guests, durasi</p>
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">Plans</h1>
+        <p class="text-xs text-slate-500">Kelola paket — harga, max guests, durasi</p>
+      </div>
+      <button class="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" @click="startCreate">+ Buat Plan</button>
+    </div>
 
     <div v-if="loading" class="mt-4 rounded-xl bg-white p-8 text-center text-sm text-slate-500">Memuat...</div>
     <div v-else class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -59,6 +84,7 @@ async function save() {
         <h3 class="font-semibold">Edit {{ editing.slug }}</h3>
         <div class="mt-4 space-y-3">
           <label class="block text-xs font-medium">Nama <input v-model="form.name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+          <label class="block text-xs font-medium">Slug <span class="text-slate-400 font-normal">(tidak bisa diubah)</span> <input :value="form.slug" disabled class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500" /></label>
           <label class="block text-xs font-medium">Harga <input v-model.number="form.price" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
           <label class="block text-xs font-medium">Max guests <input v-model.number="form.max_guests" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
           <label class="block text-xs font-medium">Durasi (bulan) <input v-model.number="form.duration_months" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
@@ -67,6 +93,24 @@ async function save() {
         <div class="mt-5 flex justify-end gap-2">
           <button class="rounded-full border border-slate-200 px-4 py-2 text-sm" @click="editing=null">Batal</button>
           <button :disabled="saving" class="rounded-full bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-30" @click="save">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="creating" class="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4" @click.self="creating=false">
+      <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+        <h3 class="font-semibold">Buat Plan Baru</h3>
+        <div class="mt-4 space-y-3">
+          <label class="block text-xs font-medium">Nama <input v-model="form.name" placeholder="Premium Plus" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+          <label class="block text-xs font-medium">Slug <span class="text-slate-400 font-normal">(huruf kecil, angka, dash)</span> <input v-model="form.slug" placeholder="premium-plus" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" /></label>
+          <label class="block text-xs font-medium">Harga (Rp) <input v-model.number="form.price" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+          <label class="block text-xs font-medium">Max guests <input v-model.number="form.max_guests" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+          <label class="block text-xs font-medium">Durasi (bulan) <input v-model.number="form.duration_months" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" v-model="form.is_active" /> Aktif</label>
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button class="rounded-full border border-slate-200 px-4 py-2 text-sm" @click="creating=false">Batal</button>
+          <button :disabled="saving" class="rounded-full bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-30" @click="create">Buat</button>
         </div>
       </div>
     </div>

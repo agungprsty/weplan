@@ -83,7 +83,7 @@ const doughnutOptions = computed(() => ({
   <div class="p-4 lg:p-6">
     <div class="mb-6">
       <h1 class="text-2xl font-bold tracking-tight text-slate-900">Overview</h1>
-      <p class="text-sm text-slate-500">Ringkasan operasional WePlan — superadmin only</p>
+      <p class="text-sm text-slate-500">Ringkasan operasional Kanikah — superadmin only</p>
     </div>
 
     <div v-if="loading" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

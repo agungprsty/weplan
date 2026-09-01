@@ -133,6 +133,9 @@ async def list_users(
         filters.append(User.is_active.is_(is_active))
     if is_superadmin is not None:
         filters.append(User.is_superadmin.is_(is_superadmin))
+    else:
+        # default: sembunyikan superadmin di list (requirement)
+        filters.append(User.is_superadmin.is_(False))
     if provider:
         filters.append(User.provider == provider)
 

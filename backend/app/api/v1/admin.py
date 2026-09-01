@@ -22,6 +22,7 @@ from app.schemas.admin import (
     AdminWeddingListResponse,
     ImpersonateResponse,
     OrderCancelRequest,
+    PlanCreateRequest,
     PlanUpdateRequest,
     ResetPasswordLinkResponse,
     UserStatusUpdate,
@@ -219,26 +220,12 @@ async def impersonate_user(
         raise HTTPException(status_code=404, detail="User not found")
     if not target.is_active:
         raise HTTPException(status_code=400, detail="User tidak aktif")
-    tokens = admin_service.generate_impersonate_tokens(target.id)
-    # audit
-    from app.models.wedding_user import WeddingUser
-
-    wu = await db.scalar(
-        select(WeddingUser).where(WeddingUser.user_id == target.id).limit(1)
-    )
-    if wu is not None:
-        from app.services.activity import log_activity
-
-        await log_activity(
-            db,
-            wu.wedding_id,
-            current_user,
-            "updated",
-            "wedding",
-            target.id,
-            f"Admin impersonate {target.email}",
-            meta={"impersonated_user": str(target.id), "admin": str(current_user.id)},
+    if target.is_superadmin:
+        raise HTTPException(
+            status_code=400, detail="Tidak bisa impersonate sesama superadmin"
         )
+    tokens = admin_service.generate_impersonate_tokens(target.id)
+    # stealth: jangan buat activity agar user tidak tahu sedang di-impersonate
     return ImpersonateResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
@@ -602,6 +589,29 @@ async def list_activities_global(
 
 
 # ---- Plans ----
+@router.post("/plans", response_model=AdminPlanItem, status_code=201)
+async def create_plan(
+    data: PlanCreateRequest,
+    current_user: Annotated[User, Depends(get_current_superadmin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AdminPlanItem:
+    existing = await db.scalar(select(Plan).where(Plan.slug == data.slug))
+    if existing is not None:
+        raise HTTPException(status_code=400, detail="Slug sudah digunakan")
+    plan = Plan(
+        name=data.name,
+        slug=data.slug,
+        price=data.price,
+        max_guests=data.max_guests,
+        duration_months=data.duration_months,
+        is_active=data.is_active,
+    )
+    db.add(plan)
+    await db.flush()
+    await db.refresh(plan)
+    return plan  # type: ignore[return-value]
+
+
 @router.get("/plans", response_model=list[AdminPlanItem])
 async def list_plans_admin(
     current_user: Annotated[User, Depends(get_current_superadmin)],

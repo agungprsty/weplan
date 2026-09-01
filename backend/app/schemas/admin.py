@@ -124,6 +124,15 @@ class OrderCancelRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=500)
 
 
+class PlanCreateRequest(BaseModel):
+    name: str = Field(max_length=100)
+    slug: str = Field(max_length=50, pattern=r"^[a-z0-9-]+$")
+    price: int = Field(ge=0)
+    max_guests: int = Field(ge=1)
+    duration_months: int = Field(ge=0)
+    is_active: bool = True
+
+
 class PlanUpdateRequest(BaseModel):
     name: str | None = Field(default=None, max_length=100)
     price: int | None = Field(default=None, ge=0)

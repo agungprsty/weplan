@@ -33,6 +33,8 @@ export function useAdminApi() {
     cancelOrder: (id: string, body: { reason?: string }) =>
       api('/api/v1/admin/orders/' + id + '/cancel', { method: 'PATCH', body }),
     listPlans: () => api<AdminPlan[]>('/api/v1/admin/plans'),
+    createPlan: (body: Record<string, unknown>) =>
+      api<AdminPlan>('/api/v1/admin/plans', { method: 'POST', body }),
     updatePlan: (id: string, body: Record<string, unknown>) =>
       api('/api/v1/admin/plans/' + id, { method: 'PATCH', body }),
   }

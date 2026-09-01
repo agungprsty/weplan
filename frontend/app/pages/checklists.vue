@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const checklistStore = useChecklistStore()
 const weddingStore = useWeddingStore()
+const toast = useToast()
 
 const showForm = ref(false)
 const filterStatus = ref<'all' | 'todo' | 'in_progress' | 'done'>('all')
@@ -33,30 +34,56 @@ onMounted(async () => {
 async function handleAutoGenerate() {
   try {
     await checklistStore.autoGenerate()
-  } catch {}
+    toast.success('Template checklist berhasil digenerate')
+  } catch {
+    toast.error('Gagal generate checklist')
+  }
 }
 
 async function addQuick() {
-  if (newTitle.value.trim().length < 2) return
-  await checklistStore.addChecklist({ title: newTitle.value.trim(), category: newCategory.value, due_date: newDueDate.value || null } as Partial<Checklist> & { title: string; category: Checklist['category'] })
-  newTitle.value = ''
-  newDueDate.value = ''
+  if (newTitle.value.trim().length < 2) {
+    toast.error('Judul tugas minimal 2 karakter')
+    return
+  }
+  try {
+    await checklistStore.addChecklist({ title: newTitle.value.trim(), category: newCategory.value, due_date: newDueDate.value || null } as Partial<Checklist> & { title: string; category: Checklist['category'] })
+    newTitle.value = ''
+    newDueDate.value = ''
+    toast.success('Tugas berhasil ditambahkan')
+  } catch {
+    toast.error('Gagal menambah tugas')
+  }
 }
 
 async function toggleStatus(item: Checklist) {
   const order: Checklist['status'][] = ['todo', 'in_progress', 'done']
   const idx = order.indexOf(item.status)
   const next = order[(idx + 1) % order.length]
-  await checklistStore.updateChecklist(item.id, { status: next })
+  try {
+    await checklistStore.updateChecklist(item.id, { status: next })
+    toast.success(`Status diubah menjadi ${statusLabel(next)}`)
+  } catch {
+    toast.error('Gagal mengubah status')
+  }
 }
 
 async function markDone(item: Checklist) {
-  await checklistStore.updateChecklist(item.id, { status: 'done' })
+  try {
+    await checklistStore.updateChecklist(item.id, { status: 'done' })
+    toast.success('Tugas ditandai selesai')
+  } catch {
+    toast.error('Gagal menandai selesai')
+  }
 }
 
 async function handleDelete(item: Checklist) {
   if (!confirm(`Hapus tugas "${item.title}"?`)) return
-  await checklistStore.deleteChecklist(item.id)
+  try {
+    await checklistStore.deleteChecklist(item.id)
+    toast.success('Tugas berhasil dihapus')
+  } catch {
+    toast.error('Gagal menghapus tugas')
+  }
 }
 
 function formatDate(d: string | null) {

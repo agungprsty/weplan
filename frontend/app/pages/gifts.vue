@@ -216,12 +216,14 @@ async function submit() {
   formError.value = null
   if (!isEditing.value && !form.guestId && !form.guestName.trim()) {
     formError.value = 'Pilih tamu dari daftar atau tulis nama manual'
+    toast.error(formError.value)
     return
   }
   if (showAmount.value) {
     const amt = Number(form.amount)
     if (!Number.isFinite(amt) || amt < 0) {
       formError.value = 'Nominal tidak valid'
+      toast.error(formError.value)
       return
     }
   }

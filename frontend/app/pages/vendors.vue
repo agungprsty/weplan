@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const weddingStore = useWeddingStore()
 const vendorStore = useVendorStore()
+const toast = useToast()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
@@ -73,10 +74,12 @@ async function submit() {
   formError.value = null
   if (form.vendor_name.trim().length < 2) {
     formError.value = 'Nama vendor minimal 2 karakter'
+    toast.error(formError.value)
     return
   }
   if (!isPremium.value) {
     formError.value = 'Fitur Vendor hanya untuk Paket Premium. Silakan upgrade dan perpanjang jika expired.'
+    toast.error(formError.value)
     return
   }
   const payload = {
@@ -90,8 +93,9 @@ async function submit() {
     notes: form.notes || undefined,
   } as Partial<Vendor>
 
+  const wasEditing = isEditing.value
   try {
-    if (isEditing.value && editingId.value) {
+    if (wasEditing && editingId.value) {
       await vendorStore.updateVendor(editingId.value, payload)
     } else {
       await vendorStore.addVendor(payload)
@@ -99,26 +103,34 @@ async function submit() {
     showForm.value = false
     editingId.value = null
     resetForm()
+    toast.success(wasEditing ? 'Vendor berhasil diperbarui' : 'Vendor berhasil ditambahkan')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
     if (typeof d === 'object' && d && 'message' in d) formError.value = String((d as Record<string, unknown>).message)
     else if (typeof d === 'string') formError.value = d
     else formError.value = 'Gagal menyimpan vendor'
+    toast.error(formError.value || 'Gagal menyimpan vendor')
   }
 }
 
 async function markLunas(v: Vendor) {
   try {
     await vendorStore.updateVendor(v.id, { status: 'lunas' })
-  } catch {}
+    toast.success('Vendor ditandai lunas')
+  } catch {
+    toast.error('Gagal menandai lunas')
+  }
 }
 
 async function handleDelete(v: Vendor) {
   if (!confirm(`Hapus vendor "${v.vendor_name}"?`)) return
   try {
     await vendorStore.deleteVendor(v.id)
-  } catch {}
+    toast.success('Vendor berhasil dihapus')
+  } catch {
+    toast.error('Gagal menghapus vendor')
+  }
 }
 
 onMounted(async () => {

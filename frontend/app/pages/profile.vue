@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'dashboard' })
 
 const auth = useAuthStore()
+const toast = useToast()
 
 const loading = ref(false)
 const profileError = ref<string | null>(null)
@@ -32,10 +33,12 @@ async function saveProfile() {
   profileSuccess.value = null
   if (profileForm.name.trim().length < 2) {
     profileError.value = 'Nama minimal 2 karakter'
+    toast.error(profileError.value)
     return
   }
   if (!profileForm.email.includes('@')) {
     profileError.value = 'Email tidak valid'
+    toast.error(profileError.value)
     return
   }
   loading.value = true
@@ -43,8 +46,10 @@ async function saveProfile() {
     await auth.updateProfile({ full_name: profileForm.name.trim(), email: profileForm.email.trim() })
     profileSuccess.value = 'Data diri berhasil diperbarui'
     setTimeout(() => profileSuccess.value = null, 3000)
+    toast.success('Data diri berhasil diperbarui')
   } catch (err: unknown) {
     profileError.value = extractErr(err)
+    toast.error(profileError.value || 'Gagal memperbarui profil')
   } finally {
     loading.value = false
   }

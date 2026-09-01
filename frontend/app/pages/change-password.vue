@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'dashboard' })
 
 const auth = useAuthStore()
+const toast = useToast()
 
 const form = reactive({
   current_password: '',
@@ -30,6 +31,7 @@ async function submit() {
   const msg = validate()
   if (msg) {
     error.value = msg
+    toast.error(msg)
     return
   }
   loading.value = true
@@ -44,12 +46,14 @@ async function submit() {
     form.new_password = ''
     form.confirm_password = ''
     setTimeout(() => success.value = null, 3000)
+    toast.success('Password berhasil diubah')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as string | Record<string, unknown> | undefined
     if (typeof d === 'string') error.value = d
     else if (d && typeof d === 'object' && 'message' in d) error.value = String((d as Record<string, unknown>).message)
     else error.value = 'Gagal mengubah password. Periksa password saat ini.'
+    toast.error(error.value || 'Gagal mengubah password')
   } finally {
     loading.value = false
   }

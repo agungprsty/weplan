@@ -6,6 +6,7 @@ definePageMeta({ layout: 'auth' })
 const router = useRouter()
 const weddingStore = useWeddingStore()
 const authStore = useAuthStore()
+const toast = useToast()
 
 const mode = ref<'choose' | 'create' | 'join'>('choose')
 
@@ -61,6 +62,7 @@ async function onCreateSubmit() {
   const invalid = validateCreate()
   if (invalid) {
     formError.value = invalid
+    toast.error(invalid)
     return
   }
 
@@ -73,6 +75,7 @@ async function onCreateSubmit() {
       ...(weddingDate.value ? { wedding_date: weddingDate.value } : {}),
       ...(totalBudget.value ? { total_budget: parseInt(totalBudget.value) } : {})
     })
+    toast.success('Wedding berhasil dibuat')
     const pendingPlan = import.meta.client ? localStorage.getItem('kanikah_pending_plan') : null
     if (pendingPlan === 'premium') {
       await router.push('/checkout')
@@ -85,6 +88,7 @@ async function onCreateSubmit() {
       return
     }
     formError.value = extractError(err)
+    toast.error(formError.value || 'Gagal membuat wedding')
   } finally {
     submitting.value = false
   }
@@ -95,12 +99,14 @@ async function onJoinSubmit() {
   const invalid = validateJoin()
   if (invalid) {
     formError.value = invalid
+    toast.error(invalid)
     return
   }
 
   submitting.value = true
   try {
     await weddingStore.pairWedding(pairCode.value.trim().toUpperCase())
+    toast.success('Berhasil gabung wedding pasangan')
     const pendingPlan = import.meta.client ? localStorage.getItem('kanikah_pending_plan') : null
     if (pendingPlan === 'premium') {
       await router.push('/checkout')
@@ -113,6 +119,7 @@ async function onJoinSubmit() {
       return
     }
     formError.value = extractError(err)
+    toast.error(formError.value || 'Gagal gabung wedding')
   } finally {
     submitting.value = false
   }

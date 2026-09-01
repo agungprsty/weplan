@@ -5,6 +5,7 @@ const weddingStore = useWeddingStore()
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const toast = useToast()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -77,6 +78,7 @@ async function submitOrder() {
   // notes wajib — untuk persiapan bukti via WhatsApp
   if (!notes.value.trim() || notes.value.trim().length < 10) {
     error.value = 'Tulis keterangan transfer (min. 10 karakter) — contoh: a.n., jam, bank. Bukti foto akan dikirim via WhatsApp.'
+    toast.error(error.value)
     return
   }
   submitting.value = true
@@ -98,6 +100,7 @@ async function submitOrder() {
     const created = order as any
     successOrder.value = { id: created.id, amount: created.amount ?? premiumPlan.value.price }
     if (import.meta.client) localStorage.removeItem('kanikah_pending_plan')
+    toast.success('Pesanan Premium berhasil dibuat')
   } catch (err: any) {
     const detail = err?.data?.detail as string | undefined
     if (detail && detail.toLowerCase().includes('pending')) {
@@ -113,6 +116,7 @@ async function submitOrder() {
     } else {
       error.value = detail ?? 'Gagal membuat pesanan. Coba lagi.'
     }
+    toast.error(error.value || 'Gagal membuat pesanan')
   } finally {
     submitting.value = false
   }

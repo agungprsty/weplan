@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'dashboard' })
 
 const kuaStore = useKuaStore()
+const toast = useToast()
 
 const activeOwner = ref<'all' | 'cpp' | 'cpw'>('all')
 
@@ -37,7 +38,10 @@ async function toggleStatus(doc: KuaDocument) {
   const next = isDone(doc) ? 'belum' : 'sudah'
   try {
     await kuaStore.updateStatus(doc.id, next as KuaDocument['status'])
-  } catch {}
+    toast.success(next === 'sudah' ? 'Berkas ditandai siap' : 'Berkas ditandai belum')
+  } catch {
+    toast.error('Gagal mengubah status berkas')
+  }
 }
 
 function openAddModal() {
@@ -51,6 +55,7 @@ function openAddModal() {
 async function submitAdd() {
   if (!addForm.title.trim()) {
     addError.value = 'Judul berkas wajib diisi'
+    toast.error(addError.value)
     return
   }
   addError.value = ''
@@ -62,8 +67,10 @@ async function submitAdd() {
       is_required: addForm.is_required,
     })
     showAddModal.value = false
+    toast.success('Berkas berhasil ditambahkan')
   } catch (e: any) {
     addError.value = e?.data?.detail?.message || e?.message || 'Gagal menambah berkas'
+    toast.error(addError.value || 'Gagal menambah berkas')
   } finally {
     addSubmitting.value = false
   }
@@ -75,8 +82,10 @@ async function removeDoc(doc: KuaDocument) {
   deletingId.value = doc.id
   try {
     await kuaStore.deleteDocument(doc.id)
+    toast.success('Berkas berhasil dihapus')
   } catch (e: any) {
-    alert(e?.data?.detail || 'Gagal menghapus berkas')
+    const msg = e?.data?.detail || 'Gagal menghapus berkas'
+    toast.error(typeof msg === 'string' ? msg : 'Gagal menghapus berkas')
   } finally {
     deletingId.value = null
   }

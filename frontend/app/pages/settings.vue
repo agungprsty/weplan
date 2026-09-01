@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'dashboard' })
 
 const weddingStore = useWeddingStore()
+const toast = useToast()
 
 const loading = ref(false)
 const weddingError = ref<string | null>(null)
@@ -39,10 +40,12 @@ async function saveWedding() {
   weddingSuccess.value = null
   if (weddingForm.title.trim().length < 2) {
     weddingError.value = 'Judul pernikahan minimal 2 karakter'
+    toast.error(weddingError.value)
     return
   }
   if (weddingForm.partner1_name.trim().length < 2 || weddingForm.partner2_name.trim().length < 2) {
     weddingError.value = 'Nama pasangan wajib diisi'
+    toast.error(weddingError.value)
     return
   }
   loading.value = true
@@ -56,8 +59,10 @@ async function saveWedding() {
     } as any)
     weddingSuccess.value = 'Data wedding berhasil diperbarui'
     setTimeout(() => weddingSuccess.value = null, 3000)
+    toast.success('Data wedding berhasil diperbarui')
   } catch (err: unknown) {
     weddingError.value = extractErr(err)
+    toast.error(weddingError.value || 'Gagal menyimpan wedding')
   } finally {
     loading.value = false
   }

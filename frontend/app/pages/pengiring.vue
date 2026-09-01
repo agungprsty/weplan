@@ -4,6 +4,7 @@ definePageMeta({ layout: 'dashboard' })
 const cortageStore = useCortageStore()
 const guestStore = useGuestStore()
 const weddingStore = useWeddingStore()
+const toast = useToast()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
@@ -93,6 +94,7 @@ async function submitCreate() {
   createError.value = null
   if (createForm.name.trim().length < 2) {
     createError.value = 'Nama minimal 2 karakter'
+    toast.error(createError.value)
     return
   }
   try {
@@ -111,12 +113,14 @@ async function submitCreate() {
     } as Partial<Guest> & { name: string })
     showCreate.value = false
     await cortageStore.fetchCortage()
+    toast.success('Pengiring berhasil ditambahkan')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
     if (typeof d === 'object' && d && 'message' in d) createError.value = String((d as Record<string, unknown>).message)
     else if (typeof d === 'string') createError.value = d
     else createError.value = guestStore.error ?? 'Gagal menambahkan pengiring'
+    toast.error(createError.value || 'Gagal menambahkan pengiring')
   }
 }
 
@@ -134,25 +138,33 @@ async function submitForm() {
     await cortageStore.updateCortage(editingId.value, payload)
     showForm.value = false
     editingId.value = null
+    toast.success('Data pengiring berhasil diperbarui')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
     if (typeof d === 'object' && d && 'message' in d) formError.value = String((d as Record<string, unknown>).message)
     else if (typeof d === 'string') formError.value = d
     else formError.value = 'Gagal menyimpan'
+    toast.error(formError.value || 'Gagal menyimpan')
   }
 }
 
 async function markFittingDone(item: Cortage) {
   try {
     await cortageStore.updateCortage(item.id, { fitting_status: 'done' })
-  } catch {}
+    toast.success('Fitting ditandai selesai')
+  } catch {
+    toast.error('Gagal menandai fitting selesai')
+  }
 }
 
 async function markLunas(item: Cortage) {
   try {
     await cortageStore.updateCortage(item.id, { payment_status: 'lunas' })
-  } catch {}
+    toast.success('Pembayaran ditandai lunas')
+  } catch {
+    toast.error('Gagal menandai lunas')
+  }
 }
 
 onMounted(async () => {

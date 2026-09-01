@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const weddingStore = useWeddingStore()
 const maharStore = useMaharStore()
+const toast = useToast()
 
 const activeTab = ref<'mahar' | 'seserahan_cpp' | 'seserahan_cpw' | 'hantaran'>('mahar')
 const showForm = ref(false)
@@ -75,10 +76,12 @@ async function submitForm() {
   formError.value = null
   if (form.title.trim().length < 2) {
     formError.value = 'Judul minimal 2 karakter.'
+    toast.error(formError.value)
     return
   }
   if (form.status === 'selesai' && !form.actual_cost) {
     formError.value = 'Biaya aktual wajib diisi untuk status selesai.'
+    toast.error(formError.value)
     return
   }
   const payload: MaharCreateInput = {
@@ -92,6 +95,7 @@ async function submitForm() {
     tenor_paid: form.tenor_paid,
     notes: form.notes.trim() || undefined,
   }
+  const wasEditing = Boolean(editingId.value)
   try {
     if (editingId.value) {
       await maharStore.updateItem(editingId.value, payload)
@@ -100,6 +104,7 @@ async function submitForm() {
     }
     showForm.value = false
     editingId.value = null
+    toast.success(wasEditing ? 'Item berhasil diperbarui' : 'Item berhasil ditambahkan')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown }; response?: { status?: number } }
     const detail = e?.data?.detail as Record<string, unknown> | string | undefined
@@ -112,6 +117,7 @@ async function submitForm() {
     } else {
       formError.value = 'Gagal menyimpan. Coba lagi.'
     }
+    toast.error(formError.value || 'Gagal menyimpan')
   }
 }
 
@@ -119,8 +125,9 @@ async function deleteItem(id: string) {
   if (!confirm('Hapus item ini?')) return
   try {
     await maharStore.deleteItem(id)
+    toast.success('Item berhasil dihapus')
   } catch {
-    alert('Gagal hapus')
+    toast.error('Gagal menghapus item')
   }
 }
 
@@ -130,16 +137,19 @@ async function markSelesai(item: MaharItem) {
     formError.value = null
     openEdit(item)
     formError.value = 'Isi biaya aktual dulu sebelum tandai selesai.'
+    toast.error(formError.value)
     return
   }
   try {
     await maharStore.updateItem(item.id, { status: 'selesai' })
+    toast.success('Item ditandai selesai')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
-    if (typeof d === 'object' && d && 'message' in d) alert(String((d as Record<string, unknown>).message))
-    else if (typeof d === 'string') alert(d)
-    else alert('Gagal tandai selesai. Pastikan biaya aktual terisi.')
+    let msg = 'Gagal tandai selesai. Pastikan biaya aktual terisi.'
+    if (typeof d === 'object' && d && 'message' in d) msg = String((d as Record<string, unknown>).message)
+    else if (typeof d === 'string') msg = d
+    toast.error(msg)
   }
 }
 

@@ -4,6 +4,7 @@ definePageMeta({ layout: 'dashboard' })
 const weddingStore = useWeddingStore()
 const finance = useFinanceStore()
 const wedding = computed(() => weddingStore.wedding)
+const toast = useToast()
 
 const showAdd = ref(false)
 const formError = ref<string | null>(null)
@@ -27,8 +28,8 @@ onMounted(async () => {
 async function addTx() {
   formError.value = null
   const amount = parseInt(txForm.amount)
-  if (!amount) { formError.value = 'Amount wajib'; return }
-  if (!isPremium.value) { formError.value = 'Cashflow butuh Premium 50k/6 bulan.'; return }
+  if (!amount) { formError.value = 'Amount wajib'; toast.error(formError.value); return }
+  if (!isPremium.value) { formError.value = 'Cashflow butuh Premium 50k/6 bulan.'; toast.error(formError.value); return }
   try {
     await finance.addTransaction({
       type: txForm.type,
@@ -44,8 +45,10 @@ async function addTx() {
     txForm.source = ''
     txForm.notes = ''
     page.value = 1
+    toast.success('Transaksi berhasil ditambahkan')
   } catch (err: unknown) {
     formError.value = extractErr(err)
+    toast.error(formError.value || 'Gagal menyimpan transaksi')
   }
 }
 

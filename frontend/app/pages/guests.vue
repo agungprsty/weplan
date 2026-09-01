@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const weddingStore = useWeddingStore()
 const guestStore = useGuestStore()
+const toast = useToast()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
@@ -87,6 +88,7 @@ async function submit() {
   formError.value = null
   if (form.name.trim().length < 2) {
     formError.value = 'Nama minimal 2 karakter'
+    toast.error(formError.value)
     return
   }
   const payload = {
@@ -97,8 +99,9 @@ async function submit() {
     side: form.side,
     notes: form.notes || undefined,
   }
+  const wasEditing = isEditing.value
   try {
-    if (isEditing.value && editingId.value) {
+    if (wasEditing && editingId.value) {
       await guestStore.updateGuest(editingId.value, payload)
     } else {
       await guestStore.addGuest(payload as Partial<Guest> & { name: string })
@@ -106,12 +109,14 @@ async function submit() {
     showForm.value = false
     editingId.value = null
     resetForm()
+    toast.success(wasEditing ? 'Tamu berhasil diperbarui' : 'Tamu berhasil ditambahkan')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
     if (typeof d === 'object' && d && 'message' in d) formError.value = String((d as Record<string, unknown>).message)
     else if (typeof d === 'string') formError.value = d
     else formError.value = 'Gagal menyimpan tamu'
+    toast.error(formError.value || 'Gagal menyimpan tamu')
   }
 }
 
@@ -121,14 +126,20 @@ async function toggleRsvp(g: Guest) {
   const next = order[(idx + 1) % order.length]
   try {
     await guestStore.updateGuest(g.id, { rsvp_status: next })
-  } catch {}
+    toast.success(`RSVP diubah menjadi ${rsvpLabel(next)}`)
+  } catch {
+    toast.error('Gagal mengubah RSVP')
+  }
 }
 
 async function handleDelete(g: Guest) {
   if (!confirm(`Hapus tamu "${g.name}"?`)) return
   try {
     await guestStore.deleteGuest(g.id)
-  } catch {}
+    toast.success('Tamu berhasil dihapus')
+  } catch {
+    toast.error('Gagal menghapus tamu')
+  }
 }
 
 onMounted(async () => {

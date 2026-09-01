@@ -181,7 +181,7 @@ const displayDesc = computed(() => props.description ?? cfg.value.description)
         </div>
 
         <p class="mt-6 text-xs text-slate-400">
-          Kode error: {{ code }} · <NuxtLink to="/docs" class="hover:text-slate-600 underline-offset-2 hover:underline">Dokumentasi</NuxtLink> · <NuxtLink to="/privacy" class="hover:text-slate-600 underline-offset-2 hover:underline">Privasi</NuxtLink>
+          Kode error: {{ code }} · <NuxtLink to="/panduan" class="hover:text-slate-600 underline-offset-2 hover:underline">Panduan</NuxtLink> · <NuxtLink to="/privacy" class="hover:text-slate-600 underline-offset-2 hover:underline">Privasi</NuxtLink>
         </p>
       </div>
     </main>

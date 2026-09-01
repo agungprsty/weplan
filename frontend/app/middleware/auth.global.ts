@@ -11,7 +11,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     throw createError({ statusCode: 404, statusMessage: 'Page Not Found', fatal: false })
   }
 
-  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/faq', '/contact', '/privacy', '/terms', '/403', '/404', '/500', '/maintenance']
+  const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/panduan', '/faq', '/contact', '/privacy', '/terms', '/403', '/404', '/500', '/maintenance']
   const isPublic = publicPages.includes(to.path) || to.path.startsWith('/_error')
   const isAdminRoute = to.path.startsWith('/admin')
 

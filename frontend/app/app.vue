@@ -1,6 +1,8 @@
 <template>
   <div>
-    <AdminImpersonateBanner />
+    <ClientOnly>
+      <AdminImpersonateBanner />
+    </ClientOnly>
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

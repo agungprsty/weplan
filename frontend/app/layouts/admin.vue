@@ -5,6 +5,7 @@ const auth = useAuthStore()
 
 const sidebarOpen = ref(true)
 const isMobile = ref(false)
+const isImpersonating = computed(() => auth.isImpersonating)
 
 function updateIsMobile() {
   if (typeof window !== 'undefined') isMobile.value = window.innerWidth < 1024
@@ -39,8 +40,11 @@ function handleLogout() {
   <div class="min-h-screen bg-[#0f172a] text-slate-100 antialiased">
     <!-- Sidebar -->
     <aside
-      class="fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300 lg:translate-x-0"
-      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:w-[64px] lg:translate-x-0'"
+      class="fixed left-0 z-40 flex w-[260px] flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300 lg:translate-x-0"
+      :class="[
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:w-[64px] lg:translate-x-0',
+        isImpersonating ? 'top-9 h-[calc(100vh-36px)]' : 'inset-y-0'
+      ]"
     >
       <div class="flex h-[64px] shrink-0 items-center gap-3 border-b border-slate-800 px-4">
         <span v-if="sidebarOpen" class="text-lg font-bold tracking-tight">Kanikah <span class="font-normal text-slate-400">Admin</span></span>
@@ -93,10 +97,10 @@ function handleLogout() {
       </div>
     </aside>
 
-    <div v-if="sidebarOpen" class="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden" @click="sidebarOpen=false" />
+    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden" :class="isImpersonating ? 'top-9' : 'inset-y-0'" @click="sidebarOpen=false" />
 
     <div class="flex min-h-screen flex-col transition-all duration-300" :class="sidebarOpen ? 'lg:pl-[260px]' : 'lg:pl-[64px]'">
-      <header class="sticky top-0 z-20 flex h-[64px] items-center gap-3 border-b border-slate-800 bg-slate-900/80 px-4 backdrop-blur lg:px-6">
+      <header class="sticky z-20 flex h-[64px] items-center gap-3 border-b border-slate-800 bg-slate-900/80 px-4 backdrop-blur lg:px-6" :class="isImpersonating ? 'top-9' : 'top-0'">
         <button class="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 bg-slate-800 text-slate-200 lg:hidden" @click.stop="sidebarOpen=!sidebarOpen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
         <h1 class="hidden text-sm font-semibold tracking-wide text-slate-200 lg:inline">Admin Panel</h1>
         <div class="hidden flex-1 justify-center lg:flex">

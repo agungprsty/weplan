@@ -54,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = null
       }
     }
+    _impersonating.value = Boolean(localStorage.getItem('kanikah_impersonating'))
   }
 
   function clearSession() {
@@ -96,7 +97,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const isSuperadmin = computed(() => Boolean(user.value?.is_superadmin))
-  const isImpersonating = computed(() => import.meta.client ? Boolean(localStorage.getItem('kanikah_impersonating')) : false)
+  const _impersonating = ref(false)
+  if (import.meta.client) {
+    _impersonating.value = Boolean(localStorage.getItem('kanikah_impersonating'))
+    // sync across tabs + react to manual changes
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'kanikah_impersonating') _impersonating.value = Boolean(e.newValue)
+    })
+  }
+  const isImpersonating = computed(() => _impersonating.value)
 
   async function fetchMe() {
     const api = useApi()
@@ -150,6 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('kanikah_admin_user', JSON.stringify(user.value || {}))
     localStorage.setItem('kanikah_impersonating', '1')
     localStorage.setItem('kanikah_impersonate_target', JSON.stringify(targetUser))
+    _impersonating.value = true
     setSession(newToken, newRefresh, targetUser)
   }
 
@@ -173,6 +183,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('kanikah_admin_user')
     localStorage.removeItem('kanikah_impersonating')
     localStorage.removeItem('kanikah_impersonate_target')
+    _impersonating.value = false
   }
 
   function getImpersonateTarget(): AuthUser | null {

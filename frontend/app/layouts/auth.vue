@@ -1,5 +1,10 @@
+<script setup lang="ts">
+const auth = useAuthStore()
+const isImpersonating = computed(() => auth.isImpersonating)
+</script>
+
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden">
+  <div class="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden" :class="isImpersonating ? 'pt-9' : ''">
     <nav class="w-full border-b border-slate-100 bg-white/60 backdrop-blur-md">
       <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <NuxtLink to="/" class="font-serif font-bold text-xl tracking-tight text-slate-900">

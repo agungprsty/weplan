@@ -5,6 +5,7 @@ const weddingStore = useWeddingStore()
 const router = useRouter()
 
 const showUserMenu = ref(false)
+const isImpersonating = computed(() => authStore.isImpersonating)
 
 function handleLogout() {
   authStore.clearSession()
@@ -16,7 +17,7 @@ function handleLogout() {
 
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden">
-    <nav class="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-rose-100 transition-all">
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-lg border-b border-rose-100 transition-all" :class="isImpersonating ? 'top-9' : 'top-0'">
       <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         <NuxtLink to="/" class="font-serif font-bold text-2xl tracking-tight text-slate-900">
           <span class="text-slate-900">Ka</span><span class="text-rose-600">nikah</span>
@@ -27,7 +28,7 @@ function handleLogout() {
             <a href="#harga" class="hover:text-rose-600 transition-colors">Harga</a>
             <a href="#testimoni" class="hover:text-rose-600 transition-colors">Testimoni</a>
           </template>
-          <NuxtLink to="/docs" class="hover:text-rose-600 transition-colors">Dokumentasi</NuxtLink>
+          <NuxtLink to="/panduan" class="hover:text-rose-600 transition-colors">Panduan</NuxtLink>
           <NuxtLink to="/faq" class="hover:text-rose-600 transition-colors">FAQ</NuxtLink>
         </div>
         <div class="flex items-center gap-4">
@@ -73,7 +74,7 @@ function handleLogout() {
       </div>
     </nav>
 
-    <main class="pt-20">
+    <main :class="isImpersonating ? 'pt-[116px]' : 'pt-20'">
       <slot />
     </main>
 
@@ -83,7 +84,7 @@ function handleLogout() {
           <span class="text-white">Ka</span><span class="text-rose-500">nikah</span>
         </NuxtLink>
         <div class="flex gap-6 text-sm text-slate-400">
-          <NuxtLink to="/docs" class="hover:text-rose-400 transition">Dokumentasi</NuxtLink>
+          <NuxtLink to="/panduan" class="hover:text-rose-400 transition">Panduan</NuxtLink>
           <NuxtLink to="/faq" class="hover:text-rose-400 transition">FAQ</NuxtLink>
           <NuxtLink to="/privacy" class="hover:text-rose-400 transition">Kebijakan Privasi</NuxtLink>
           <NuxtLink to="/terms" class="hover:text-rose-400 transition">Syarat & Ketentuan</NuxtLink>

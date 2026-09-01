@@ -14,6 +14,7 @@ const authMenuOpen = ref(false)
 const errorsMenuOpen = ref(false)
 const mobileSearchOpen = ref(false)
 const showUpgradeModal = ref(false)
+const isImpersonating = computed(() => auth.isImpersonating)
 
 const PREMIUM_PATHS = ['/gifts', '/pengiring', '/vendors', '/mahar', '/checklists', '/keuangan']
 
@@ -98,8 +99,11 @@ function isActive(path: string) {
   <div class="min-h-screen bg-[#f8f9fb] text-slate-800 antialiased selection:bg-rose-200 selection:text-rose-900 font-sans" @click="closePopovers">
     <!-- Sidebar -->
     <aside
-      class="fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white transition-all duration-300 lg:translate-x-0"
-      :class="sidebarOpen ? 'translate-x-0 lg:w-[280px]' : '-translate-x-full lg:translate-x-0 lg:w-[72px]'"
+      class="fixed left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white transition-all duration-300 lg:translate-x-0"
+      :class="[
+        sidebarOpen ? 'translate-x-0 lg:w-[280px]' : '-translate-x-full lg:translate-x-0 lg:w-[72px]',
+        isImpersonating ? 'top-9 h-[calc(100vh-36px)]' : 'inset-y-0'
+      ]"
     >
       <!-- Brand -->
       <div class="flex h-[64px] shrink-0 items-center gap-3 border-b border-slate-100 px-5" :class="!sidebarOpen ? 'lg:justify-center lg:px-2' : ''">
@@ -310,7 +314,7 @@ function isActive(path: string) {
                   <svg v-if="sidebarOpen" class="ml-auto h-3.5 w-3.5 text-slate-400 transition-transform" :class="authMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M6 9l6 6 6-6" /></svg>
                 </button>
                 <ul v-show="authMenuOpen && sidebarOpen" class="mt-1 space-y-0.5 border-l border-slate-100 pl-4 ml-3">
-                  <li><NuxtLink to="/docs" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Dokumentasi</NuxtLink></li>
+                  <li><NuxtLink to="/panduan" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Panduan</NuxtLink></li>
                   <li><NuxtLink to="/faq" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">FAQ</NuxtLink></li>
                   <li><NuxtLink to="/contact" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Hubungi Kami</NuxtLink></li>
                   <li><NuxtLink to="/privacy" class="block rounded-md px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900" @click="closeSidebarOnMobile">Privasi</NuxtLink></li>
@@ -346,12 +350,12 @@ function isActive(path: string) {
     </aside>
 
     <!-- Backdrop mobile -->
-    <div v-if="sidebarOpen" class="fixed inset-0 z-30 bg-slate-900/20 backdrop-blur-sm lg:hidden" @click="sidebarOpen = false" />
+    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 z-30 bg-slate-900/20 backdrop-blur-sm lg:hidden" :class="isImpersonating ? 'top-9' : 'inset-y-0'" @click="sidebarOpen = false" />
 
     <!-- Main -->
     <div class="flex min-h-screen flex-col transition-all duration-300" :class="sidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[72px]'">
       <!-- Top Navbar -->
-      <header class="sticky top-0 z-20 flex h-[64px] items-center gap-3 border-b border-slate-200 bg-white px-4 lg:px-6">
+      <header class="sticky z-20 flex h-[64px] items-center gap-3 border-b border-slate-200 bg-white px-4 lg:px-6" :class="isImpersonating ? 'top-9' : 'top-0'">
         <!-- Toggle sidebar: hanya mobile (lg:hidden) agar tidak duplikat dengan tombol di sidebar saat desktop -->
         <button
           class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 lg:hidden"
@@ -429,7 +433,7 @@ function isActive(path: string) {
 
     <!-- Upgrade Modal -->
     <Transition name="upgrade-fade">
-      <div v-if="showUpgradeModal" class="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true">
+      <div v-if="showUpgradeModal" class="fixed inset-0 z-[70] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showUpgradeModal = false" />
         <div class="relative w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
           <button class="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-600" aria-label="Tutup" @click="showUpgradeModal = false">

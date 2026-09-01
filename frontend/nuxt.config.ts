@@ -40,6 +40,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     routeRules: {
+      '/docs': { redirect: '/panduan' },
       '/**': {
         headers: {
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',

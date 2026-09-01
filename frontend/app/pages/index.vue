@@ -186,31 +186,6 @@ const activeFeatureIdx = ref(0)
 const activeFeature = computed(() => features[activeFeatureIdx.value] ?? features[0])
 const activeImage = computed(() => activeFeature.value.image)
 
-let fiturObserver: IntersectionObserver | null = null
-
-onMounted(() => {
-  if (typeof window === 'undefined') return
-  // gunakan querySelector agar tidak pusing dengan ref array di template
-  fiturObserver = new IntersectionObserver(
-    (entries) => {
-      // ambil entry paling terlihat (intersectionRatio tertinggi)
-      const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-      if (visible) {
-        const idx = Number((visible.target as HTMLElement).dataset.fidx)
-        if (!Number.isNaN(idx)) activeFeatureIdx.value = idx
-      }
-    },
-    { root: null, rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] }
-  )
-  const tick = () => {
-    const els = document.querySelectorAll<HTMLElement>('[data-fidx]')
-    if (els.length) els.forEach(el => fiturObserver!.observe(el))
-    else setTimeout(tick, 150)
-  }
-  setTimeout(tick, 120)
-  onBeforeUnmount(() => fiturObserver?.disconnect())
-})
-
 const testimonials = [
   {
     name: 'Dina & Farhan',
@@ -304,19 +279,6 @@ const testimonials = [
             </div>
             <div class="p-6">
               <div class="flex items-center gap-3 mb-3">
-                <div
-                  :class="[
-                    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                    feature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
-                    feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
-                    feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
-                    feature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
-                    feature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
-                    feature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
-                  ]"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="feature.icon" /></svg>
-                </div>
                 <h3 class="font-serif font-bold text-slate-900 text-lg">{{ feature.title }}</h3>
               </div>
               <p class="text-sm leading-relaxed text-slate-600">{{ feature.description }}</p>
@@ -324,70 +286,36 @@ const testimonials = [
           </div>
         </div>
 
-        <!-- Desktop: 2 grid pinned — kiri sticky gambar, kanan trigger -->
-        <div class="hidden lg:grid lg:grid-cols-2 gap-12 xl:gap-16 items-start">
-          <!-- Kiri: sticky gambar + deskripsi — selalu terlihat saat scroll kanan -->
-          <div class="sticky top-24 self-start">
-            <div class="rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/40 overflow-hidden">
-              <div class="bg-slate-50 p-2">
-                <div class="relative aspect-[16/10] overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white">
-                  <Transition name="fitur-fade" mode="out-in">
-                    <img :key="activeFeature.title" :src="activeImage" :alt="activeFeature.title" class="absolute inset-0 h-full w-full object-cover object-top" />
-                  </Transition>
-                </div>
-              </div>
-            </div>
-            <div class="mt-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 flex gap-4 shadow-sm">
-              <div
-                :class="[
-                  'w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm',
-                  activeFeature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
-                  activeFeature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
-                  activeFeature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
-                  activeFeature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
-                  activeFeature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
-                  activeFeature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
-                ]"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeFeature.icon" /></svg>
-              </div>
-              <div>
-                <p class="font-serif font-bold text-slate-900">{{ activeFeature.title }}</p>
-                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ activeFeature.description }}</p>
-              </div>
-            </div>
-            <div class="mt-5 flex items-center justify-between">
-              <div class="flex gap-1.5">
-                <span v-for="(f, i) in features" :key="f.title + '-dot'" class="h-1.5 rounded-full transition-all duration-300" :class="i === activeFeatureIdx ? 'w-8 bg-slate-900' : 'w-1.5 bg-slate-200'"></span>
-              </div>
-              <span class="text-xs font-medium text-slate-400">{{ activeFeatureIdx + 1 }} / {{ features.length }}</span>
-            </div>
-            <p class="mt-3 text-center text-xs text-slate-400">Scroll di kanan untuk ganti gambar →</p>
-          </div>
-
-          <!-- Kanan: nama fitur besar — trigger ganti gambar, tinggi besar agar pin terasa -->
-          <div class="relative">
+        <div class="hidden lg:block relative">
+          <div class="pointer-events-none absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-slate-200 to-transparent xl:block"></div>
+          <div class="space-y-14 xl:space-y-20">
             <div
               v-for="(feature, idx) in features"
               :key="feature.title"
-              :data-fidx="idx"
-              class="group flex min-h-[68vh] flex-col justify-center border-l-2 py-12 pl-8 last:border-0 transition-all duration-500"
-              :class="activeFeatureIdx === idx ? 'border-slate-900 opacity-100' : 'border-slate-100 opacity-25'"
+              class="group relative grid grid-cols-2 gap-10 xl:gap-16 items-center"
             >
-              <p class="text-xs font-semibold uppercase tracking-[0.18em]" :class="activeFeatureIdx === idx ? 'text-rose-600' : 'text-slate-400'">Fitur {{ String(idx+1).padStart(2,'0') }} / {{ String(features.length).padStart(2,'0') }}</p>
-              <h3 class="mt-3 font-serif text-4xl xl:text-[3rem] font-bold leading-[0.95] tracking-tight transition-colors" :class="activeFeatureIdx === idx ? 'text-slate-900' : 'text-slate-400'">
-                {{ feature.title }}
-              </h3>
-              <p class="mt-4 max-w-md text-[15px] leading-relaxed transition-colors" :class="activeFeatureIdx === idx ? 'text-slate-600' : 'text-slate-400'">
-                {{ feature.description }}
-              </p>
-              <div class="mt-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-widest transition-colors" :class="activeFeatureIdx === idx ? 'text-slate-900' : 'text-slate-300'">
-                <span class="h-px w-10 transition-colors" :class="activeFeatureIdx === idx ? 'bg-slate-900' : 'bg-slate-200'"></span>
-                {{ idx === 0 ? 'Mulai di sini — scroll' : idx === features.length - 1 ? 'Akhir fitur — lanjut ke harga' : 'Lanjut scroll' }}
+              <div :class="idx % 2 === 1 ? 'order-2 xl:pl-8' : 'order-1 xl:pr-8'">
+                <div
+                  class="relative rounded-[2rem] border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/40 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200/60"
+                  :class="idx % 2 === 0 ? 'rotate-[-0.9deg] group-hover:rotate-0' : 'rotate-[0.9deg] group-hover:rotate-0'"
+                >
+                  <div class="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
+                    <img :src="feature.image" :alt="feature.title" class="w-full h-auto object-cover object-top transition duration-700 group-hover:scale-[1.015]" loading="lazy" />
+                  </div>
+                </div>
               </div>
-              <!-- subtle preview thumb on inactive -->
-              <div class="mt-6 lg:hidden">
-                <img :src="feature.image" :alt="feature.title" class="w-full h-auto rounded-xl border border-slate-200 object-cover" />
+              <div :class="idx % 2 === 1 ? 'order-1 xl:pr-4 xl:text-right' : 'order-2 xl:pl-4'">
+                <div class="relative">
+                  <span class="pointer-events-none absolute -top-10 select-none font-serif text-[5.5rem] font-bold leading-none text-slate-100 xl:text-[7rem]" :class="idx % 2 === 1 ? 'right-0' : 'left-0'">{{ String(idx+1).padStart(2,'0') }}</span>
+                  <div class="relative">
+                    <h3 class="mt-3 font-serif text-4xl xl:text-[2.6rem] font-bold leading-[0.95] tracking-tight text-slate-900">
+                      {{ feature.title }}
+                    </h3>
+                    <p class="mt-4 max-w-[46ch] text-[15px] leading-relaxed text-slate-600" :class="idx % 2 === 1 ? 'xl:ml-auto' : ''">
+                      {{ feature.description }}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

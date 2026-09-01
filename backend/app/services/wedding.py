@@ -87,8 +87,12 @@ async def create_wedding(db: AsyncSession, data: WeddingCreate, user: User) -> W
     db.add(wedding_user)
     await db.flush()
     await sync_savings_target(db, wedding)
-    await db.refresh(wedding)
-    # New wedding always has 1 partner, no extra query needed
+    await db.flush()
+    # reload dengan selectinload(plan) agar tidak MissingGreenlet saat serialisasi response (async lazy load)
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding.id)
+    )
+    wedding = result.scalar_one()
     wedding.member_count = 1
     await log_activity(
         db,
@@ -136,7 +140,11 @@ async def pair_wedding(db: AsyncSession, pair_code: str, user: User) -> Wedding:
     )
     db.add(wedding_user)
     await db.flush()
-    await db.refresh(wedding)
+    # reload dengan selectinload(plan) agar tidak MissingGreenlet saat serialisasi response
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding.id)
+    )
+    wedding = result.scalar_one()
     # After pairing, wedding has 2 partners
     wedding.member_count = 2
     await log_activity(
@@ -165,8 +173,10 @@ async def get_user_wedding(db: AsyncSession, user: User) -> Wedding | None:
 
 
 async def get_wedding_by_id(db: AsyncSession, wedding_id: uuid.UUID) -> Wedding | None:
-    wedding = await db.get(Wedding, wedding_id)
-    # Lazy attach if needed
-    if wedding is not None and not hasattr(wedding, "member_count"):
-        wedding.member_count = 0
-    return wedding
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding_id)
+    )
+    wedding = result.scalar_one_or_none()
+    if wedding is not None:
+        return await _attach_member_count(db, wedding)
+    return None

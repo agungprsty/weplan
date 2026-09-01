@@ -1,6 +1,14 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+import dashboardImg from '~/assets/images/dashboard.png'
+import berkasKuaImg from '~/assets/images/berkas-kua.png'
+import checklistsImg from '~/assets/images/checklists.png'
+import daftarTamuImg from '~/assets/images/daftar-tamu.png'
+import keuanganImg from '~/assets/images/keuangan.png'
+import maharImg from '~/assets/images/mahar.png'
+import vendorsImg from '~/assets/images/vendors.png'
+
 const authStore = useAuthStore()
 const router = useRouter()
 const api = useApi()
@@ -128,44 +136,76 @@ const features = [
     description:
       'Bagi tugas dengan pasangan dan pantau statusnya — tersinkron real-time di kedua akun.',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-    color: 'rose'
+    color: 'rose',
+    image: checklistsImg
   },
   {
     title: 'Pantau Anggaran',
     description:
       'Tetapkan batas dana, lacak pembayaran DP vendor, dan cegah pengeluaran berlebih sejak dini.',
     icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    color: 'emerald'
+    color: 'emerald',
+    image: keuanganImg
   },
   {
     title: 'Relasi Tamu & RSVP',
     description:
       'Kelompokkan tamu kedua keluarga, pantau konfirmasi hadir, dan atur porsi katering akurat.',
     icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-    color: 'indigo'
+    color: 'indigo',
+    image: daftarTamuImg
   },
   {
     title: 'Kelola Vendor',
     description:
       'Simpan daftar vendor, catatan kontak, dan status kontrak dalam satu tempat.',
     icon: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8Z',
-    color: 'amber'
+    color: 'amber',
+    image: vendorsImg
   },
   {
     title: 'Gifts, Mahar & Seserahan',
     description:
       'Catat kado dan uang yang diterima, lengkap dengan daftar mahar & seserahan.',
     icon: 'M8.5 6.5a2 2 0 011.5-2h2a2 2 0 011.5 2M6 8h12M14 6.5l3.5 14h-4M12 8v13M6 8l3.5 14h4M12 8v13',
-    color: 'violet'
+    color: 'violet',
+    image: maharImg
   },
   {
     title: 'Berkas KUA',
     description:
       'Persiapan dokumen nikah terpusat dan siap diajukan kapan pun dibutuhkan.',
     icon: 'M3 4a2 2 0 012-2h2a2 2 0 012 2v1h10v13a2 2 0 01-2 2H7a2 2 0 01-2-2V4Z M7 8h10M7 12h10M7 16h6',
-    color: 'sky'
+    color: 'sky',
+    image: berkasKuaImg
   }
 ]
+
+const activeFeatureIdx = ref(0)
+const featureRefs = ref<HTMLElement[]>([])
+
+const activeFeature = computed(() => features[activeFeatureIdx.value] ?? features[0])
+const activeImage = computed(() => activeFeature.value.image)
+
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const idx = Number((entry.target as HTMLElement).dataset.index)
+          if (!Number.isNaN(idx)) activeFeatureIdx.value = idx
+        }
+      }
+    },
+    { root: null, rootMargin: '-45% 0px -45% 0px', threshold: 0 }
+  )
+  // observe after next tick
+  setTimeout(() => {
+    for (const el of featureRefs.value) if (el) observer.observe(el)
+  }, 100)
+  onBeforeUnmount(() => observer.disconnect())
+})
 
 const testimonials = [
   {
@@ -218,82 +258,125 @@ const testimonials = [
         </div>
       </div>
 
-      <!-- App Mockup -->
-      <div class="fade-in-up delay-300 max-w-5xl mx-auto mt-20 relative">
-        <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-50 to-transparent z-10"></div>
-        <div class="bg-white rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden relative">
-          <div class="h-14 border-b border-slate-100 flex items-center px-6 gap-2 bg-slate-50/80 backdrop-blur-sm">
-            <div class="w-3 h-3 rounded-full bg-rose-400"></div>
-            <div class="w-3 h-3 rounded-full bg-amber-400"></div>
-            <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+      <!-- App Mockup — dashboard.png -->
+      <div class="fade-in-up delay-300 max-w-5xl mx-auto mt-16 md:mt-20 relative px-2 sm:px-0">
+        <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-50 to-transparent z-10 pointer-events-none"></div>
+        <div class="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden relative">
+          <div class="h-10 md:h-14 border-b border-slate-100 flex items-center px-4 md:px-6 gap-2 bg-slate-50/80 backdrop-blur-sm">
+            <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-rose-400"></div>
+            <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-amber-400"></div>
+            <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-400"></div>
+            <div class="ml-3 hidden md:flex items-center gap-1.5 text-xs text-slate-400">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+              kanikah.id/dashboard
+            </div>
           </div>
-          <div class="p-8 md:p-10 grid grid-cols-1 md:grid-cols-4 gap-8 bg-pattern">
-            <div class="col-span-1 space-y-4 hidden md:block">
-              <div class="h-6 bg-slate-200 rounded-md w-1/2 mb-8"></div>
-              <div class="h-10 bg-rose-50 rounded-lg w-full border border-rose-100"></div>
-              <div class="h-10 bg-slate-100 rounded-lg w-full"></div>
-              <div class="h-10 bg-slate-100 rounded-lg w-4/5"></div>
-            </div>
-            <div class="col-span-1 md:col-span-3 space-y-6">
-              <div class="flex justify-between items-center mb-4">
-                <div class="h-8 bg-slate-200 rounded-md w-1/3"></div>
-                <div class="h-10 w-10 bg-slate-200 rounded-full"></div>
-              </div>
-              <div class="grid grid-cols-3 gap-6">
-                <div class="h-28 bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl shadow-sm border border-rose-200 p-4">
-                  <div class="w-8 h-8 bg-white/20 rounded-lg mb-4"></div>
-                  <div class="h-4 bg-white/60 rounded w-1/2"></div>
-                </div>
-                <div class="h-28 bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-                  <div class="w-8 h-8 bg-emerald-100 rounded-lg mb-4"></div>
-                  <div class="h-4 bg-slate-200 rounded w-2/3"></div>
-                </div>
-                <div class="h-28 bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-                  <div class="w-8 h-8 bg-indigo-100 rounded-lg mb-4"></div>
-                  <div class="h-4 bg-slate-200 rounded w-1/2"></div>
-                </div>
-              </div>
-              <div class="h-48 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
-                <div class="h-4 bg-slate-200 rounded w-1/4 mb-6"></div>
-                <div class="h-8 bg-slate-50 rounded-lg w-full"></div>
-                <div class="h-8 bg-slate-50 rounded-lg w-full"></div>
-                <div class="h-8 bg-slate-50 rounded-lg w-4/5"></div>
-              </div>
-            </div>
+          <div class="relative bg-slate-50 p-1.5 sm:p-2 md:p-3">
+            <img :src="dashboardImg" alt="Dashboard Kanikah — pratinjau aplikasi" class="w-full h-auto rounded-[0.9rem] md:rounded-[1.2rem] border border-slate-200 shadow-sm object-cover object-top" loading="eager" width="1200" height="750" />
           </div>
         </div>
+        <!-- subtle glow -->
+        <div class="absolute -inset-x-4 -bottom-6 -z-10 h-24 bg-gradient-to-t from-rose-100/50 to-transparent blur-2xl pointer-events-none"></div>
       </div>
     </main>
 
-    <!-- Fitur -->
-    <section id="fitur" class="py-24 bg-white relative">
-      <div class="max-w-6xl mx-auto px-6">
-        <div class="text-center mb-16 max-w-3xl mx-auto">
-          <h2 class="font-serif text-3xl md:text-5xl font-bold text-slate-900 mb-6">Satu tempat untuk mewujudkan segalanya.</h2>
-          <p class="text-slate-600 text-lg">Tinggalkan buku catatan fisik dan spreadsheet yang membingungkan. Kanikah menyatukan seluruh elemen persiapan pernikahan Anda.</p>
+    <!-- Fitur — 2 grid: kiri gambar+deskripsi, kanan nama fitur besar, scroll-pin -->
+    <section id="fitur" class="py-16 md:py-24 bg-white relative overflow-clip">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-10 md:mb-16 max-w-3xl mx-auto">
+          <h2 class="font-serif text-3xl md:text-5xl font-bold text-slate-900 mb-4 md:mb-6">Satu tempat untuk mewujudkan segalanya.</h2>
+          <p class="text-slate-600 text-base md:text-lg leading-relaxed">Tinggalkan buku catatan fisik dan spreadsheet yang membingungkan. Kanikah menyatukan seluruh elemen persiapan pernikahan Anda.</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
+        <!-- Mobile: stacked cards (1 col) -->
+        <div class="grid gap-6 lg:hidden">
           <div
             v-for="feature in features"
-            :key="feature.title"
-            class="group bg-slate-50 border border-slate-100 rounded-3xl p-8 hover:shadow-xl hover:shadow-rose-100/50 transition-all duration-300 hover:-translate-y-1"
+            :key="feature.title + '-m'"
+            class="rounded-[1.5rem] border border-slate-200 bg-white overflow-hidden shadow-sm"
           >
-            <div
-              :class="[
-                'w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110',
-                  feature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
-                  feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
-                  feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
-                  feature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
-                  feature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
-                  feature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
-              ]"
-            >
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="feature.icon" /></svg>
+            <div class="p-1.5 bg-slate-50">
+              <img :src="feature.image" :alt="feature.title" class="w-full h-auto rounded-[1rem] border border-slate-200 object-cover" loading="lazy" />
             </div>
-            <h3 class="font-serif font-bold text-slate-900 text-xl mb-3">{{ feature.title }}</h3>
-            <p class="text-slate-600 leading-relaxed">{{ feature.description }}</p>
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-3">
+                <div
+                  :class="[
+                    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                    feature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
+                    feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
+                    feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
+                    feature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
+                    feature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
+                    feature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
+                  ]"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="feature.icon" /></svg>
+                </div>
+                <h3 class="font-serif font-bold text-slate-900 text-lg">{{ feature.title }}</h3>
+              </div>
+              <p class="text-sm leading-relaxed text-slate-600">{{ feature.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop: 2 grid pinned -->
+        <div class="hidden lg:grid lg:grid-cols-2 gap-12 xl:gap-16 items-start">
+          <!-- Kiri: sticky gambar + deskripsi -->
+          <div class="lg:sticky lg:top-24 self-start">
+            <div class="rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/40 overflow-hidden">
+              <div class="bg-slate-50 p-2">
+                <Transition name="fitur-fade" mode="out-in">
+                  <img :key="activeFeature.title" :src="activeImage" :alt="activeFeature.title" class="w-full h-auto rounded-[1.4rem] border border-slate-200 object-cover object-top" />
+                </Transition>
+              </div>
+            </div>
+            <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 flex gap-4">
+              <div
+                :class="[
+                  'w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
+                  activeFeature.color === 'rose' ? 'bg-rose-100 text-rose-600' : '',
+                  activeFeature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : '',
+                  activeFeature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : '',
+                  activeFeature.color === 'amber' ? 'bg-amber-100 text-amber-600' : '',
+                  activeFeature.color === 'violet' ? 'bg-violet-100 text-violet-600' : '',
+                  activeFeature.color === 'sky' ? 'bg-sky-100 text-sky-600' : ''
+                ]"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeFeature.icon" /></svg>
+              </div>
+              <div>
+                <p class="font-serif font-bold text-slate-900">{{ activeFeature.title }}</p>
+                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ activeFeature.description }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex justify-center gap-1.5">
+              <span v-for="(f, i) in features" :key="f.title + '-dot'" class="h-1.5 rounded-full transition-all" :class="i === activeFeatureIdx ? 'w-8 bg-slate-900' : 'w-1.5 bg-slate-200'"></span>
+            </div>
+          </div>
+
+          <!-- Kanan: nama fitur besar — scroll trigger -->
+          <div class="relative">
+            <div
+              v-for="(feature, idx) in features"
+              :key="feature.title"
+              :data-index="idx"
+              :ref="(el: any) => { if (el) featureRefs[idx] = el as HTMLElement }"
+              class="flex min-h-[55vh] lg:min-h-[70vh] flex-col justify-center border-b border-slate-100 py-10 last:border-0 lg:py-16 transition-opacity duration-300"
+              :class="activeFeatureIdx === idx ? 'opacity-100' : 'opacity-30'"
+            >
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Fitur {{ String(idx+1).padStart(2,'0') }} / {{ String(features.length).padStart(2,'0') }}</p>
+              <h3 class="mt-3 font-serif text-4xl xl:text-[2.75rem] font-bold leading-[1.05] tracking-tight" :class="activeFeatureIdx === idx ? 'text-slate-900' : 'text-slate-500'">
+                {{ feature.title }}
+              </h3>
+              <p class="mt-4 max-w-md text-base leading-relaxed" :class="activeFeatureIdx === idx ? 'text-slate-600' : 'text-slate-400'">
+                {{ feature.description }}
+              </p>
+              <div class="mt-6 flex items-center gap-2 text-xs font-medium" :class="activeFeatureIdx === idx ? 'text-rose-600' : 'text-slate-300'">
+                <span class="h-px w-8 bg-current"></span>
+                {{ idx === 0 ? 'Mulai di sini' : idx === features.length - 1 ? 'Akhir fitur' : 'Lanjut scroll' }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -386,3 +469,18 @@ const testimonials = [
     </section>
   </div>
 </template>
+
+<style scoped>
+.fitur-fade-enter-active,
+.fitur-fade-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.fitur-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.fitur-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.02);
+}
+</style>

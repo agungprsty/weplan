@@ -22,6 +22,7 @@ class Gift(Base):
     type: Mapped[str] = mapped_column(String(20), default="kado")  # kado / uang / other
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     amount: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     received_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)

@@ -429,6 +429,7 @@ function isActive(path: string) {
       <main class="flex-1">
         <slot />
       </main>
+      <AppToast />
     </div>
 
     <!-- Upgrade Modal -->

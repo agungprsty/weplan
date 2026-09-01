@@ -24,6 +24,7 @@ def _to_dict(gift: Gift, guest_name: str | None) -> dict:
         "type": gift.type,
         "description": gift.description,
         "amount": gift.amount,
+        "address": gift.address,
         "received_at": gift.received_at,
         "created_at": gift.created_at,
         "updated_at": gift.updated_at,

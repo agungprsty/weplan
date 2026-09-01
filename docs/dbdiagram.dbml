@@ -216,6 +216,7 @@ Table gifts {
   type varchar(20) [not null, default: 'kado', note: 'kado,uang,other']
   description varchar(255)
   amount bigint
+  address varchar(500)
   received_at date
   created_at datetime [not null]
   updated_at datetime [not null]

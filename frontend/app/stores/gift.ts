@@ -8,6 +8,7 @@ export interface Gift {
   type: 'kado' | 'uang' | 'other'
   description: string | null
   amount: number | null
+  address: string | null
   received_at: string | null
   created_at: string
   updated_at: string
@@ -45,6 +46,7 @@ export const useGiftStore = defineStore('gift', () => {
       type: data.type ?? 'kado',
       description: data.description ?? null,
       amount: data.amount ?? null,
+      address: data.address ?? null,
       received_at: data.received_at ?? null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

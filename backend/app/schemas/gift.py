@@ -10,6 +10,7 @@ class GiftBase(BaseModel):
     type: Literal["kado", "uang", "other"] = "kado"
     description: str | None = Field(default=None, max_length=255)
     amount: int | None = Field(default=None, ge=0)
+    address: str | None = Field(default=None, max_length=500)
     received_at: date | None = None
 
 
@@ -22,6 +23,7 @@ class GiftUpdate(BaseModel):
     type: Literal["kado", "uang", "other"] | None = None
     description: str | None = Field(default=None, max_length=255)
     amount: int | None = Field(default=None, ge=0)
+    address: str | None = Field(default=None, max_length=500)
     received_at: date | None = None
 
 

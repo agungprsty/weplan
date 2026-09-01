@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard' })
 
 const giftStore = useGiftStore()
 const guestStore = useGuestStore()
+const toast = useToast()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
@@ -16,6 +17,7 @@ const form = reactive({
   type: 'kado' as Gift['type'],
   description: '',
   amount: '' as string,
+  address: '',
   received_at: '',
 })
 
@@ -47,7 +49,8 @@ const filtered = computed(() => {
     list = list.filter(
       (i) =>
         (i.guest_name ?? '').toLowerCase().includes(q) ||
-        (i.description ?? '').toLowerCase().includes(q),
+        (i.description ?? '').toLowerCase().includes(q) ||
+        (i.address ?? '').toLowerCase().includes(q),
     )
   }
   return list
@@ -85,6 +88,7 @@ function resetForm() {
   form.type = 'kado'
   form.description = ''
   form.amount = ''
+  form.address = ''
   form.received_at = todayStr()
   guestInput.value = ''
   guestMenuOpen.value = false
@@ -112,6 +116,7 @@ function openEdit(g: Gift) {
   form.type = g.type
   form.description = g.description ?? ''
   form.amount = g.amount !== null ? String(g.amount) : ''
+  form.address = g.address ?? ''
   form.received_at = g.received_at ?? ''
   guestInput.value = g.guest_name ?? ''
   guestMenuOpen.value = false
@@ -221,11 +226,13 @@ async function submit() {
     }
   }
   const amountValue = showAmount.value ? Number(form.amount) : null
+  const wasEditing = isEditing.value
   try {
-    if (isEditing.value && editingId.value) {
+    if (wasEditing && editingId.value) {
       await giftStore.updateGift(editingId.value, {
         type: form.type,
         description: form.description || undefined,
+        address: form.address || null,
         received_at: form.received_at || undefined,
         amount: amountValue ?? undefined,
       })
@@ -241,18 +248,22 @@ async function submit() {
         type: form.type,
         description: form.description || null,
         amount: amountValue,
+        address: form.address || null,
         received_at: form.received_at || todayStr(),
       })
     }
     showForm.value = false
     editingId.value = null
     resetForm()
+    if (wasEditing) toast.success('Gift berhasil diperbarui')
+    else toast.success('Gift berhasil dicatat')
   } catch (err: unknown) {
     const e = err as { data?: { detail?: unknown } }
     const d = e?.data?.detail as Record<string, unknown> | string | undefined
     if (typeof d === 'object' && d && 'message' in d) formError.value = String((d as Record<string, unknown>).message)
     else if (typeof d === 'string') formError.value = d
     else formError.value = 'Gagal menyimpan gift'
+    toast.error(formError.value || 'Gagal menyimpan gift')
   }
 }
 
@@ -260,7 +271,10 @@ async function handleDelete(g: Gift) {
   if (!confirm(`Hapus gift "${g.description || typeLabel(g.type)}" dari ${g.guest_name ?? 'tamu'}?`)) return
   try {
     await giftStore.deleteGift(g.id)
-  } catch {}
+    toast.success('Gift berhasil dihapus')
+  } catch {
+    toast.error('Gagal menghapus gift')
+  }
 }
 
 onMounted(async () => {
@@ -401,6 +415,11 @@ function typeBadge(t: Gift['type']) {
           <input v-model="form.description" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="mis. Piring, amplop merah, emas..." />
         </div>
         <div>
+          <label class="text-xs font-medium text-slate-700">Alamat Pengirim</label>
+          <input v-model="form.address" type="text" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" placeholder="mis. Jl. Mawar No. 10, Jakarta" />
+          <p class="mt-1 text-[11px] text-slate-400">Alamat asal hadiah / domisili tamu</p>
+        </div>
+        <div>
           <label class="text-xs font-medium text-slate-700">Tanggal diterima</label>
           <input v-model="form.received_at" type="date" class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:bg-white" />
         </div>
@@ -414,7 +433,7 @@ function typeBadge(t: Gift['type']) {
         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5L20 20" /></svg>
         </span>
-        <input v-model="search" type="search" placeholder="Cari tamu / hadiah..." class="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900" />
+        <input v-model="search" type="search" placeholder="Cari tamu / hadiah / alamat..." class="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900" />
       </div>
       <select v-model="filterType" class="w-auto rounded-full border border-slate-200 bg-white px-3.5 py-2.5 text-sm">
         <option value="all">Semua tipe</option>
@@ -426,9 +445,18 @@ function typeBadge(t: Gift['type']) {
       <button v-if="filterType!=='all' || search" class="text-xs font-medium text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900" @click="filterType='all'; search=''">Reset</button>
     </div>
 
-    <div v-if="totalUang > 0" class="mb-4 flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-      <span class="text-xs font-medium text-emerald-700">Total uang diterima</span>
-      <span class="text-sm font-semibold text-emerald-800">{{ formatRp(totalUang) }}</span>
+    <div v-if="totalUang > 0" class="mb-4 flex items-center gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white px-5 py-4 shadow-sm">
+      <div class="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white sm:grid">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2" /><path d="M16 11a4 4 0 0 0-8 0" /><path d="M2 9h20" /></svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-xs font-semibold uppercase tracking-widest text-emerald-700">Rekapitulasi Dana Amplop</p>
+        <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">Akumulasi amplop tunai dari tamu undangan yang telah tercatat</p>
+      </div>
+      <div class="shrink-0 text-right">
+        <p class="text-base font-bold tracking-tight text-emerald-800 sm:text-lg">{{ formatRp(totalUang) }}</p>
+        <p class="text-[11px] font-medium text-emerald-600">{{ giftStore.items.filter(i=>i.type==='uang').length }} amplop tercatat</p>
+      </div>
     </div>
 
     <!-- Mobile cards -->
@@ -443,6 +471,10 @@ function typeBadge(t: Gift['type']) {
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold text-slate-900">{{ g.guest_name || 'Tamu tidak diketahui' }}</p>
             <p class="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{{ g.description || '—' }}</p>
+            <p v-if="g.address" class="mt-1 flex items-start gap-1 text-[11px] leading-relaxed text-slate-400">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-0.5 shrink-0"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              <span class="line-clamp-1">{{ g.address }}</span>
+            </p>
           </div>
           <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" :class="typeBadge(g.type)">{{ typeLabel(g.type) }}</span>
         </div>
@@ -471,6 +503,7 @@ function typeBadge(t: Gift['type']) {
               <th class="px-5 py-3 font-medium">Tamu</th>
               <th class="px-5 py-3 font-medium">Tipe</th>
               <th class="px-5 py-3 font-medium">Hadiah</th>
+              <th class="px-5 py-3 font-medium">Alamat</th>
               <th class="px-5 py-3 font-medium text-right">Nominal</th>
               <th class="px-5 py-3 font-medium">Tanggal</th>
               <th class="px-5 py-3 font-medium text-right">Aksi</th>
@@ -481,6 +514,7 @@ function typeBadge(t: Gift['type']) {
               <td class="px-5 py-4 font-medium text-slate-900">{{ g.guest_name || '—' }}</td>
               <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-medium" :class="typeBadge(g.type)">{{ typeLabel(g.type) }}</span></td>
               <td class="px-5 py-4 text-slate-600"><span class="line-clamp-1 max-w-[32ch]">{{ g.description || '—' }}</span></td>
+              <td class="px-5 py-4 text-xs text-slate-500"><span class="line-clamp-1 max-w-[24ch]" :title="g.address || ''">{{ g.address || '—' }}</span></td>
               <td class="px-5 py-4 text-right text-xs font-medium" :class="g.type==='uang' ? 'text-emerald-700' : 'text-slate-400'">{{ g.type==='uang' ? formatRp(g.amount) : '—' }}</td>
               <td class="px-5 py-4 text-xs text-slate-500">{{ g.received_at ? g.received_at.slice(0, 10) : '—' }}</td>
               <td class="px-5 py-4">

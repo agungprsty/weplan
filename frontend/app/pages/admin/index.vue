@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
+import { Bar, Doughnut } from 'vue-chartjs'
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
+
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const adminStore = useAdminStore()
@@ -20,7 +25,58 @@ const cards = computed(() => {
   ]
 })
 
-function formatRp(n: number) { return `Rp ${n.toLocaleString('id-ID')}` }
+const barData = computed(() => {
+  const daily = stats.value?.signup_daily || []
+  return {
+    labels: daily.map(d => {
+      const dt = new Date(d.date)
+      return dt.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })
+    }),
+    datasets: [
+      {
+        label: 'Signup',
+        data: daily.map(d => d.count),
+        backgroundColor: '#0f172a',
+        borderRadius: 6,
+        barThickness: 18,
+      },
+    ],
+  }
+})
+
+const barOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { callbacks: { title: (items: any[]) => items[0]?.label ?? '' } },
+  },
+  scales: {
+    y: { beginAtZero: true, ticks: { precision: 0 } },
+    x: { grid: { display: false } },
+  },
+}))
+
+const doughnutData = computed(() => ({
+  labels: ['Pending', 'Confirmed', 'Cancelled'],
+  datasets: [
+    {
+      data: [stats.value?.pending_orders ?? 0, stats.value?.confirmed_orders ?? 0, stats.value?.cancelled_orders ?? 0],
+      backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+  ],
+}))
+
+const doughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '62%',
+  plugins: {
+    legend: { position: 'bottom' as const, labels: { usePointStyle: true, padding: 16, font: { size: 11 } } },
+  },
+}))
 </script>
 
 <template>
@@ -43,6 +99,23 @@ function formatRp(n: number) { return `Rp ${n.toLocaleString('id-ID')}` }
     </div>
 
     <div v-else class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Gagal memuat stats. Cek koneksi API.</div>
+
+    <div v-if="stats" class="mt-6 grid gap-4 lg:grid-cols-3">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <h3 class="font-semibold text-slate-900">Signup 7 Hari Terakhir</h3>
+        <p class="text-xs text-slate-500">Bar harian — {{ stats.signup_last_7d }} user baru 7d</p>
+        <div class="mt-4 h-[220px]">
+          <Bar :data="barData" :options="barOptions" />
+        </div>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="font-semibold text-slate-900">Orders by Status</h3>
+        <p class="text-xs text-slate-500">Donat pending/confirmed/cancelled</p>
+        <div class="mt-4 h-[220px]">
+          <Doughnut :data="doughnutData" :options="doughnutOptions" />
+        </div>
+      </div>
+    </div>
 
     <div class="mt-6 grid gap-4 lg:grid-cols-2">
       <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

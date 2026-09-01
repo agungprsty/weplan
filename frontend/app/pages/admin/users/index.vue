@@ -60,14 +60,17 @@ async function copyResetLink(user: { id: string; email: string }) {
   }
 }
 
-async function impersonate(user: { id: string; email: string }) {
-  if (!confirm(`Impersonate ${user.email}? Token 10 menit.`)) return
+async function impersonate(user: { id: string; email: string; full_name: string }) {
+  if (!confirm(`Impersonate ${user.email}? Akan login sebagai user ini (10m) dan banner impersonate akan muncul.`)) return
   try {
     const res = await adminApi.impersonate(user.id)
-    // save impersonate token temporarily and open app as that user in new tab?
-    // simpler: copy token
-    await navigator.clipboard.writeText(res.access_token)
-    alert(`Impersonate token disalin (10m). Gunakan di header Authorization.\nAccess: ${res.access_token.slice(0,30)}...`)
+    const auth = useAuthStore()
+    auth.startImpersonate(res.access_token, res.refresh_token, { id: user.id, name: user.full_name, email: user.email, is_superadmin: false } as any)
+    // fetch wedding as impersonated user agar dashboard langsung work
+    const wedding = useWeddingStore()
+    wedding.clearWedding()
+    try { await wedding.fetchWedding() } catch {}
+    await navigateTo('/dashboard')
   } catch (e: unknown) {
     const msg = (e as { data?: { detail?: string } })?.data?.detail || 'gagal'
     alert(msg)

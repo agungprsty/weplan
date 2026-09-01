@@ -61,11 +61,15 @@ async function doReset() {
 }
 
 async function doImpersonate() {
-  if (!confirm(`Impersonate ${user.value?.email}?`)) return
+  if (!confirm(`Impersonate ${user.value?.email}? Akan login sebagai user ini.`)) return
   try {
     const res = await api.impersonate(id)
-    await navigator.clipboard.writeText(res.access_token)
-    alert('Token impersonate disalin (10m)')
+    const auth = useAuthStore()
+    auth.startImpersonate(res.access_token, res.refresh_token, { id: user.value.id, name: user.value.full_name, email: user.value.email, is_superadmin: false } as any)
+    const wedding = useWeddingStore()
+    wedding.clearWedding()
+    try { await wedding.fetchWedding() } catch {}
+    await navigateTo('/dashboard')
   } catch (e: any) { alert(e?.data?.detail || 'Gagal') }
 }
 </script>

@@ -15,6 +15,11 @@ class PaginationMeta(BaseModel):
     pages: int
 
 
+class SignupDailyItem(BaseModel):
+    date: str
+    count: int
+
+
 class AdminStatsResponse(BaseModel):
     total_users: int
     active_users: int
@@ -27,6 +32,7 @@ class AdminStatsResponse(BaseModel):
     gratis_weddings: int
     signup_last_7d: int
     signup_last_30d: int
+    signup_daily: list[SignupDailyItem] = Field(default_factory=list)
 
 
 class AdminUserItem(BaseModel):

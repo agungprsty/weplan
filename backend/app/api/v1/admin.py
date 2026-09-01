@@ -2,7 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -537,6 +537,68 @@ async def cancel_order(
         meta={"from": "pending", "to": "cancelled", "reason": data.reason},
     )
     return order  # type: ignore[return-value]
+
+
+# ---- Global Activities ----
+@router.get("/activities", response_model=ActivityListResponse)
+async def list_activities_global(
+    current_user: Annotated[User, Depends(get_current_superadmin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    entity_type: str | None = Query(default=None, max_length=30),
+    action: str | None = Query(default=None, max_length=30),
+    q: str | None = Query(default=None, max_length=100),
+) -> ActivityListResponse:
+    from app.models.activity import Activity
+
+    filters = []
+    if entity_type:
+        filters.append(Activity.entity_type == entity_type)
+    if action:
+        filters.append(Activity.action == action)
+    if q:
+        like = f"%{q}%"
+        filters.append(Activity.title.ilike(like))
+    where_clause = and_(*filters) if filters else True
+
+    total = (
+        await db.scalar(select(func.count()).select_from(Activity).where(where_clause))
+        or 0
+    )
+    offset = (page - 1) * limit
+    result = await db.execute(
+        select(Activity)
+        .where(where_clause)
+        .order_by(Activity.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    items = list(result.scalars().all())
+    data = []
+    for a in items:
+        data.append(
+            {
+                "id": a.id,
+                "wedding_id": a.wedding_id,
+                "actor_user_id": a.actor_user_id,
+                "action": a.action,
+                "entity_type": a.entity_type,
+                "entity_id": a.entity_id,
+                "title": a.title,
+                "meta": a.meta_data,
+                "created_at": a.created_at,
+            }
+        )
+    return ActivityListResponse(  # type: ignore[arg-type]
+        data=data,
+        meta={
+            "total": int(total),
+            "page": page,
+            "limit": limit,
+            "pages": _pages(int(total), limit),
+        },
+    )
 
 
 # ---- Plans ----

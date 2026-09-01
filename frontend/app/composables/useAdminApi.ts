@@ -24,6 +24,8 @@ export function useAdminApi() {
       api<AdminWeddingDetail>('/api/v1/admin/weddings/' + id + '/regenerate-code', { method: 'POST' }),
     listActivities: (weddingId: string, params: Record<string, unknown> = {}) =>
       api<ActivityListResponse>('/api/v1/admin/weddings/' + weddingId + '/activities', { query: params }),
+    listActivitiesGlobal: (params: Record<string, unknown> = {}) =>
+      api<ActivityListResponse>('/api/v1/admin/activities', { query: params }),
     listOrders: (params: Record<string, unknown> = {}) =>
       api<AdminOrderListResponse>('/api/v1/admin/orders', { query: params }),
     confirmOrder: (id: string, body: { payment_method: string; notes?: string }) =>
@@ -49,6 +51,7 @@ export interface AdminStats {
   gratis_weddings: number
   signup_last_7d: number
   signup_last_30d: number
+  signup_daily: { date: string; count: number }[]
 }
 
 export interface PaginationMeta {

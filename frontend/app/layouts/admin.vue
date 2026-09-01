@@ -73,6 +73,9 @@ function handleLogout() {
           <li>
             <NuxtLink to="/admin/plans" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium" :class="isActive('/admin/plans') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'" @click="isMobile && (sidebarOpen=false)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg><span v-if="sidebarOpen">Plans</span></NuxtLink>
           </li>
+          <li>
+            <NuxtLink to="/admin/activities" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium" :class="isActive('/admin/activities') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'" @click="isMobile && (sidebarOpen=false)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg><span v-if="sidebarOpen">Activities</span></NuxtLink>
+          </li>
         </ul>
 
         <div class="mt-6 border-t border-slate-800 pt-4" v-if="sidebarOpen">
@@ -95,12 +98,17 @@ function handleLogout() {
     <div class="flex min-h-screen flex-col transition-all duration-300" :class="sidebarOpen ? 'lg:pl-[260px]' : 'lg:pl-[64px]'">
       <header class="sticky top-0 z-20 flex h-[64px] items-center gap-3 border-b border-slate-800 bg-slate-900/80 px-4 backdrop-blur lg:px-6">
         <button class="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 bg-slate-800 text-slate-200 lg:hidden" @click.stop="sidebarOpen=!sidebarOpen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-        <h1 class="text-sm font-semibold tracking-wide text-slate-200">Admin Panel</h1>
-        <span class="hidden text-xs text-slate-500 sm:inline">— weplansuper@gmail.com</span>
+        <h1 class="hidden text-sm font-semibold tracking-wide text-slate-200 lg:inline">Admin Panel</h1>
+        <div class="hidden flex-1 justify-center lg:flex">
+          <AdminGlobalSearch />
+        </div>
         <div class="ml-auto flex items-center gap-2">
           <NuxtLink to="/" class="hidden text-xs text-slate-400 hover:text-white sm:inline">Kanikah</NuxtLink>
         </div>
       </header>
+      <div class="border-b border-slate-800 bg-slate-900 px-4 py-2 lg:hidden">
+        <AdminGlobalSearch />
+      </div>
       <main class="flex-1 bg-[#f1f5f9] text-slate-800">
         <slot />
       </main>

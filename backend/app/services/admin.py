@@ -84,6 +84,22 @@ async def get_admin_stats(db: AsyncSession) -> dict:
         or 0
     )
 
+    # daily breakdown last 7 days (include today)
+    signup_daily: list[dict] = []
+    for i in range(6, -1, -1):
+        day = (now - timedelta(days=i)).date()
+        start = datetime.combine(day, datetime.min.time())
+        end = start + timedelta(days=1)
+        cnt = (
+            await db.scalar(
+                select(func.count())
+                .select_from(User)
+                .where(User.created_at >= start, User.created_at < end)
+            )
+            or 0
+        )
+        signup_daily.append({"date": day.isoformat(), "count": int(cnt)})
+
     return {
         "total_users": int(total_users),
         "active_users": int(active_users),
@@ -96,6 +112,7 @@ async def get_admin_stats(db: AsyncSession) -> dict:
         "gratis_weddings": int(gratis_weddings),
         "signup_last_7d": int(signup_7d),
         "signup_last_30d": int(signup_30d),
+        "signup_daily": signup_daily,
     }
 
 

@@ -96,6 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const isSuperadmin = computed(() => Boolean(user.value?.is_superadmin))
+  const isImpersonating = computed(() => import.meta.client ? Boolean(localStorage.getItem('kanikah_impersonating')) : false)
 
   async function fetchMe() {
     const api = useApi()
@@ -141,5 +142,45 @@ export const useAuthStore = defineStore('auth', () => {
     return await api('/api/v1/auth/change-password', { method: 'POST', body: data })
   }
 
-  return { token, refreshToken, user, isAuthenticated, isSuperadmin, setSession, restore, clearSession, fetchMe, updateProfile, changePassword, doRefresh }
+  function startImpersonate(newToken: string, newRefresh: string, targetUser: AuthUser) {
+    if (!import.meta.client) return
+    // simpan admin asli
+    localStorage.setItem('kanikah_admin_token', token.value || '')
+    localStorage.setItem('kanikah_admin_refresh', refreshToken.value || '')
+    localStorage.setItem('kanikah_admin_user', JSON.stringify(user.value || {}))
+    localStorage.setItem('kanikah_impersonating', '1')
+    localStorage.setItem('kanikah_impersonate_target', JSON.stringify(targetUser))
+    setSession(newToken, newRefresh, targetUser)
+  }
+
+  function stopImpersonate() {
+    if (!import.meta.client) return
+    const adminToken = localStorage.getItem('kanikah_admin_token')
+    const adminRefresh = localStorage.getItem('kanikah_admin_refresh')
+    const adminUserStr = localStorage.getItem('kanikah_admin_user')
+    if (adminToken && adminUserStr) {
+      try {
+        const adminUser = JSON.parse(adminUserStr) as AuthUser
+        setSession(adminToken, adminRefresh || '', adminUser)
+      } catch {
+        clearSession()
+      }
+    } else {
+      clearSession()
+    }
+    localStorage.removeItem('kanikah_admin_token')
+    localStorage.removeItem('kanikah_admin_refresh')
+    localStorage.removeItem('kanikah_admin_user')
+    localStorage.removeItem('kanikah_impersonating')
+    localStorage.removeItem('kanikah_impersonate_target')
+  }
+
+  function getImpersonateTarget(): AuthUser | null {
+    if (!import.meta.client) return null
+    const s = localStorage.getItem('kanikah_impersonate_target')
+    if (!s) return null
+    try { return JSON.parse(s) as AuthUser } catch { return null }
+  }
+
+  return { token, refreshToken, user, isAuthenticated, isSuperadmin, isImpersonating, setSession, restore, clearSession, fetchMe, updateProfile, changePassword, doRefresh, startImpersonate, stopImpersonate, getImpersonateTarget }
 })

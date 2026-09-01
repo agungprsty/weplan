@@ -5,6 +5,9 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  is_superadmin?: boolean
+  is_active?: boolean
+  provider?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -92,16 +95,21 @@ export const useAuthStore = defineStore('auth', () => {
     return refreshing
   }
 
+  const isSuperadmin = computed(() => Boolean(user.value?.is_superadmin))
+
   async function fetchMe() {
     const api = useApi()
     try {
       const res = await api<AuthUser>('/api/v1/auth/me')
-      const u = res as unknown as AuthUser & { full_name?: string; name?: string }
+      const u = res as unknown as AuthUser & { full_name?: string; name?: string; is_superadmin?: boolean; is_active?: boolean; provider?: string }
       // normalize: backend returns full_name, frontend stores as name
       const normalized: AuthUser = {
         id: (u as AuthUser).id,
         email: (u as AuthUser).email,
         name: (u as { name?: string; full_name?: string }).name ?? (u as { full_name?: string }).full_name ?? '',
+        is_superadmin: u.is_superadmin ?? false,
+        is_active: (u as { is_active?: boolean }).is_active,
+        provider: (u as { provider?: string }).provider,
       }
       user.value = normalized
       if (import.meta.client) localStorage.setItem('kanikah_user', JSON.stringify(normalized))
@@ -133,5 +141,5 @@ export const useAuthStore = defineStore('auth', () => {
     return await api('/api/v1/auth/change-password', { method: 'POST', body: data })
   }
 
-  return { token, refreshToken, user, isAuthenticated, setSession, restore, clearSession, fetchMe, updateProfile, changePassword, doRefresh }
+  return { token, refreshToken, user, isAuthenticated, isSuperadmin, setSession, restore, clearSession, fetchMe, updateProfile, changePassword, doRefresh }
 })

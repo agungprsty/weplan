@@ -55,10 +55,15 @@ async function handleCredential(response: { credential: string }) {
       method: 'POST',
       body: { id_token: response.credential },
     })
-    const me = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
+    const me = await $fetch<{ id: string; full_name: string; email: string; is_superadmin?: boolean }>(`${apiBase}/api/v1/auth/me`, {
       headers: { Authorization: `Bearer ${res.access_token}` },
     })
-    authStore.setSession(res.access_token, res.refresh_token, { id: me.id, name: me.full_name, email: me.email })
+    authStore.setSession(res.access_token, res.refresh_token, { id: me.id, name: me.full_name, email: me.email, is_superadmin: me.is_superadmin ?? false })
+    if (me.is_superadmin) {
+      emit('success')
+      await router.push('/admin')
+      return
+    }
     await weddingStore.fetchWedding()
     emit('success')
     if (weddingStore.hasWedding) await router.push('/dashboard')

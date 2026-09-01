@@ -46,15 +46,22 @@ async function onSubmit() {
       body: { email: email.value.trim(), password: password.value }
     })
 
-    const me = await api<{ id: string; full_name: string; email: string }>('/api/v1/auth/me', {
+    const me = await api<{ id: string; full_name: string; email: string; is_superadmin?: boolean }>('/api/v1/auth/me', {
       headers: { Authorization: `Bearer ${res.access_token}` }
     })
 
     authStore.setSession(res.access_token, res.refresh_token, {
       id: me.id,
       name: me.full_name,
-      email: me.email
+      email: me.email,
+      is_superadmin: me.is_superadmin ?? false,
     })
+
+    // superadmin langsung ke admin panel tanpa butuh wedding
+    if (me.is_superadmin) {
+      await router.push('/admin')
+      return
+    }
 
     await weddingStore.fetchWedding()
 

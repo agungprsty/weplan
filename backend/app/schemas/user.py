@@ -14,6 +14,10 @@ class UserResponse(UserBase):
 
     id: uuid.UUID
     is_active: bool
+    is_superadmin: bool = False
+    provider: str = "email"
+    avatar_url: str | None = None
+    email_verified: bool = False
     created_at: datetime
 
 

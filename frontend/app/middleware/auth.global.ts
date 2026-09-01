@@ -13,6 +13,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/faq', '/contact', '/privacy', '/terms', '/403', '/404', '/500', '/maintenance']
   const isPublic = publicPages.includes(to.path) || to.path.startsWith('/_error')
+  const isAdminRoute = to.path.startsWith('/admin')
 
   if (!auth.isAuthenticated && !isPublic) {
     return navigateTo('/login')
@@ -42,13 +43,31 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
+  // pastikan is_superadmin diketahui sebelum redirect logic (localStorage lama tidak ada flag)
+  if (auth.isAuthenticated && auth.user && auth.user.is_superadmin === undefined) {
+    try { await auth.fetchMe() } catch {}
+  }
+
   if (auth.isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    // superadmin langsung ke admin, jangan ke onboarding
+    if (auth.isSuperadmin || auth.user?.is_superadmin) {
+      return navigateTo('/admin')
+    }
     const ok = await safeFetchWedding()
     if (!ok) return navigateTo('/login')
     return navigateTo(wedding.hasWedding ? '/dashboard' : '/onboarding')
   }
 
+  // admin routes bebas dari onboarding/dashboard guard — biar middleware/admin.ts yang handle
+  if (isAdminRoute) {
+    return
+  }
+
   if (to.path === '/onboarding' && auth.isAuthenticated) {
+    // superadmin tidak butuh onboarding — arahkan ke admin
+    if (auth.isSuperadmin || auth.user?.is_superadmin) {
+      return navigateTo('/admin')
+    }
     const ok = await safeFetchWedding()
     if (!ok) return navigateTo('/login')
     if (wedding.hasWedding) {

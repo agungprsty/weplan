@@ -38,7 +38,7 @@ async def list_mahar_items(db: AsyncSession, wedding_id: uuid.UUID) -> list[Maha
     result = await db.execute(
         select(MaharItem)
         .where(MaharItem.wedding_id == wedding_id)
-        .order_by(MaharItem.created_at)
+        .order_by(MaharItem.created_at.desc())
     )
     return list(result.scalars().all())
 

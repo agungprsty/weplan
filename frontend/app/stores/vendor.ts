@@ -56,7 +56,7 @@ export const useVendorStore = defineStore('vendor', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
-    items.value.push(optimistic)
+    items.value.unshift(optimistic)
     try {
       const real = await api<Vendor>(`/api/v1/weddings/${weddingId.value}/vendors`, {
         method: 'POST',

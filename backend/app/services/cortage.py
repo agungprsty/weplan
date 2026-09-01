@@ -58,8 +58,8 @@ async def list_cortage(db: AsyncSession, wedding_id: uuid.UUID) -> list[dict]:
             details_by_guest[g.id] = d
         result.append(d)
 
-    # sort by guest name
-    result.sort(key=lambda x: next((g.name for g in guests if g.id == x.guest_id), ""))
+    # urutan terbaru (desc) — terbaru di atas
+    result.sort(key=lambda x: x.created_at, reverse=True)
 
     # build response dicts with guest info
     guest_map = {g.id: g for g in guests}

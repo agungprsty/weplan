@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 async def list_guests(db: AsyncSession, wedding_id: uuid.UUID) -> list[Guest]:
     """List guests with gift summary counts attached as transient attributes."""
-    result = await db.execute(select(Guest).where(Guest.wedding_id == wedding_id))
+    result = await db.execute(select(Guest).where(Guest.wedding_id == wedding_id).order_by(Guest.created_at.desc()))
     guests = list(result.scalars().all())
     agg = await db.execute(
         select(

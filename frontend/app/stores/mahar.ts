@@ -86,7 +86,7 @@ export const useMaharStore = defineStore('mahar', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
-    items.value.push(optimistic)
+    items.value.unshift(optimistic)
     try {
       const real = await api<MaharItem>(`/api/v1/weddings/${weddingId.value}/mahar-items`, {
         method: 'POST',

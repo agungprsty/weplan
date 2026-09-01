@@ -67,7 +67,7 @@ export const useGuestStore = defineStore('guest', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
-    items.value.push(optimistic)
+    items.value.unshift(optimistic)
     try {
       const real = await api<Guest>(`/api/v1/weddings/${weddingId.value}/guests`, {
         method: 'POST',

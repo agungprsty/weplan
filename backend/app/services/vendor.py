@@ -18,7 +18,7 @@ async def list_vendors(db: AsyncSession, wedding_id: uuid.UUID) -> list[Vendor]:
     result = await db.execute(
         select(Vendor)
         .where(Vendor.wedding_id == wedding_id)
-        .order_by(Vendor.created_at)
+        .order_by(Vendor.created_at.desc())
     )
     return list(result.scalars().all())
 

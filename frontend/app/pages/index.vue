@@ -72,7 +72,15 @@ async function fetchPlans() {
   }
 }
 
-onMounted(fetchPlans)
+onMounted(() => {
+  fetchPlans()
+  if (import.meta.client) window.addEventListener('keydown', onLightboxKeydown)
+})
+
+onUnmounted(() => {
+  if (import.meta.client) window.removeEventListener('keydown', onLightboxKeydown)
+  document.body.style.overflow = ''
+})
 
 const packages = computed(() => {
   if (!fetchedPlans.value.length) return fallbackPackages
@@ -186,6 +194,26 @@ const activeFeatureIdx = ref(0)
 const activeFeature = computed(() => features[activeFeatureIdx.value] ?? features[0])
 const activeImage = computed(() => activeFeature.value.image)
 
+// Lightbox untuk gambar fitur
+const lightboxImage = ref<string | null>(null)
+const lightboxTitle = ref('')
+
+function openLightbox(image: string, title: string) {
+  lightboxImage.value = image
+  lightboxTitle.value = title
+  if (import.meta.client) document.body.style.overflow = 'hidden'
+}
+
+function closeLightbox() {
+  lightboxImage.value = null
+  lightboxTitle.value = ''
+  if (import.meta.client) document.body.style.overflow = ''
+}
+
+function onLightboxKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && lightboxImage.value) closeLightbox()
+}
+
 const testimonials = [
   {
     name: 'Dina & Farhan',
@@ -274,9 +302,15 @@ const testimonials = [
             :key="feature.title + '-m'"
             class="rounded-[1.5rem] border border-slate-200 bg-white overflow-hidden shadow-sm"
           >
-            <div class="p-1.5 bg-slate-50">
-              <img :src="feature.image" :alt="feature.title" class="w-full h-auto rounded-[1rem] border border-slate-200 object-cover" loading="lazy" />
-            </div>
+            <button type="button" class="block w-full p-1.5 bg-slate-50 text-left cursor-zoom-in group/img focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-1 rounded-[1rem]" @click="openLightbox(feature.image, feature.title)" :aria-label="`Lihat gambar ${feature.title} lebih besar`">
+              <span class="relative block overflow-hidden rounded-[1rem] border border-slate-200">
+                <img :src="feature.image" :alt="feature.title" class="w-full h-auto object-cover transition duration-300 group-hover/img:scale-[1.015]" loading="lazy" />
+                <span class="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-slate-900/70 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16zM10 10a2 2 0 100 4 2 2 0 000-4zM14.5 10.5L21 21" /></svg>
+                  Klik untuk memperbesar
+                </span>
+              </span>
+            </button>
             <div class="p-6">
               <div class="flex items-center gap-3 mb-3">
                 <h3 class="font-serif font-bold text-slate-900 text-lg">{{ feature.title }}</h3>
@@ -299,9 +333,15 @@ const testimonials = [
                   class="relative rounded-[2rem] border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/40 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200/60"
                   :class="idx % 2 === 0 ? 'rotate-[-0.9deg] group-hover:rotate-0' : 'rotate-[0.9deg] group-hover:rotate-0'"
                 >
-                  <div class="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
-                    <img :src="feature.image" :alt="feature.title" class="w-full h-auto object-cover object-top transition duration-700 group-hover:scale-[1.015]" loading="lazy" />
-                  </div>
+                  <button type="button" class="block w-full overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2" @click="openLightbox(feature.image, feature.title)" :aria-label="`Lihat gambar ${feature.title} lebih besar`">
+                    <span class="relative block">
+                      <img :src="feature.image" :alt="feature.title" class="w-full h-auto object-cover object-top transition duration-700 group-hover:scale-[1.015]" loading="lazy" />
+                      <span class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm opacity-0 transition group-hover:opacity-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16zM14 10h-4m2-2v4" /></svg>
+                        Klik untuk memperbesar
+                      </span>
+                    </span>
+                  </button>
                 </div>
               </div>
               <div :class="idx % 2 === 1 ? 'order-1 xl:pr-4 xl:text-right' : 'order-2 xl:pl-4'">
@@ -408,6 +448,48 @@ const testimonials = [
         </NuxtLink>
       </div>
     </section>
+
+    <!-- Lightbox: gambar fitur bisa diklik & di-close -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div
+          v-if="lightboxImage"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="lightboxTitle"
+        >
+          <!-- overlay: klik untuk close -->
+          <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="closeLightbox"></div>
+
+          <!-- content -->
+          <div class="relative w-full max-w-5xl max-h-[90vh] flex flex-col items-center">
+            <!-- tombol close -->
+            <button
+              type="button"
+              class="absolute -top-2 right-0 md:-top-1 md:right-0 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 md:h-10 md:w-10"
+              aria-label="Tutup gambar"
+              @click="closeLightbox"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <p v-if="lightboxTitle" class="mb-3 text-center text-sm font-medium text-white/90 md:text-base">{{ lightboxTitle }}</p>
+
+            <div class="w-full overflow-auto rounded-2xl bg-white p-1.5 shadow-2xl md:rounded-[1.5rem] md:p-2" @click.stop>
+              <img
+                :src="lightboxImage"
+                :alt="lightboxTitle"
+                class="max-h-[78vh] w-full h-auto rounded-xl md:rounded-[1.1rem] object-contain"
+                @click.stop
+              />
+            </div>
+
+            <p class="mt-3 text-center text-xs text-white/60">Klik area gelap atau tombol ✕ atau tekan Esc untuk menutup</p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -423,5 +505,18 @@ const testimonials = [
 .fitur-fade-leave-to {
   opacity: 0;
   transform: scale(1.02);
+}
+
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
+}
+.lightbox-fade-enter-active > div,
+.lightbox-fade-leave-active > div {
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 </style>

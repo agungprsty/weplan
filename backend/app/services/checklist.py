@@ -114,7 +114,7 @@ async def list_checklists(db: AsyncSession, wedding_id: uuid.UUID) -> list[Check
     result = await db.execute(
         select(Checklist)
         .where(Checklist.wedding_id == wedding_id)
-        .order_by(Checklist.order, Checklist.created_at)
+        .order_by(Checklist.due_date.asc().nulls_last(), Checklist.created_at.asc())
     )
     return list(result.scalars().all())
 

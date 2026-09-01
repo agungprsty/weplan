@@ -20,7 +20,15 @@ const filtered = computed(() => {
   if (filterStatus.value !== 'all') list = list.filter((i) => i.status === filterStatus.value)
   if (filterCategory.value !== 'all') list = list.filter((i) => i.category === filterCategory.value)
   if (search.value.trim()) list = list.filter((i) => i.title.toLowerCase().includes(search.value.toLowerCase()))
-  return list
+  // urut asc berdasarkan deadline/jatuh tempo (due_date), null di akhir
+  return [...list].sort((a, b) => {
+    const da = a.due_date
+    const db = b.due_date
+    if (!da && !db) return 0
+    if (!da) return 1
+    if (!db) return -1
+    return da.localeCompare(db)
+  })
 })
 
 const viewMode = ref<'list' | 'timeline'>('list')
@@ -49,6 +57,7 @@ async function addQuick() {
     await checklistStore.addChecklist({ title: newTitle.value.trim(), category: newCategory.value, due_date: newDueDate.value || null } as Partial<Checklist> & { title: string; category: Checklist['category'] })
     newTitle.value = ''
     newDueDate.value = ''
+    showForm.value = false
     toast.success('Tugas berhasil ditambahkan')
   } catch {
     toast.error('Gagal menambah tugas')

@@ -80,12 +80,20 @@ async function onSubmit() {
     }
   } catch (err) {
     if (err instanceof FetchError) {
-      const detail = (err.data as Record<string, unknown> | undefined)?.detail
-      formError.value =
-        typeof detail === 'string'
-          ? detail
-          : ((detail as Record<string, unknown> | undefined)?.message as string | undefined) ??
-            'Gagal masuk. Periksa kredensial atau coba lagi.'
+      const status = err.statusCode ?? (err as unknown as { status?: number })?.status
+      if (status === 429) {
+        formError.value = 'Terlalu banyak percobaan. Coba lagi dalam 1 menit.'
+      } else {
+        const data = err.data as Record<string, unknown> | undefined
+        const detail = data?.detail as unknown
+        const errMsg = (data as Record<string, unknown> | undefined)?.error as string | undefined
+        formError.value =
+          typeof detail === 'string'
+            ? detail
+            : ((detail as Record<string, unknown> | undefined)?.message as string | undefined) ??
+              errMsg ??
+              'Gagal masuk. Periksa kredensial atau coba lagi.'
+      }
     } else {
       formError.value = 'Gagal masuk. Periksa kredensial atau coba lagi.'
     }

@@ -4,6 +4,7 @@ import uuid
 from datetime import date
 from typing import TYPE_CHECKING
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,6 +28,59 @@ _ROLE_LABELS: dict[str, str] = {
 
 def _role_label(category: str | None) -> str:
     return _ROLE_LABELS.get(category or "", "Bridesmaid")
+
+
+def _ensure_fitting_done_has_size(fitting_status: str | None, uniform_size: str | None) -> None:
+    if fitting_status == "done" and not uniform_size:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "VALIDATION_ERROR",
+                "message": "Ukuran seragam wajib diisi saat fitting selesai",
+                "errors": [
+                    {
+                        "field": "uniform_size",
+                        "message": "Wajib diisi saat fitting selesai",
+                    }
+                ],
+            },
+        )
+
+
+def _ensure_lunas_requirements(
+    payment_status: str | None,
+    fitting_status: str | None,
+    price: int | None,
+) -> None:
+    if payment_status == "lunas":
+        if fitting_status != "done":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "VALIDATION_ERROR",
+                    "message": "Fitting harus selesai sebelum tandai lunas",
+                    "errors": [
+                        {
+                            "field": "fitting_status",
+                            "message": "Harus selesai sebelum lunas",
+                        }
+                    ],
+                },
+            )
+        if price is None or price <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "VALIDATION_ERROR",
+                    "message": "Harga seragam wajib diisi sebelum tandai lunas",
+                    "errors": [
+                        {
+                            "field": "price",
+                            "message": "Wajib diisi (>0) sebelum lunas",
+                        }
+                    ],
+                },
+            )
 
 
 async def list_cortage(db: AsyncSession, wedding_id: uuid.UUID) -> list[dict]:
@@ -106,6 +160,16 @@ async def update_cortage(
     old_fitting = item.fitting_status
 
     payload = data.model_dump(exclude_unset=True)
+
+    # merged values for validation (payload overrides existing)
+    merged_uniform = payload["uniform_size"] if "uniform_size" in payload else item.uniform_size
+    merged_fitting: str = payload.get("fitting_status", item.fitting_status)  # type: ignore[assignment]
+    merged_price: int | None = payload["price"] if "price" in payload else item.price  # type: ignore[assignment]
+    merged_payment: str = payload.get("payment_status", item.payment_status)  # type: ignore[assignment]
+
+    _ensure_fitting_done_has_size(merged_fitting, merged_uniform)
+    _ensure_lunas_requirements(merged_payment, merged_fitting, merged_price)
+
     for field, value in payload.items():
         setattr(item, field, value)
     await db.flush()

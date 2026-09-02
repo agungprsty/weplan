@@ -8,6 +8,7 @@ import daftarTamuImg from '~/assets/images/daftar-tamu.png'
 import keuanganImg from '~/assets/images/keuangan.png'
 import maharImg from '~/assets/images/mahar.png'
 import vendorsImg from '~/assets/images/vendors.png'
+import pengiringSeragamImg from '~/assets/images/pengiring+seragam.png'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -178,6 +179,14 @@ const features = [
     icon: 'M8.5 6.5a2 2 0 011.5-2h2a2 2 0 011.5 2M6 8h12M14 6.5l3.5 14h-4M12 8v13M6 8l3.5 14h4M12 8v13',
     color: 'violet',
     image: maharImg
+  },
+  {
+    title: 'Pengiring & Seragam',
+    description:
+      'Kelola bridesmaid, groomsman & seragam keluarga — atur ukuran, status fitting, dan pembayaran lunas yang otomatis tercatat di Keuangan kategori Busana.',
+    icon: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8ZM17 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5ZM22 21v-2a4 4 0 00-3-3.87',
+    color: 'fuchsia',
+    image: pengiringSeragamImg
   },
   {
     title: 'Berkas KUA',

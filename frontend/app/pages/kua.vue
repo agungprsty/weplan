@@ -103,7 +103,6 @@ onMounted(async () => {
       <h1 class="font-serif text-[26px] font-bold tracking-tight text-slate-900">Berkas KUA</h1>
     </div>
 
-    <!-- 2 Grid: Kiri daftar, Kanan progres & info — mobile-first stack -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
       <!-- Kiri: Filter + List -->
       <div class="lg:col-span-8 min-w-0 space-y-4">
@@ -160,14 +159,10 @@ onMounted(async () => {
 
                 <!-- Content -->
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-[14px] font-medium leading-tight" :class="isDone(doc) ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'">
-                    {{ doc.title }}
+                  <p class="text-[14px] font-medium leading-tight" :class="isDone(doc) ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'">
+                    {{ doc.title }} {{ ownerLabel(doc.owner_type) }}
                   </p>
                   <p class="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <span class="inline-flex items-center gap-1">
-                      <span class="h-1.5 w-1.5 rounded-full" :class="doc.owner_type==='cpp' ? 'bg-sky-400' : doc.owner_type==='cpw' ? 'bg-rose-400' : 'bg-slate-300'" />
-                      {{ ownerLabel(doc.owner_type) }}
-                    </span>
                     <span v-if="!doc.is_required" class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">Opsional</span>
                     <a v-if="doc.file_url" :href="doc.file_url" target="_blank" class="inline-flex items-center gap-1 text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700" @click.stop>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H8"/><path d="M16 17H8"/><path d="M13 13h3"/></svg>
@@ -182,7 +177,7 @@ onMounted(async () => {
                   class="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
                   aria-hidden="true"
                 >
-                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Siap
+                  Siap
                 </span>
 
                 <!-- Hapus — hanya untuk berkas custom -->
@@ -231,15 +226,15 @@ onMounted(async () => {
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Ringkasan</p>
           <div class="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div class="rounded-xl bg-sky-50 px-2 py-3">
-              <p class="text-xs font-medium text-sky-700">CPP</p>
-              <p class="mt-1 text-lg font-bold text-sky-800">{{ kuaStore.items.filter(d=> d.owner_type==='cpp' || d.owner_type==='both').length }}</p>
-              <p class="text-[11px] text-sky-600">{{ kuaStore.items.filter(d=> (d.owner_type==='cpp' || d.owner_type==='both') && isDone(d)).length }} siap</p>
+            <div class="rounded-xl bg-slate-50 px-2 py-3">
+              <p class="text-xs font-medium text-slate-600">CPP</p>
+              <p class="mt-1 text-lg font-bold text-slate-800">{{ kuaStore.items.filter(d=> d.owner_type==='cpp' || d.owner_type==='both').length }}</p>
+              <p class="text-[11px] text-slate-500">{{ kuaStore.items.filter(d=> (d.owner_type==='cpp' || d.owner_type==='both') && isDone(d)).length }} siap</p>
             </div>
-            <div class="rounded-xl bg-rose-50 px-2 py-3">
-              <p class="text-xs font-medium text-rose-700">CPW</p>
-              <p class="mt-1 text-lg font-bold text-rose-800">{{ kuaStore.items.filter(d=> d.owner_type==='cpw' || d.owner_type==='both').length }}</p>
-              <p class="text-[11px] text-rose-600">{{ kuaStore.items.filter(d=> (d.owner_type==='cpw' || d.owner_type==='both') && isDone(d)).length }} siap</p>
+            <div class="rounded-xl bg-slate-50 px-2 py-3">
+              <p class="text-xs font-medium text-slate-600">CPW</p>
+              <p class="mt-1 text-lg font-bold text-slate-800">{{ kuaStore.items.filter(d=> d.owner_type==='cpw' || d.owner_type==='both').length }}</p>
+              <p class="text-[11px] text-slate-500">{{ kuaStore.items.filter(d=> (d.owner_type==='cpw' || d.owner_type==='both') && isDone(d)).length }} siap</p>
             </div>
             <div class="rounded-xl bg-slate-50 px-2 py-3">
               <p class="text-xs font-medium text-slate-600">Bersama</p>

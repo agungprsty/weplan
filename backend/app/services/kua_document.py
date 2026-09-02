@@ -13,41 +13,40 @@ from app.services.activity import log_activity
 if TYPE_CHECKING:
     from app.models.user import User
 
-# Template dasar 10 berkas KUA (gratis) — dipakai saat wedding dibuat
 KUA_TEMPLATE = [
     {
         "document_key": "ktp_cpp",
-        "title": "FC KTP CPP",
+        "title": "FC KTP",
         "owner_type": "cpp",
         "is_required": True,
     },
     {
         "document_key": "ktp_cpw",
-        "title": "FC KTP CPW",
+        "title": "FC KTP",
         "owner_type": "cpw",
         "is_required": True,
     },
     {
         "document_key": "kk_cpp",
-        "title": "FC KK CPP",
+        "title": "FC KK",
         "owner_type": "cpp",
         "is_required": True,
     },
     {
         "document_key": "kk_cpw",
-        "title": "FC KK CPW",
+        "title": "FC KK",
         "owner_type": "cpw",
         "is_required": True,
     },
     {
         "document_key": "akta_cpp",
-        "title": "FC Akta Kelahiran CPP",
+        "title": "FC Akta Kelahiran",
         "owner_type": "cpp",
         "is_required": True,
     },
     {
         "document_key": "akta_cpw",
-        "title": "FC Akta Kelahiran CPW",
+        "title": "FC Akta Kelahiran",
         "owner_type": "cpw",
         "is_required": True,
     },

@@ -166,27 +166,6 @@ function rsvpLabel(s: Guest['rsvp_status']) {
   return 'Pending'
 }
 
-function rsvpDot(s: Guest['rsvp_status']) {
-  if (s === 'attending') return 'bg-emerald-500'
-  if (s === 'declined') return 'bg-rose-500'
-  return 'bg-amber-500'
-}
-
-function rowAccent(s: Guest['rsvp_status'], category: string, side?: string) {
-  // Pengiring tetap pakai warna kategori
-  if (category === 'bridesmaid') return 'border-l-violet-500'
-  if (category === 'groomsman') return 'border-l-sky-500'
-  if (category === 'family_groom') return 'border-l-emerald-500'
-  if (category === 'family_bride') return 'border-l-amber-500'
-  // Sisi tamu umum: 3 warna berbeda
-  if (side === 'bride') return 'border-l-rose-400'
-  if (side === 'groom') return 'border-l-blue-500'
-  if (side === 'both') return 'border-l-slate-300'
-  if (s === 'attending') return 'border-l-emerald-500'
-  if (s === 'declined') return 'border-l-rose-500'
-  return 'border-l-amber-500'
-}
-
 function sideBadge(s: string) {
   if (s === 'bride') return { label: 'Mempelai Wanita', dot: 'bg-rose-400', text: 'text-slate-600' }
   if (s === 'groom') return { label: 'Mempelai Pria', dot: 'bg-sky-500', text: 'text-slate-600' }
@@ -266,7 +245,7 @@ function sideLabel(s: string) {
         <p class="text-sm font-medium text-slate-700">Belum ada tamu</p>
         <p class="mt-1 text-sm text-slate-500">Tambah tamu untuk melihat daftar.</p>
       </div>
-      <div v-else v-for="g in paged" :key="g.id" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm border-l-4" :class="rowAccent(g.rsvp_status, g.category, g.side)">
+      <div v-else v-for="g in paged" :key="g.id" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold text-slate-900">{{ g.name }}</p>
@@ -310,7 +289,7 @@ function sideLabel(s: string) {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="g in paged" :key="g.id" class="border-l-4 bg-white transition-colors hover:bg-slate-50/40" :class="rowAccent(g.rsvp_status, g.category, g.side)">
+            <tr v-for="g in paged" :key="g.id" class="bg-white transition-colors hover:bg-slate-50/40">
               <td class="px-5 py-4">
                 <p class="font-medium text-slate-900">{{ g.name }}</p>
                 <p v-if="g.notes" class="mt-0.5 line-clamp-1 max-w-[28ch] text-xs text-slate-500">{{ g.notes }}</p>

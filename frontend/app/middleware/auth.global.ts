@@ -2,9 +2,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
   const wedding = useWeddingStore()
 
-  if (import.meta.client) {
-    auth.restore()
-  }
+  // universal restore via useCookie (SSR-safe)
+  auth.restore()
 
   // Best practice: jangan redirect unknown route ke /login — biarkan error.vue render 404 hard
   if (!to.matched.length) {

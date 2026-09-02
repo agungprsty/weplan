@@ -59,3 +59,11 @@ class GuestResponse(GuestBase):
     gift_total: int = 0
     created_at: datetime
     updated_at: datetime
+
+
+class PaginatedGuestResponse(BaseModel):
+    data: list[GuestResponse]
+    meta: dict
+    total: int | None = None  # compat
+
+    model_config = ConfigDict(from_attributes=True)

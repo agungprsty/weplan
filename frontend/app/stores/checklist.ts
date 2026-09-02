@@ -14,14 +14,23 @@ export interface Checklist {
   updated_at: string
 }
 
+function unwrapPaginated<T>(res: unknown): T[] {
+  if (Array.isArray(res)) return res as T[]
+  if (res && typeof res === 'object' && 'data' in (res as Record<string, unknown>)) {
+    const d = (res as { data: unknown }).data
+    if (Array.isArray(d)) return d as T[]
+  }
+  return res as T[]
+}
+
 export const useChecklistStore = defineStore('checklist', () => {
   const items = ref<Checklist[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
+  const pagination = ref({ total: 0, page: 1, limit: 50, pages: 0 })
 
   const grouped = computed(() => {
     const g = { todo: [] as Checklist[], in_progress: [] as Checklist[], done: [] as Checklist[] }
@@ -37,13 +46,20 @@ export const useChecklistStore = defineStore('checklist', () => {
     return Math.round((done / items.value.length) * 100)
   })
 
-  async function fetchChecklists() {
+  async function fetchChecklists(page = 1, limit = 50) {
     if (!weddingId.value) return
+    const api = useApi()
     loading.value = true
     error.value = null
     try {
-      const res = await api<Checklist[]>(`/api/v1/weddings/${weddingId.value}/checklists`)
-      items.value = res as unknown as Checklist[]
+      const res = await api<Checklist[] | { data: Checklist[]; meta: typeof pagination.value }>(`/api/v1/weddings/${weddingId.value}/checklists`, {
+        query: { page, limit },
+      })
+      items.value = unwrapPaginated<Checklist>(res)
+      if (res && typeof res === 'object' && 'meta' in (res as Record<string, unknown>)) {
+        const m = (res as { meta: typeof pagination.value }).meta
+        if (m) pagination.value = m
+      }
     } catch (err: unknown) {
       error.value = extractError(err)
     } finally {
@@ -53,6 +69,7 @@ export const useChecklistStore = defineStore('checklist', () => {
 
   async function autoGenerate() {
     if (!weddingId.value) return
+    const api = useApi()
     loading.value = true
     try {
       const res = await api<Checklist[]>(`/api/v1/weddings/${weddingId.value}/checklists/auto-generate`, { method: 'POST' })
@@ -68,6 +85,7 @@ export const useChecklistStore = defineStore('checklist', () => {
 
   async function addChecklist(data: Partial<Checklist> & { title: string; category: Checklist['category'] }) {
     if (!weddingId.value) throw new Error('No wedding')
+    const api = useApi()
     const optimistic: Checklist = {
       id: crypto.randomUUID(),
       wedding_id: weddingId.value,
@@ -96,6 +114,7 @@ export const useChecklistStore = defineStore('checklist', () => {
 
   async function updateChecklist(id: string, data: Partial<Checklist>) {
     if (!weddingId.value) return
+    const api = useApi()
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
     if (idx !== -1) Object.assign(items.value[idx], data)
@@ -112,6 +131,7 @@ export const useChecklistStore = defineStore('checklist', () => {
 
   async function deleteChecklist(id: string) {
     if (!weddingId.value) return
+    const api = useApi()
     const prev = [...items.value]
     items.value = items.value.filter((i) => i.id !== id)
     try {
@@ -131,5 +151,5 @@ export const useChecklistStore = defineStore('checklist', () => {
     return 'Terjadi kesalahan.'
   }
 
-  return { items, loading, error, grouped, progress, fetchChecklists, autoGenerate, addChecklist, updateChecklist, deleteChecklist }
+  return { items, loading, error, grouped, progress, pagination, fetchChecklists, autoGenerate, addChecklist, updateChecklist, deleteChecklist }
 })

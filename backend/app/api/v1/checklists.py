@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -13,19 +13,26 @@ from app.schemas.checklist import (
     ChecklistResponse,
     ChecklistUpdate,
 )
+from app.schemas.pagination import pages_calc
 from app.services import checklist as checklist_service
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ChecklistResponse])
+@router.get("/")
 async def list_checklists(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> list[ChecklistResponse]:
-    return await checklist_service.list_checklists(db, wedding_id)
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    items, total = await checklist_service.list_checklists(db, wedding_id, page=page, limit=limit)
+    return {
+        "data": items,
+        "meta": {"total": total, "page": page, "limit": limit, "pages": pages_calc(total, limit)},
+    }
 
 
 @router.post("/", response_model=ChecklistResponse, status_code=status.HTTP_201_CREATED)

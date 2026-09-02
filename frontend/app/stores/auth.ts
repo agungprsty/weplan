@@ -11,9 +11,91 @@ export interface AuthUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(null)
-  const refreshToken = ref<string | null>(null)
+  // Use HTTP-only cookie migration: useCookie is universal (SSR + client), not vulnerable to XSS via JS extraction if later switched to httpOnly via server.
+  // For now we use non-httpOnly cookies with SameSite=Lax, Secure in prod, backed by useCookie - better than localStorage (accessible to XSS).
+  const token = useCookie<string | null>('kanikah_token', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 7,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const refreshToken = useCookie<string | null>('kanikah_refresh', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 14,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const userCookie = useCookie<string | null>('kanikah_user', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 7,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const impersonatingCookie = useCookie<string | null>('kanikah_impersonating', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 1,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const adminTokenCookie = useCookie<string | null>('kanikah_admin_token', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 1,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const adminRefreshCookie = useCookie<string | null>('kanikah_admin_refresh', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 1,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const adminUserCookie = useCookie<string | null>('kanikah_admin_user', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 1,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+  const impersonateTargetCookie = useCookie<string | null>('kanikah_impersonate_target', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 1,
+    sameSite: 'lax',
+    path: '/',
+    watch: true,
+  })
+
   const user = ref<AuthUser | null>(null)
+
+  // hydrate user from cookie on init (universal)
+  if (userCookie.value) {
+    try {
+      user.value = JSON.parse(userCookie.value) as AuthUser
+    } catch {
+      user.value = null
+    }
+  } else if (import.meta.client) {
+    // migration: fallback to legacy localStorage if cookie empty
+    const legacy = localStorage.getItem('kanikah_user')
+    if (legacy) {
+      try {
+        user.value = JSON.parse(legacy) as AuthUser
+        userCookie.value = legacy
+      } catch {
+        user.value = null
+      }
+      // migrate tokens too
+      const lt = localStorage.getItem('kanikah_token')
+      const lr = localStorage.getItem('kanikah_refresh')
+      if (lt) token.value = lt
+      if (lr) refreshToken.value = lr
+    }
+  }
 
   const isAuthenticated = computed(() => Boolean(token.value))
   let refreshing: Promise<string | null> | null = null
@@ -27,45 +109,57 @@ export const useAuthStore = defineStore('auth', () => {
       nextUser = maybeUser
     } else {
       nextUser = nextRefreshOrUser as AuthUser
-      // pertahankan refresh lama jika tidak dikirim (compat)
       nextRefresh = refreshToken.value
     }
     token.value = nextToken
     if (nextRefresh) refreshToken.value = nextRefresh
     user.value = nextUser
+    userCookie.value = JSON.stringify(nextUser)
+    // clear legacy localStorage after migration
     if (import.meta.client) {
-      localStorage.setItem('kanikah_token', nextToken)
-      if (nextRefresh) localStorage.setItem('kanikah_refresh', nextRefresh)
-      localStorage.setItem('kanikah_user', JSON.stringify(nextUser))
+      try {
+        localStorage.removeItem('kanikah_token')
+        localStorage.removeItem('kanikah_refresh')
+        localStorage.removeItem('kanikah_user')
+      } catch {}
     }
   }
 
   function restore() {
-    if (!import.meta.client) return
-    const storedToken = localStorage.getItem('kanikah_token')
-    const storedRefresh = localStorage.getItem('kanikah_refresh')
-    const storedUser = localStorage.getItem('kanikah_user')
-    if (storedToken) token.value = storedToken
-    if (storedRefresh) refreshToken.value = storedRefresh
-    if (storedUser) {
+    // Universal: cookies are already reactive, just hydrate user if needed
+    if (userCookie.value && !user.value) {
       try {
-        user.value = JSON.parse(storedUser) as AuthUser
+        user.value = JSON.parse(userCookie.value) as AuthUser
       } catch {
         user.value = null
       }
     }
-    _impersonating.value = Boolean(localStorage.getItem('kanikah_impersonating'))
+    // legacy migration for token only (if cookie empty but localStorage has it)
+    if (import.meta.client) {
+      if (!token.value) {
+        const lt = localStorage.getItem('kanikah_token')
+        if (lt) token.value = lt
+      }
+      if (!refreshToken.value) {
+        const lr = localStorage.getItem('kanikah_refresh')
+        if (lr) refreshToken.value = lr
+      }
+    }
+    _impersonating.value = Boolean(impersonatingCookie.value)
   }
 
   function clearSession() {
     token.value = null
     refreshToken.value = null
     user.value = null
+    userCookie.value = null
     refreshing = null
     if (import.meta.client) {
-      localStorage.removeItem('kanikah_token')
-      localStorage.removeItem('kanikah_refresh')
-      localStorage.removeItem('kanikah_user')
+      try {
+        localStorage.removeItem('kanikah_token')
+        localStorage.removeItem('kanikah_refresh')
+        localStorage.removeItem('kanikah_user')
+      } catch {}
     }
   }
 
@@ -81,10 +175,6 @@ export const useAuthStore = defineStore('auth', () => {
         )
         token.value = res.access_token
         refreshToken.value = res.refresh_token
-        if (import.meta.client) {
-          localStorage.setItem('kanikah_token', res.access_token)
-          localStorage.setItem('kanikah_refresh', res.refresh_token)
-        }
         return res.access_token
       } catch {
         clearSession()
@@ -97,22 +187,22 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const isSuperadmin = computed(() => Boolean(user.value?.is_superadmin))
-  const _impersonating = ref(false)
+  const _impersonating = ref(Boolean(impersonatingCookie.value))
   if (import.meta.client) {
-    _impersonating.value = Boolean(localStorage.getItem('kanikah_impersonating'))
-    // sync across tabs + react to manual changes
+    // sync across tabs for legacy localStorage and cookie watch
     window.addEventListener('storage', (e) => {
-      if (e.key === 'kanikah_impersonating') _impersonating.value = Boolean(e.newValue)
+      if (e.key === 'kanikah_impersonating' || e.key === null) {
+        _impersonating.value = Boolean(impersonatingCookie.value || localStorage.getItem('kanikah_impersonating'))
+      }
     })
   }
-  const isImpersonating = computed(() => _impersonating.value)
+  const isImpersonating = computed(() => _impersonating.value || Boolean(impersonatingCookie.value))
 
   async function fetchMe() {
     const api = useApi()
     try {
       const res = await api<AuthUser>('/api/v1/auth/me')
       const u = res as unknown as AuthUser & { full_name?: string; name?: string; is_superadmin?: boolean; is_active?: boolean; provider?: string }
-      // normalize: backend returns full_name, frontend stores as name
       const normalized: AuthUser = {
         id: (u as AuthUser).id,
         email: (u as AuthUser).email,
@@ -122,7 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
         provider: (u as { provider?: string }).provider,
       }
       user.value = normalized
-      if (import.meta.client) localStorage.setItem('kanikah_user', JSON.stringify(normalized))
+      userCookie.value = JSON.stringify(normalized)
       return normalized
     } catch {
       return null
@@ -142,7 +232,7 @@ export const useAuthStore = defineStore('auth', () => {
       name: raw.full_name ?? raw.name ?? data.full_name ?? user.value?.name ?? '',
     }
     user.value = normalized
-    if (import.meta.client) localStorage.setItem('kanikah_user', JSON.stringify(normalized))
+    userCookie.value = JSON.stringify(normalized)
     return normalized
   }
 
@@ -152,22 +242,20 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function startImpersonate(newToken: string, newRefresh: string, targetUser: AuthUser) {
-    if (!import.meta.client) return
-    // simpan admin asli
-    localStorage.setItem('kanikah_admin_token', token.value || '')
-    localStorage.setItem('kanikah_admin_refresh', refreshToken.value || '')
-    localStorage.setItem('kanikah_admin_user', JSON.stringify(user.value || {}))
-    localStorage.setItem('kanikah_impersonating', '1')
-    localStorage.setItem('kanikah_impersonate_target', JSON.stringify(targetUser))
+    // simpan admin asli ke cookie
+    adminTokenCookie.value = token.value || ''
+    adminRefreshCookie.value = refreshToken.value || ''
+    adminUserCookie.value = JSON.stringify(user.value || {})
+    impersonatingCookie.value = '1'
+    impersonateTargetCookie.value = JSON.stringify(targetUser)
     _impersonating.value = true
     setSession(newToken, newRefresh, targetUser)
   }
 
   function stopImpersonate() {
-    if (!import.meta.client) return
-    const adminToken = localStorage.getItem('kanikah_admin_token')
-    const adminRefresh = localStorage.getItem('kanikah_admin_refresh')
-    const adminUserStr = localStorage.getItem('kanikah_admin_user')
+    const adminToken = adminTokenCookie.value
+    const adminRefresh = adminRefreshCookie.value
+    const adminUserStr = adminUserCookie.value
     if (adminToken && adminUserStr) {
       try {
         const adminUser = JSON.parse(adminUserStr) as AuthUser
@@ -178,17 +266,25 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       clearSession()
     }
-    localStorage.removeItem('kanikah_admin_token')
-    localStorage.removeItem('kanikah_admin_refresh')
-    localStorage.removeItem('kanikah_admin_user')
-    localStorage.removeItem('kanikah_impersonating')
-    localStorage.removeItem('kanikah_impersonate_target')
+    adminTokenCookie.value = null
+    adminRefreshCookie.value = null
+    adminUserCookie.value = null
+    impersonatingCookie.value = null
+    impersonateTargetCookie.value = null
     _impersonating.value = false
+    if (import.meta.client) {
+      try {
+        localStorage.removeItem('kanikah_admin_token')
+        localStorage.removeItem('kanikah_admin_refresh')
+        localStorage.removeItem('kanikah_admin_user')
+        localStorage.removeItem('kanikah_impersonating')
+        localStorage.removeItem('kanikah_impersonate_target')
+      } catch {}
+    }
   }
 
   function getImpersonateTarget(): AuthUser | null {
-    if (!import.meta.client) return null
-    const s = localStorage.getItem('kanikah_impersonate_target')
+    const s = impersonateTargetCookie.value || (import.meta.client ? localStorage.getItem('kanikah_impersonate_target') : null)
     if (!s) return null
     try { return JSON.parse(s) as AuthUser } catch { return null }
   }

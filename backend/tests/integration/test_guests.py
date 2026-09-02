@@ -69,7 +69,10 @@ async def test_list_guests(client: AsyncClient):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    data = response.json()
+    if isinstance(data, dict) and "data" in data:
+        data = data["data"]
+    assert len(data) == 2
 
 
 @pytest.mark.asyncio

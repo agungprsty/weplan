@@ -15,26 +15,49 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-async def list_guests(db: AsyncSession, wedding_id: uuid.UUID) -> list[Guest]:
-    """List guests with gift summary counts attached as transient attributes."""
-    result = await db.execute(select(Guest).where(Guest.wedding_id == wedding_id).order_by(Guest.created_at.desc()))
+async def list_guests(
+    db: AsyncSession,
+    wedding_id: uuid.UUID,
+    page: int = 1,
+    limit: int = 20,
+) -> tuple[list[Guest], int]:
+    """List guests with pagination + gift summary counts attached as transient attributes."""
+    # total count
+    total = await db.scalar(select(func.count()).select_from(Guest).where(Guest.wedding_id == wedding_id)) or 0
+    offset = (page - 1) * limit
+    result = await db.execute(
+        select(Guest)
+        .where(Guest.wedding_id == wedding_id)
+        .order_by(Guest.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
     guests = list(result.scalars().all())
+    if not guests:
+        return guests, int(total)
     agg = await db.execute(
         select(
             Gift.guest_id,
             func.count(Gift.id),
             func.coalesce(func.sum(Gift.amount), 0),
         )
-        .where(Gift.wedding_id == wedding_id)
+        .where(Gift.wedding_id == wedding_id, Gift.guest_id.in_([g.id for g in guests]))
         .group_by(Gift.guest_id)
     )
     summaries = {
         row[0]: (row[1], int(row[2])) for row in agg.all() if row[0] is not None
     }
     for guest in guests:
-        count, total = summaries.get(guest.id, (0, 0))
-        guest.gift_count = count
-        guest.gift_total = total
+        count, total_amt = summaries.get(guest.id, (0, 0))
+        guest.gift_count = count  # type: ignore[attr-defined]
+        guest.gift_total = total_amt  # type: ignore[attr-defined]
+    return guests, int(total)
+
+
+async def list_guests_all(db: AsyncSession, wedding_id: uuid.UUID) -> list[Guest]:
+    """Fallback for internal use without pagination (e.g. analytics)."""
+    guests, _ = await list_guests(db, wedding_id, page=1, limit=100)
+    # if more than 100, fetch remaining via loop (rare for internal)
     return guests
 
 

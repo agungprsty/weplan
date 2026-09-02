@@ -22,32 +22,38 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Harden CORS: support multiple origins from env and fallback regex for localhost/127.0.0.1 any port  # noqa: E501
+import os
+
+# Harden CORS: allow explicit origins, restrict headers, disable LAN regex in production
 origins = settings.allowed_origins_list
-# if single wildcard configured, allow all
+is_prod = os.getenv("ENV", os.getenv("APP_ENV", "development")).lower() in ("production", "prod")
+
 if origins == ["*"]:
-    allow_origins = ["*"]
+    allow_origins = ["*"] if not is_prod else []
     allow_origin_regex = None
 else:
     allow_origins = origins
-    # juga izinkan localhost/127.0.0.1 + 0.0.0.0 + LAN private IP (172.16-31.x, 192.168.x, 10.x)  # noqa: E501
-    # dengan port berapa pun (http/https) — untuk dev via Network/QR code
-    allow_origin_regex = (
-        r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0"
-        r"|10\.\d+\.\d+\.\d+"
-        r"|192\.168\.\d+\.\d+"
-        r"|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+"
-        r")(:\d+)?"
-    )
+    if is_prod:
+        # Production: explicit origins only, no regex fallback
+        allow_origin_regex = None
+    else:
+        # Dev: allow localhost/127.0.0.1 + LAN private IP for Network/QR code
+        allow_origin_regex = (
+            r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0"
+            r"|10\.\d+\.\d+\.\d+"
+            r"|192\.168\.\d+\.\d+"
+            r"|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+"
+            r")(:\d+)?"
+        )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+    expose_headers=["X-Total-Count"],
     max_age=600,
 )
 

@@ -27,15 +27,24 @@ export interface Transaction {
   updated_at: string
 }
 
+function unwrapPaginated<T>(res: unknown): T[] {
+  if (Array.isArray(res)) return res as T[]
+  if (res && typeof res === 'object' && 'data' in (res as Record<string, unknown>)) {
+    const d = (res as { data: unknown }).data
+    if (Array.isArray(d)) return d as T[]
+  }
+  return res as T[]
+}
+
 export const useFinanceStore = defineStore('finance', () => {
   const target = ref<SavingsTarget | null>(null)
   const transactions = ref<Transaction[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
+  const pagination = ref({ total: 0, page: 1, limit: 50, pages: 0 })
 
   const isPremium = computed(() => {
     const w = weddingStore.wedding
@@ -52,6 +61,7 @@ export const useFinanceStore = defineStore('finance', () => {
 
   async function fetchTarget() {
     if (!weddingId.value) return
+    const api = useApi()
     loading.value = true
     error.value = null
     try {
@@ -66,6 +76,7 @@ export const useFinanceStore = defineStore('finance', () => {
 
   async function saveTarget(data: { target_amount: number; deadline?: string | null }) {
     if (!weddingId.value) throw new Error('No wedding')
+    const api = useApi()
     const prev = target.value ? { ...target.value } : null
     const optimistic: SavingsTarget = {
       id: target.value?.id ?? crypto.randomUUID(),
@@ -92,12 +103,19 @@ export const useFinanceStore = defineStore('finance', () => {
     }
   }
 
-  async function fetchTransactions() {
+  async function fetchTransactions(page = 1, limit = 50) {
     if (!weddingId.value) return
+    const api = useApi()
     loading.value = true
     try {
-      const res = await api<Transaction[]>(`/api/v1/weddings/${weddingId.value}/transactions`)
-      transactions.value = res as unknown as Transaction[]
+      const res = await api<Transaction[] | { data: Transaction[]; meta: typeof pagination.value }>(`/api/v1/weddings/${weddingId.value}/transactions`, {
+        query: { page, limit },
+      })
+      transactions.value = unwrapPaginated<Transaction>(res)
+      if (res && typeof res === 'object' && 'meta' in (res as Record<string, unknown>)) {
+        const m = (res as { meta: typeof pagination.value }).meta
+        if (m) pagination.value = m
+      }
     } catch (err: unknown) {
       error.value = extractError(err)
     } finally {
@@ -107,6 +125,7 @@ export const useFinanceStore = defineStore('finance', () => {
 
   async function addTransaction(data: Omit<Transaction, 'id' | 'wedding_id' | 'created_at' | 'updated_at'>) {
     if (!weddingId.value) throw new Error('No wedding')
+    const api = useApi()
     const optimistic: Transaction = {
       id: crypto.randomUUID(),
       wedding_id: weddingId.value,
@@ -137,6 +156,7 @@ export const useFinanceStore = defineStore('finance', () => {
 
   async function deleteTransaction(id: string) {
     if (!weddingId.value) return
+    const api = useApi()
     const prev = [...transactions.value]
     transactions.value = transactions.value.filter((t) => t.id !== id)
     try {
@@ -158,5 +178,5 @@ export const useFinanceStore = defineStore('finance', () => {
     return 'Terjadi kesalahan.'
   }
 
-  return { target, transactions, loading, error, totalMasuk, totalKeluar, saldo, isPremium: isPremium2, fetchTarget, saveTarget, fetchTransactions, addTransaction, deleteTransaction }
+  return { target, transactions, loading, error, totalMasuk, totalKeluar, saldo, isPremium: isPremium2, pagination, fetchTarget, saveTarget, fetchTransactions, addTransaction, deleteTransaction }
 })

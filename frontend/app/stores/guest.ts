@@ -16,13 +16,22 @@ export interface Guest {
   updated_at: string
 }
 
+function unwrapPaginated<T>(res: unknown): T[] {
+  if (Array.isArray(res)) return res as T[]
+  if (res && typeof res === 'object' && 'data' in (res as Record<string, unknown>)) {
+    const d = (res as { data: unknown }).data
+    if (Array.isArray(d)) return d as T[]
+  }
+  return res as T[]
+}
+
 export const useGuestStore = defineStore('guest', () => {
   const items = ref<Guest[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
+  const pagination = ref({ total: 0, page: 1, limit: 50, pages: 0 })
 
   const grouped = computed(() => {
     const g = {
@@ -38,13 +47,20 @@ export const useGuestStore = defineStore('guest', () => {
     return g
   })
 
-  async function fetchGuests() {
+  async function fetchGuests(page = 1, limit = 50) {
     if (!weddingId.value) return
+    const api = useApi()
     loading.value = true
     error.value = null
     try {
-      const res = await api<Guest[]>(`/api/v1/weddings/${weddingId.value}/guests`)
-      items.value = res as unknown as Guest[]
+      const res = await api<Guest[] | { data: Guest[]; meta: { total: number; page: number; limit: number; pages: number } }>(`/api/v1/weddings/${weddingId.value}/guests`, {
+        query: { page, limit },
+      })
+      items.value = unwrapPaginated<Guest>(res)
+      if (res && typeof res === 'object' && 'meta' in (res as Record<string, unknown>)) {
+        const m = (res as { meta: typeof pagination.value }).meta
+        if (m) pagination.value = m
+      }
     } catch (err: unknown) {
       error.value = extractError(err)
     } finally {
@@ -54,6 +70,7 @@ export const useGuestStore = defineStore('guest', () => {
 
   async function addGuest(data: Partial<Guest> & { name: string }) {
     if (!weddingId.value) throw new Error('No wedding')
+    const api = useApi()
     const optimistic: Guest = {
       id: crypto.randomUUID(),
       wedding_id: weddingId.value,
@@ -85,6 +102,7 @@ export const useGuestStore = defineStore('guest', () => {
 
   async function updateGuest(id: string, data: Partial<Guest>) {
     if (!weddingId.value) return
+    const api = useApi()
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
     if (idx !== -1) Object.assign(items.value[idx], data)
@@ -104,6 +122,7 @@ export const useGuestStore = defineStore('guest', () => {
 
   async function deleteGuest(id: string) {
     if (!weddingId.value) return
+    const api = useApi()
     const prev = [...items.value]
     items.value = items.value.filter((i) => i.id !== id)
     try {
@@ -123,5 +142,5 @@ export const useGuestStore = defineStore('guest', () => {
     return 'Terjadi kesalahan.'
   }
 
-  return { items, loading, error, grouped, fetchGuests, addGuest, updateGuest, deleteGuest }
+  return { items, loading, error, grouped, pagination, fetchGuests, addGuest, updateGuest, deleteGuest }
 })

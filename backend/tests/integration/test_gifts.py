@@ -92,7 +92,11 @@ async def test_list_gifts_and_guest_summary(client: AsyncClient):
         f"/api/v1/weddings/{wedding_id}/guests/",
         headers={"Authorization": f"Bearer {token}"},
     )
-    summary = {g["name"]: g for g in guests.json()}
+    guests_data = guests.json()
+    # support paginated {data, meta} and legacy list
+    if isinstance(guests_data, dict) and "data" in guests_data:
+        guests_data = guests_data["data"]
+    summary = {g["name"]: g for g in guests_data}
     assert summary["Guest 1"]["gift_count"] == 2
     assert summary["Guest 1"]["gift_total"] == 100000
     assert summary["Guest 2"]["gift_count"] == 1

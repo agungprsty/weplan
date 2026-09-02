@@ -14,15 +14,22 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
+from sqlalchemy import func
+
+
 async def list_transactions(
-    db: AsyncSession, wedding_id: uuid.UUID
-) -> list[Transaction]:
+    db: AsyncSession, wedding_id: uuid.UUID, page: int = 1, limit: int = 20
+) -> tuple[list[Transaction], int]:
+    total = await db.scalar(select(func.count()).select_from(Transaction).where(Transaction.wedding_id == wedding_id)) or 0
+    offset = (page - 1) * limit
     result = await db.execute(
         select(Transaction)
         .where(Transaction.wedding_id == wedding_id)
         .order_by(Transaction.transaction_date.desc(), Transaction.created_at.desc())
+        .offset(offset)
+        .limit(limit)
     )
-    return list(result.scalars().all())
+    return list(result.scalars().all()), int(total)
 
 
 async def create_transaction(

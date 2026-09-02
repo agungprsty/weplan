@@ -3,6 +3,18 @@ export function useApi() {
   const auth = useAuthStore()
   const baseURL = config.public.apiBase as string
 
+  function redirectToLoginIfNeeded() {
+    if (!import.meta.client) return
+    try {
+      const route = useRoute()
+      const isAuthPage = route.path === '/login' || route.path === '/register'
+      if (!isAuthPage) navigateTo('/login')
+    } catch {
+      // useRoute may be unavailable during SSR or outside Nuxt context; fallback to direct nav
+      navigateTo('/login')
+    }
+  }
+
   return $fetch.create({
     baseURL,
     onRequest({ options }) {
@@ -24,11 +36,7 @@ export function useApi() {
             const wedding = useWeddingStore()
             wedding.clearWedding()
           } catch {}
-          if (import.meta.client) {
-            const route = useRoute()
-            const isAuthPage = route.path === '/login' || route.path === '/register'
-            if (!isAuthPage) navigateTo('/login')
-          }
+          redirectToLoginIfNeeded()
         }
         return
       }
@@ -41,11 +49,7 @@ export function useApi() {
           const wedding = useWeddingStore()
           wedding.clearWedding()
         } catch {}
-        if (import.meta.client) {
-          const route = useRoute()
-          const isAuthPage = route.path === '/login' || route.path === '/register'
-          if (!isAuthPage) navigateTo('/login')
-        }
+        redirectToLoginIfNeeded()
         return
       }
 
@@ -61,11 +65,7 @@ export function useApi() {
           const wedding = useWeddingStore()
           wedding.clearWedding()
         } catch {}
-        if (import.meta.client) {
-          const route = useRoute()
-          const isAuthPage = route.path === '/login' || route.path === '/register'
-          if (!isAuthPage) navigateTo('/login')
-        }
+        redirectToLoginIfNeeded()
         return
       }
 

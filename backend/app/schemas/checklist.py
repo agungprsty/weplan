@@ -61,3 +61,8 @@ class ChecklistResponse(ChecklistBase):
     order: int
     created_at: datetime
     updated_at: datetime
+
+
+class PaginatedChecklistResponse(BaseModel):
+    data: list[ChecklistResponse]
+    meta: dict

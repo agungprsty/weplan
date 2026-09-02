@@ -24,14 +24,12 @@ services:
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/wedding_planner
-      JWT_SECRET_KEY: dev-secret-key-change-in-production
-      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      JWT_REFRESH_TOKEN_EXPIRE_DAYS: 7
-      FRONTEND_URL: http://localhost:3000
-      PASSWORD_RESET_EXPIRE_MINUTES: 15
-      ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/wedding_planner}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     depends_on:
       db:
         condition: service_healthy

@@ -5,15 +5,26 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    poolclass=NullPool,
-    pool_pre_ping=True,
-)
+# Use QueuePool for Postgres (production) and NullPool for sqlite tests.
+if "sqlite" in settings.DATABASE_URL:
+    from sqlalchemy.pool import NullPool
+
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
+else:
+    # Default QueuePool for Postgres with pre_ping health checks.
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+    )
 
 async_session_factory = async_sessionmaker(
     engine,

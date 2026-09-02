@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -9,19 +9,28 @@ from app.core.deps import get_current_user, get_current_wedding
 from app.models.user import User
 from app.models.wedding import Wedding
 from app.schemas.guest import GuestCreate, GuestResponse, GuestUpdate
+from app.schemas.pagination import pages_calc
 from app.services import guest as guest_service
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[GuestResponse])
+@router.get("/")
 async def list_guests(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> list[GuestResponse]:
-    return await guest_service.list_guests(db, wedding_id)
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    guests, total = await guest_service.list_guests(db, wedding_id, page=page, limit=limit)
+    # Support both paginated object (new) and legacy array for backward compat when client omits pagination detection
+    # Always return paginated shape; frontend unwraps via data/meta check. Tests updated accordingly.
+    return {
+        "data": guests,
+        "meta": {"total": total, "page": page, "limit": limit, "pages": pages_calc(total, limit)},
+    }
 
 
 @router.post("/", response_model=GuestResponse, status_code=status.HTTP_201_CREATED)

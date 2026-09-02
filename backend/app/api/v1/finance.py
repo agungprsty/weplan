@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -127,14 +127,19 @@ async def put_savings_target(
 
 
 # Transactions
-@router.get("/transactions", response_model=list[TransactionResponse])
+@router.get("/transactions")
 async def list_transactions(
     wedding_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> list[TransactionResponse]:
-    return await txn_service.list_transactions(db, wedding_id)
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    from app.schemas.pagination import pages_calc
+
+    items, total = await txn_service.list_transactions(db, wedding_id, page=page, limit=limit)
+    return {"data": items, "meta": {"total": total, "page": page, "limit": limit, "pages": pages_calc(total, limit)}}
 
 
 @router.post(

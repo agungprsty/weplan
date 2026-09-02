@@ -4,7 +4,7 @@ import uuid
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.checklist import Checklist
@@ -110,7 +110,26 @@ CHECKLIST_TEMPLATE_12BULAN: list[dict] = [
 ]
 
 
-async def list_checklists(db: AsyncSession, wedding_id: uuid.UUID) -> list[Checklist]:
+async def list_checklists(
+    db: AsyncSession, wedding_id: uuid.UUID, page: int = 1, limit: int = 20
+) -> tuple[list[Checklist], int]:
+    total = await db.scalar(select(func.count()).select_from(Checklist).where(Checklist.wedding_id == wedding_id)) or 0
+    offset = (page - 1) * limit
+    result = await db.execute(
+        select(Checklist)
+        .where(Checklist.wedding_id == wedding_id)
+        .order_by(Checklist.due_date.asc().nulls_last(), Checklist.created_at.asc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(result.scalars().all()), int(total)
+
+
+async def list_checklists_all(db: AsyncSession, wedding_id: uuid.UUID) -> list[Checklist]:
+    """Unpaginated for internal auto_generate check."""
+    total = await db.scalar(select(func.count()).select_from(Checklist).where(Checklist.wedding_id == wedding_id)) or 0
+    if total == 0:
+        return []
     result = await db.execute(
         select(Checklist)
         .where(Checklist.wedding_id == wedding_id)
@@ -247,7 +266,7 @@ async def auto_generate_checklists(
     wedding_date: date | None,
     actor: User | None = None,
 ) -> list[Checklist]:
-    existing = await list_checklists(db, wedding_id)
+    existing = await list_checklists_all(db, wedding_id)
     if existing:
         return existing
     if wedding_date is None:

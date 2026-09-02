@@ -36,3 +36,8 @@ class TransactionResponse(TransactionBase):
     wedding_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+
+class PaginatedTransactionResponse(BaseModel):
+    data: list[TransactionResponse]
+    meta: dict

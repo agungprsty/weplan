@@ -45,12 +45,12 @@ export default defineNuxtConfig({
         headers: {
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
           'Cross-Origin-Embedder-Policy': 'credentialless',
-          'X-Frame-Options': 'DENY',
+          'X-Frame-Options': 'SAMEORIGIN',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy':
-            "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://accounts.google.com https://www.googleapis.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; object-src 'none'; base-uri 'self'"
+            "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.gstatic.com; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 http://localhost:* http://127.0.0.1:* https://accounts.google.com https://www.googleapis.com; frame-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://www.gstatic.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; object-src 'none'; base-uri 'self'"
         }
       }
     }

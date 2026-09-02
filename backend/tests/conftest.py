@@ -5,8 +5,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import get_db
+from app.core.limiter import limiter
 from app.main import app
 from app.models.base import Base
+
+# Disable rate limiter during tests to avoid flaky 429
+limiter.enabled = False
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 

@@ -17,7 +17,6 @@ export interface KuaDocument {
 export const useKuaStore = defineStore('kua', () => {
   const items = ref<KuaDocument[]>([])
   const loading = ref(false)
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
 
@@ -36,6 +35,7 @@ export const useKuaStore = defineStore('kua', () => {
   })
 
   async function fetchKua() {
+    const api = useApi()
     if (!weddingId.value) return
     loading.value = true
     try {
@@ -47,6 +47,7 @@ export const useKuaStore = defineStore('kua', () => {
   }
 
   async function updateStatus(id: string, status: KuaDocument['status'], file_url?: string) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
@@ -67,6 +68,7 @@ export const useKuaStore = defineStore('kua', () => {
   }
 
   async function createDocument(payload: { title: string; owner_type: KuaDocument['owner_type']; is_required?: boolean }) {
+    const api = useApi()
     if (!weddingId.value) throw new Error('Wedding belum siap')
     // optimistic: push temp
     const tempId = crypto.randomUUID()
@@ -100,6 +102,7 @@ export const useKuaStore = defineStore('kua', () => {
   }
 
   async function deleteDocument(id: string) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? items.value[idx] : null

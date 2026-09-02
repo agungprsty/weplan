@@ -74,45 +74,5 @@ async def update_wedding(
     wedding: Annotated[Wedding, Depends(get_current_wedding)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> WeddingResponse:
-    update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(wedding, field, value)
-    await db.flush()
-    # Sinkronkan savings_target jika total_budget / wedding_date berubah
-    if "total_budget" in update_data or "wedding_date" in update_data:
-        from app.services.wedding import sync_savings_target
-
-        await sync_savings_target(db, wedding)
-    # Re-load dengan selectinload(plan) agar tidak MissingGreenlet saat serialisasi
-    from sqlalchemy import func, select
-    from sqlalchemy.orm import selectinload
-
-    from app.models.wedding_user import WeddingUser
-
-    result = await db.execute(
-        select(Wedding)
-        .options(selectinload(Wedding.plan))
-        .where(Wedding.id == wedding.id)
-    )
-    wedding = result.scalar_one()
-    # Ensure member_count present for response (service helper would have it, but for deps wedding we need to attach)  # noqa: E501
-
-    cnt = await db.scalar(
-        select(func.count())
-        .select_from(WeddingUser)
-        .where(WeddingUser.wedding_id == wedding.id)
-    )
-    wedding.member_count = int(cnt or 0)
-    from app.services.activity import log_activity
-
-    if update_data:
-        await log_activity(
-            db,
-            wedding.id,
-            current_user,
-            "updated",
-            "wedding",
-            wedding.id,
-            wedding.title,
-        )
-    return wedding  # type: ignore[return-value]
+    updated = await wedding_service.update_wedding(db, wedding, data, actor=current_user)
+    return updated  # type: ignore[return-value]

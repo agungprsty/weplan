@@ -36,6 +36,8 @@ async def authenticate_user(db: AsyncSession, data: LoginRequest) -> User | None
 
     if user is None or not user.hashed_password:
         return None
+    if not user.is_active:
+        return None
     if not verify_password(data.password, user.hashed_password):
         return None
     return user

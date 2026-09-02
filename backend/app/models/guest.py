@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, utcnow
@@ -11,6 +11,11 @@ from app.models.base import Base, utcnow
 
 class Guest(Base):
     __tablename__ = "guests"
+    __table_args__ = (
+        Index("ix_guests_wedding_category", "wedding_id", "category"),
+        Index("ix_guests_wedding_rsvp", "wedding_id", "rsvp_status"),
+        Index("ix_guests_wedding_side", "wedding_id", "side"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     wedding_id: Mapped[uuid.UUID] = mapped_column(

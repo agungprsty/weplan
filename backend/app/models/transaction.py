@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Date, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Date, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, utcnow
@@ -11,6 +11,10 @@ from app.models.base import Base, utcnow
 
 class Transaction(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        Index("ix_transactions_wedding_date", "wedding_id", "transaction_date"),
+        Index("ix_transactions_wedding_type", "wedding_id", "type"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     wedding_id: Mapped[uuid.UUID] = mapped_column(

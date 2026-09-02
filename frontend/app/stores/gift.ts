@@ -18,11 +18,11 @@ export const useGiftStore = defineStore('gift', () => {
   const items = ref<Gift[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
 
   async function fetchGifts() {
+    const api = useApi()
     if (!weddingId.value) return
     loading.value = true
     error.value = null
@@ -37,6 +37,7 @@ export const useGiftStore = defineStore('gift', () => {
   }
 
   async function addGift(data: Partial<Gift> & { guest_id: string }) {
+    const api = useApi()
     if (!weddingId.value) throw new Error('No wedding')
     const optimistic: Gift = {
       id: crypto.randomUUID(),
@@ -68,6 +69,7 @@ export const useGiftStore = defineStore('gift', () => {
   }
 
   async function updateGift(id: string, data: Partial<Gift>) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
@@ -88,6 +90,7 @@ export const useGiftStore = defineStore('gift', () => {
   }
 
   async function deleteGift(id: string) {
+    const api = useApi()
     if (!weddingId.value) return
     const prev = [...items.value]
     items.value = items.value.filter((i) => i.id !== id)

@@ -5,6 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.plan import is_premium_wedding
+
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_wedding
 from app.models.user import User
@@ -22,10 +24,7 @@ router = APIRouter()
 
 
 def _is_premium(wedding: Wedding) -> bool:
-    if wedding.plan_expires_at is None:
-        return False
-    now = datetime.now(UTC).replace(tzinfo=None)
-    return wedding.plan_expires_at > now and wedding.plan_id is not None
+    return is_premium_wedding(wedding)
 
 
 # Savings Target singleton — sinkron otomatis dari wedding.total_budget & wedding_date

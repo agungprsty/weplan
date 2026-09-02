@@ -33,7 +33,6 @@ export const useMaharStore = defineStore('mahar', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const api = useApi()
   const weddingStore = useWeddingStore()
 
   const weddingId = computed(() => weddingStore.wedding?.id)
@@ -55,6 +54,7 @@ export const useMaharStore = defineStore('mahar', () => {
   const totalActual = computed(() => items.value.reduce((s, i) => s + (i.actual_cost ?? 0), 0))
 
   async function fetchItems() {
+    const api = useApi()
     if (!weddingId.value) return
     loading.value = true
     error.value = null
@@ -69,6 +69,7 @@ export const useMaharStore = defineStore('mahar', () => {
   }
 
   async function addItem(data: MaharCreateInput) {
+    const api = useApi()
     if (!weddingId.value) throw new Error('No wedding')
     // optimistic
     const optimistic: MaharItem = {
@@ -103,6 +104,7 @@ export const useMaharStore = defineStore('mahar', () => {
   }
 
   async function updateItem(id: string, data: Partial<MaharCreateInput>) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
@@ -122,6 +124,7 @@ export const useMaharStore = defineStore('mahar', () => {
   }
 
   async function deleteItem(id: string) {
+    const api = useApi()
     if (!weddingId.value) return
     const prev = [...items.value]
     items.value = items.value.filter((i) => i.id !== id)

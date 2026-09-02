@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PlanInfo(BaseModel):
@@ -27,11 +27,25 @@ class WeddingCreate(WeddingBase):
 
 
 class WeddingUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
     wedding_date: date | None = None
-    partner1_name: str | None = None
-    partner2_name: str | None = None
-    total_budget: int | None = None
+    partner1_name: str | None = Field(default=None, min_length=1, max_length=255)
+    partner2_name: str | None = Field(default=None, min_length=1, max_length=255)
+    total_budget: int | None = Field(default=None, ge=0)
+
+    @field_validator("title", "partner1_name", "partner2_name", mode="before")
+    @classmethod
+    def strip_names(cls, v):
+        return v.strip() if isinstance(v, str) else v
+
+
+class WeddingPairRequest(BaseModel):
+    pair_code: str = Field(min_length=6, max_length=8)
+
+    @field_validator("pair_code", mode="before")
+    @classmethod
+    def normalize_code(cls, v):
+        return v.strip().upper() if isinstance(v, str) else v
 
 
 class WeddingResponse(WeddingBase):
@@ -44,10 +58,6 @@ class WeddingResponse(WeddingBase):
     member_count: int = 0
     created_at: datetime
     updated_at: datetime
-
-
-class WeddingPairRequest(BaseModel):
-    pair_code: str
 
 
 class WeddingWithPartners(WeddingResponse):

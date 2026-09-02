@@ -21,11 +21,11 @@ export const useVendorStore = defineStore('vendor', () => {
   const items = ref<Vendor[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
 
   async function fetchVendors() {
+    const api = useApi()
     if (!weddingId.value) return
     loading.value = true
     try {
@@ -39,6 +39,7 @@ export const useVendorStore = defineStore('vendor', () => {
   }
 
   async function addVendor(data: Partial<Vendor>) {
+    const api = useApi()
     if (!weddingId.value) throw new Error('No wedding')
     const optimistic: Vendor = {
       id: crypto.randomUUID(),
@@ -72,6 +73,7 @@ export const useVendorStore = defineStore('vendor', () => {
   }
 
   async function updateVendor(id: string, data: Partial<Vendor>) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null
@@ -89,6 +91,7 @@ export const useVendorStore = defineStore('vendor', () => {
   }
 
   async function deleteVendor(id: string) {
+    const api = useApi()
     if (!weddingId.value) return
     const prev = [...items.value]
     items.value = items.value.filter((i) => i.id !== id)

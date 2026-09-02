@@ -130,11 +130,7 @@ const checklistBadgeClass = computed(() => {
   return 'border-slate-200 bg-white text-slate-600'
 })
 
-const isPremium = computed(() => {
-  if (typeof financeStore.isPremium === 'boolean') return financeStore.isPremium
-  const w = weddingStore.wedding as unknown as { plan_expires_at?: string | null } | null
-  return Boolean(w?.plan_expires_at && new Date(w.plan_expires_at).getTime() > Date.now())
-})
+const { isPremium } = usePremium()
 
 const isPaired = computed(() => {
   const c = wedding.value?.member_count

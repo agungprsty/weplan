@@ -1,8 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.limiter import limiter
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -27,7 +29,9 @@ router = APIRouter()
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 async def register(
+    request: Request,
     data: RegisterRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
@@ -42,7 +46,9 @@ async def register(
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     data: LoginRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Token:
@@ -148,7 +154,9 @@ async def refresh(
 
 
 @router.post("/forgot-password")
+@limiter.limit("3/minute")
 async def forgot_password(
+    request: Request,
     data: ForgotPasswordRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
@@ -189,7 +197,9 @@ async def reset_password(
 
 
 @router.post("/google", response_model=Token)
+@limiter.limit("10/minute")
 async def google_login(
+    request: Request,
     data: GoogleLoginRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Token:

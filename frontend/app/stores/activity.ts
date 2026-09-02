@@ -26,7 +26,6 @@ export const useActivityStore = defineStore('activity', () => {
   const loaded = ref(false)
   const error = ref<string | null>(null)
 
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
 
@@ -35,6 +34,7 @@ export const useActivityStore = defineStore('activity', () => {
   let abort: AbortController | null = null
 
   async function fetchActivities(limit = 20, offset = 0, entityType?: string): Promise<void> {
+    const api = useApi()
     if (!weddingId.value) return
     if (inflight) return inflight
     abort?.abort()
@@ -79,6 +79,7 @@ export const useActivityStore = defineStore('activity', () => {
 
   /** Fetch halaman tertentu secara isolated (replace) — dipakai di /activities */
   async function fetchPage(opts: { limit: number; offset: number; entityType?: string }): Promise<Activity[]> {
+    const api = useApi()
     if (!weddingId.value) return []
     loading.value = true
     error.value = null

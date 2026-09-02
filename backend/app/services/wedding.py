@@ -180,3 +180,39 @@ async def get_wedding_by_id(db: AsyncSession, wedding_id: uuid.UUID) -> Wedding 
     if wedding is not None:
         return await _attach_member_count(db, wedding)
     return None
+
+
+async def update_wedding(
+    db: AsyncSession, wedding: Wedding, data, actor: User | None = None
+) -> Wedding:
+    """Business logic for PATCH /weddings/{id}: apply updates, sync savings, reload, log."""
+
+    # Normalize WeddingUpdate dict
+    update_data = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
+
+    for field, value in update_data.items():
+        setattr(wedding, field, value)
+    await db.flush()
+
+    if "total_budget" in update_data or "wedding_date" in update_data:
+        await sync_savings_target(db, wedding)
+
+    # Reload with plan to avoid MissingGreenlet
+    result = await db.execute(
+        select(Wedding).options(selectinload(Wedding.plan)).where(Wedding.id == wedding.id)
+    )
+    wedding = result.scalar_one()
+    wedding = await _attach_member_count(db, wedding)  # type: ignore[assignment]
+    assert wedding is not None
+
+    if update_data and actor is not None:
+        await log_activity(
+            db,
+            wedding.id,
+            actor,
+            "updated",
+            "wedding",
+            wedding.id,
+            wedding.title,
+        )
+    return wedding

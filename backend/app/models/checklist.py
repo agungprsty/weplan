@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, ForeignKey, Integer, String, Text
+from sqlalchemy import Date, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, utcnow
@@ -11,6 +11,11 @@ from app.models.base import Base, utcnow
 
 class Checklist(Base):
     __tablename__ = "checklists"
+    __table_args__ = (
+        Index("ix_checklists_wedding_status", "wedding_id", "status"),
+        Index("ix_checklists_wedding_due", "wedding_id", "due_date"),
+        Index("ix_checklists_wedding_category", "wedding_id", "category"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     wedding_id: Mapped[uuid.UUID] = mapped_column(

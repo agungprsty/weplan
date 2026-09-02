@@ -24,7 +24,6 @@ export const useCortageStore = defineStore('cortage', () => {
   const items = ref<Cortage[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const api = useApi()
   const weddingStore = useWeddingStore()
   const weddingId = computed(() => weddingStore.wedding?.id)
 
@@ -33,6 +32,7 @@ export const useCortageStore = defineStore('cortage', () => {
   const fittingDoneCount = computed(() => items.value.filter((i) => i.fitting_status === 'done').length)
 
   async function fetchCortage() {
+    const api = useApi()
     if (!weddingId.value) return
     loading.value = true
     error.value = null
@@ -50,6 +50,7 @@ export const useCortageStore = defineStore('cortage', () => {
   const fetchBridesmaids = fetchCortage
 
   async function updateCortage(id: string, data: Partial<Cortage>) {
+    const api = useApi()
     if (!weddingId.value) return
     const idx = items.value.findIndex((i) => i.id === id)
     const prev = idx !== -1 ? { ...items.value[idx] } : null

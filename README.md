@@ -1,6 +1,6 @@
-# Wedding Planner SaaS
+# Kanikah - Wedding Planner
 
-Platform SaaS multi-tenant untuk kolaborasi real-time pasangan dalam merencanakan pernikahan. Mengelola anggaran, daftar tamu, dan tugas persiapan.
+Platform multi-tenant untuk kolaborasi real-time pasangan dalam merencanakan pernikahan. Mengelola anggaran, daftar tamu, dan tugas persiapan.
 
 ## Tech Stack
 
@@ -104,26 +104,6 @@ kanikah/
 └── plan.json                 # Project plan
 ```
 
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
-
-### Workspace
-- `POST /api/weddings` - Create wedding workspace
-- `POST /api/weddings/pair` - Pair account with unique code
-- `GET /api/weddings/me` - Get user's wedding details
-
-### Guests
-- `GET /api/weddings/{id}/guests` - List guests
-- `POST /api/weddings/{id}/guests` - Add guest
-- `PATCH /api/weddings/{id}/guests/{id}` - Update guest/RSVP
-
-### Checklists
-- `GET /api/weddings/{id}/checklists` - List tasks
-- `PATCH /api/weddings/{id}/checklists/{id}` - Update task status/assignee
-
 ## Development
 
 ### Code Style
@@ -152,16 +132,6 @@ pytest -v
 cd frontend
 npm run test
 ```
-
-## Database Schema
-
-- **users** - User credentials and profile
-- **weddings** - Wedding event metadata
-- **wedding_users** - User-wedding relationship with roles
-- **guests** - Guest list with RSVP status
-- **checklists** - Task management with assignments
-
-All tenant tables include `wedding_id` for multi-tenancy (Row-Level Isolation).
 
 ## License
 

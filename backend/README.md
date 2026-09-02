@@ -1,6 +1,6 @@
-# Wedding Planner SaaS - Backend
+# Kanikah - Wedding Planner - Backend
 
-Backend API untuk platform Wedding Planner SaaS dibangun dengan FastAPI, SQLAlchemy 2.0 (async), dan PostgreSQL.
+Backend API untuk platform Wedding Planner dibangun dengan FastAPI, SQLAlchemy 2.0 (async), dan PostgreSQL.
 
 ## Tech Stack
 
@@ -45,55 +45,6 @@ uvicorn app.main:app --reload --port 8000
 
 API documentation tersedia di: `http://localhost:8000/docs`
 
-## Project Structure
-
-```
-backend/
-├── app/
-│   ├── main.py              # FastAPI app entry
-│   ├── core/                # Core modules
-│   │   ├── config.py        # Pydantic Settings
-│   │   ├── database.py      # Async SQLAlchemy
-│   │   ├── security.py      # JWT + Password hashing
-│   │   └── deps.py          # FastAPI dependencies
-│   ├── models/              # SQLAlchemy models
-│   ├── schemas/             # Pydantic schemas
-│   ├── api/v1/              # API routes
-│   ├── services/            # Business logic
-│   └── utils/               # Helpers
-├── alembic/                 # Database migrations
-├── tests/                   # Test files
-├── alembic.ini
-├── pyproject.toml
-└── requirements.txt
-```
-
-## API Endpoints
-
-### Auth
-- `POST /api/v1/auth/register` - Register user baru
-- `POST /api/v1/auth/login` - Login dan dapatkan JWT token
-- `GET /api/v1/auth/me` - Dapatkan data user saat ini
-
-### Weddings
-- `POST /api/v1/weddings/` - Buat workspace wedding baru
-- `POST /api/v1/weddings/pair` - Pair akun dengan kode unik
-- `GET /api/v1/weddings/me` - Dapatkan data wedding user
-- `PATCH /api/v1/weddings/{id}` - Update data wedding
-
-### Guests
-- `GET /api/v1/weddings/{id}/guests/` - List semua tamu
-- `POST /api/v1/weddings/{id}/guests/` - Tambah tamu
-- `GET /api/v1/weddings/{id}/guests/{id}` - Detail tamu
-- `PATCH /api/v1/weddings/{id}/guests/{id}` - Update tamu/RSVP
-- `DELETE /api/v1/weddings/{id}/guests/{id}` - Hapus tamu
-
-### Checklists
-- `GET /api/v1/weddings/{id}/checklists/` - List semua tugas
-- `POST /api/v1/weddings/{id}/checklists/` - Buat tugas baru
-- `GET /api/v1/weddings/{id}/checklists/{id}` - Detail tugas
-- `PATCH /api/v1/weddings/{id}/checklists/{id}` - Update tugas
-- `DELETE /api/v1/weddings/{id}/checklists/{id}` - Hapus tugas
 
 ## Development
 

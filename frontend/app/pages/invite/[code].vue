@@ -172,16 +172,6 @@ async function handleJoin() {
   }
 }
 
-function goLogin() {
-  // hanya simpan pending jika belum penuh
-  if (preview.value?.is_full) {
-    clearPendingInvite()
-    router.push('/login')
-    return
-  }
-  savePendingInvite(rawCode.value)
-  router.push(`/login?invite=${encodeURIComponent(rawCode.value)}`)
-}
 function goRegister() {
   if (preview.value?.is_full) {
     clearPendingInvite()
@@ -295,7 +285,7 @@ const formattedDate = computed(() => {
 
         <!-- Sudah member yang sama -->
         <div v-else-if="isAuthenticated && weddingStore.hasWedding && weddingStore.wedding?.pair_code === preview.pair_code" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 text-center">
-          Kamu sudah bergabung di workspace ini. 🎉
+          Kamu sudah bergabung di workspace ini.
           <div class="mt-3">
             <NuxtLink to="/dashboard" class="inline-flex rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">Buka Dashboard</NuxtLink>
           </div>
@@ -303,12 +293,10 @@ const formattedDate = computed(() => {
 
         <!-- Belum login -->
         <div v-else-if="!isAuthenticated" class="mt-6">
-          <p class="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm text-white">Login atau daftar untuk gabung otomatis — tidak perlu input manual.</p>
-          <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button class="rounded-full bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800" @click="goLogin">Masuk & Gabung</button>
-            <button class="rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="goRegister">Daftar & Gabung</button>
+          <div class="mt-4 grid grid-cols-1">
+            <button class="rounded-full bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800 cursor-pointer" @click="goRegister">Gabung Sekarang</button>
           </div>
-          <p class="mt-3 text-center text-xs text-slate-400">Setelah login/register kamu akan otomatis masuk ke dashboard.</p>
+          <p class="mt-3 text-center text-xs text-slate-400">Setelah gabung kamu akan otomatis masuk ke dashboard.</p>
         </div>
 
         <!-- Auth & belum punya wedding -> CTA join -->
@@ -319,7 +307,7 @@ const formattedDate = computed(() => {
             class="w-full rounded-full bg-slate-900 px-4 py-3.5 text-sm font-medium text-white shadow-md transition hover:bg-rose-600 hover:shadow-rose-500/20 disabled:opacity-60"
             @click="handleJoin"
           >
-            {{ joining ? 'Menggabungkan...' : 'Gabung Sekarang — Otomatis' }}
+            {{ joining ? 'Menggabungkan...' : 'Gabung Sekarang' }}
           </button>
           <p class="mt-2 text-center text-xs text-slate-400">Tanpa input manual. Satu klik langsung ke dashboard.</p>
         </div>

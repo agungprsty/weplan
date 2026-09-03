@@ -23,6 +23,7 @@ const inviteLink = computed(() => {
   const base = useRuntimeConfig().public.frontendUrl as string | undefined || ''
   return base ? `${base.replace(/\/$/, '')}/invite/${wedding.value.pair_code}` : `/invite/${wedding.value.pair_code}`
 })
+const inviteCode = computed(() => wedding.value?.pair_code ?? '')
 
 async function copyPairCode() {
   if (!wedding.value) return
@@ -42,7 +43,11 @@ async function copyInviteLink() {
 }
 function shareWA() {
   if (!inviteLink.value) return
-  const text = `Gabung wedding kita di Kanikah 💍\nKlik link ini biar otomatis masuk tanpa input kode:\n${inviteLink.value}`
+  const code = inviteCode.value?.trim().toUpperCase() ?? ''
+  const manualCode = code
+    ? `\n\nAtau kalau mau gabung manual lewat aplikasinya, masukkan kode undangan ini ya: *${code}*`
+    : ''
+  const text = `Halo! Yuk gabung ke workspace Kanikah buat ngurusin persiapan nikahan kita bareng-bareng 💍✨\n\nKamu bisa langsung klik link di bawah ini biar otomatis masuk tanpa perlu repot masukin kode:\n${inviteLink.value}${manualCode}`
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`
   if (import.meta.client) window.open(url, '_blank')
 }
@@ -525,7 +530,7 @@ onMounted(async () => {
             <div class="rounded-xl bg-white border border-slate-200 p-3">
               <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Link Undangan Otomatis</p>
               <p class="mt-1 truncate font-mono text-xs text-slate-600">{{ inviteLink }}</p>
-              <p class="mt-1 text-xs text-slate-400">Pasangan cukup klik link, login/register, langsung masuk tanpa input kode.</p>
+              <p class="mt-1 text-xs text-slate-400">Pasangan cukup klik link, register akun, langsung masuk tanpa input kode.</p>
               <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <button class="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition" :class="copiedInviteLink ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'" @click="copyInviteLink">
                   <svg v-if="!copiedInviteLink" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="10" height="10" rx="2" /><path d="M5 15V7a2 2 0 0 1 2-2h8" /></svg>

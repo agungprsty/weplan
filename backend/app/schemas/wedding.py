@@ -63,3 +63,15 @@ class WeddingResponse(WeddingBase):
 class WeddingWithPartners(WeddingResponse):
     partner1_email: str | None = None
     partner2_email: str | None = None
+
+
+class WeddingPreviewResponse(BaseModel):
+    """Public preview untuk invite link: hanya info aman, tidak leak email/budget detail."""
+
+    title: str
+    partner1_name: str
+    partner2_name: str
+    wedding_date: date | None = None
+    member_count: int = 0
+    pair_code: str
+    is_full: bool = False

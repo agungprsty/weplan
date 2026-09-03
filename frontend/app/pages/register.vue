@@ -8,10 +8,27 @@ const route = useRoute()
 const apiBase = useRuntimeConfig().public.apiBase
 const authStore = useAuthStore()
 
-// persist plan intent dari pricing (landing) jika ada
+// persist plan & invite intent
+const inviteCode = computed(() => {
+  const q = route.query.invite as string | undefined
+  if (q && /^[A-Za-z0-9]{6,8}$/.test(q.trim())) return q.trim().toUpperCase()
+  if (import.meta.client) {
+    const stored = localStorage.getItem('kanikah_pending_invite')
+    if (stored && /^[A-Za-z0-9]{6,8}$/.test(stored.trim())) return stored.trim().toUpperCase()
+  }
+  return null
+})
+
 onMounted(() => {
   const plan = route.query.plan as string | undefined
   if (plan && import.meta.client) localStorage.setItem('kanikah_pending_plan', plan)
+  const inv = route.query.invite as string | undefined
+  if (inv && import.meta.client && /^[A-Za-z0-9]{6,8}$/.test(inv.trim())) {
+    localStorage.setItem('kanikah_pending_invite', inv.trim().toUpperCase())
+    try { document.cookie = `kanikah_pending_invite=${inv.trim().toUpperCase()}; path=/; max-age=${60*60*24}` } catch {}
+  }
+  const emailQ = route.query.email as string | undefined
+  if (emailQ && !email.value) email.value = emailQ
 })
 
 const name = ref('')
@@ -146,6 +163,14 @@ async function onSubmit() {
       email: me.email
     })
 
+    // jika ada pending invite, prioritaskan ke invite flow auto-join
+    const pendingInvite = inviteCode.value || (route.query.invite as string | undefined)?.trim().toUpperCase() || (import.meta.client ? localStorage.getItem('kanikah_pending_invite') : null)
+    if (pendingInvite && /^[A-Z0-9]{6,8}$/.test(pendingInvite)) {
+      if (import.meta.client) localStorage.setItem('kanikah_pending_invite', pendingInvite)
+      await router.push(`/invite/${pendingInvite}`)
+      return
+    }
+
     // simpan intent plan untuk flow pricing → register → onboarding → checkout
     const planParam = route.query.plan as string | undefined
     if (planParam && import.meta.client) localStorage.setItem('kanikah_pending_plan', planParam)
@@ -250,6 +275,9 @@ async function onSubmit() {
         <p class="mt-2 text-sm text-slate-600">
           Gratis untuk fitur dasar. Setiap anggota pasangan membuat akun masing-masing.
         </p>
+        <div v-if="inviteCode" class="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+          Undangan workspace <span class="font-mono font-bold tracking-widest">{{ inviteCode }}</span> tersimpan. Setelah daftar kamu otomatis gabung tanpa input kode.
+        </div>
 
         <form class="mt-6 space-y-5" @submit.prevent="onSubmit">
           <div>
@@ -329,7 +357,7 @@ async function onSubmit() {
 
       <p class="mt-6 text-center text-sm text-slate-600">
         Sudah punya akun?
-        <NuxtLink to="/login" class="font-medium text-rose-600 hover:text-rose-700 transition-colors">
+        <NuxtLink :to="inviteCode ? `/login?invite=${inviteCode}` : '/login'" class="font-medium text-rose-600 hover:text-rose-700 transition-colors">
           Masuk
         </NuxtLink>
       </p>

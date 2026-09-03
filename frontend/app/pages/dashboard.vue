@@ -12,8 +12,17 @@ const { format: relativeTime, formatWIB } = useRelativeTime()
 const { dotClass, formatActivity, activityStatusDetail } = useActivityDisplay()
 
 const copiedPairCode = ref(false)
+const copiedInviteLink = ref(false)
+const showQR = ref(false)
 
 const wedding = computed(() => weddingStore.wedding)
+
+const inviteLink = computed(() => {
+  if (!wedding.value?.pair_code) return ''
+  if (import.meta.client) return `${window.location.origin}/invite/${wedding.value.pair_code}`
+  const base = useRuntimeConfig().public.frontendUrl as string | undefined || ''
+  return base ? `${base.replace(/\/$/, '')}/invite/${wedding.value.pair_code}` : `/invite/${wedding.value.pair_code}`
+})
 
 async function copyPairCode() {
   if (!wedding.value) return
@@ -23,6 +32,25 @@ async function copyPairCode() {
     setTimeout(() => { copiedPairCode.value = false }, 2000)
   } catch { /* silent */ }
 }
+async function copyInviteLink() {
+  if (!inviteLink.value) return
+  try {
+    await navigator.clipboard.writeText(inviteLink.value)
+    copiedInviteLink.value = true
+    setTimeout(() => { copiedInviteLink.value = false }, 2000)
+  } catch { /* silent */ }
+}
+function shareWA() {
+  if (!inviteLink.value) return
+  const text = `Gabung wedding kita di Kanikah 💍\nKlik link ini biar otomatis masuk tanpa input kode:\n${inviteLink.value}`
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+  if (import.meta.client) window.open(url, '_blank')
+}
+const qrSrc = computed(() => {
+  // pakai QR API tanpa lib tambahan (mobile-first, ringan)
+  if (!inviteLink.value) return ''
+  return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(inviteLink.value)}`
+})
 
 const formattedDate = computed(() => {
   if (!wedding.value?.wedding_date) return null
@@ -480,19 +508,42 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <div v-else class="mt-5 flex flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Pair Code</p>
-              <p class="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-slate-900">{{ wedding?.pair_code }}</p>
-              <p class="mt-1 text-xs text-slate-400">8 karakter · huruf besar & angka</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition" :class="copiedPairCode ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'" @click="copyPairCode">
-                <svg v-if="!copiedPairCode" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="10" height="10" rx="2" /><path d="M5 15V7a2 2 0 0 1 2-2h8" /></svg>
-                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" /></svg>
+          <div v-else class="mt-5 flex flex-col gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Pair Code</p>
+                <p class="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-slate-900">{{ wedding?.pair_code }}</p>
+                <p class="mt-1 text-xs text-slate-400">8 karakter · huruf besar & angka · link tidak kedaluwarsa</p>
+              </div>
+              <button class="inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1.5 text-xs font-medium transition" :class="copiedPairCode ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'" @click="copyPairCode">
+                <svg v-if="!copiedPairCode" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="10" height="10" rx="2" /><path d="M5 15V7a2 2 0 0 1 2-2h8" /></svg>
+                <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" /></svg>
                 {{ copiedPairCode ? 'Tersalin!' : 'Salin Kode' }}
               </button>
-              <a href="#" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" @click.prevent>Undang Pasangan</a>
+            </div>
+            <!-- Invite Link (mobile-first) -->
+            <div class="rounded-xl bg-white border border-slate-200 p-3">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Link Undangan Otomatis</p>
+              <p class="mt-1 truncate font-mono text-xs text-slate-600">{{ inviteLink }}</p>
+              <p class="mt-1 text-xs text-slate-400">Pasangan cukup klik link, login/register, langsung masuk tanpa input kode.</p>
+              <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <button class="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition" :class="copiedInviteLink ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'" @click="copyInviteLink">
+                  <svg v-if="!copiedInviteLink" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="10" height="10" rx="2" /><path d="M5 15V7a2 2 0 0 1 2-2h8" /></svg>
+                  <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" /></svg>
+                  {{ copiedInviteLink ? 'Link Tersalin!' : 'Salin Link' }}
+                </button>
+                <button class="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700" @click="shareWA">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.03 2C6.58 2 2.15 6.42 2.15 10.86c0 1.56.41 3.08 1.2 4.42L2 22l6.86-1.8a9.87 9.87 0 0 0 4.72 1.2h.01c5.45 0 9.88-4.42 9.88-9.87 0-2.64-1.03-5.12-2.9-6.98l-.02-.01zM12.04 19.6h-.01a8.03 8.03 0 0 1-4.09-1.12l-.29-.17-4.08 1.07 1.09-3.97-.19-.31A8.02 8.02 0 0 1 3.86 10.86c0-4.47 3.64-8.11 8.12-8.11 2.17 0 4.21.84 5.74 2.37a8.07 8.07 0 0 1 2.38 5.74c0 4.48-3.64 8.11-8.06 8.74z" /></svg>
+                  WhatsApp
+                </button>
+                <button class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50" @click="showQR = !showQR">
+                  {{ showQR ? 'Sembunyikan QR' : 'Tampilkan QR' }}
+                </button>
+              </div>
+              <div v-if="showQR" class="mt-4 flex flex-col items-center">
+                <img :src="qrSrc" alt="QR Invite" class="h-48 w-48 rounded-xl border border-slate-200 bg-white p-2" />
+                <p class="mt-2 text-xs text-slate-500">Scan QR untuk buka link undangan</p>
+              </div>
             </div>
           </div>
           <div class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">

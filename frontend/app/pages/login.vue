@@ -16,9 +16,28 @@ const formError = ref<string | null>(null)
 
 const registeredNotice = computed(() => route.query.registered === '1')
 
+const inviteCode = computed(() => {
+  const q = route.query.invite as string | undefined
+  if (q && /^[A-Za-z0-9]{6,8}$/.test(q.trim())) return q.trim().toUpperCase()
+  if (import.meta.client) {
+    const stored = localStorage.getItem('kanikah_pending_invite')
+    if (stored && /^[A-Za-z0-9]{6,8}$/.test(stored.trim())) return stored.trim().toUpperCase()
+  }
+  return null
+})
+
 onMounted(() => {
   const plan = route.query.plan as string | undefined
   if (plan && import.meta.client) localStorage.setItem('kanikah_pending_plan', plan)
+  const inv = route.query.invite as string | undefined
+  if (inv && import.meta.client && /^[A-Za-z0-9]{6,8}$/.test(inv.trim())) {
+    localStorage.setItem('kanikah_pending_invite', inv.trim().toUpperCase())
+    // cookie untuk SSR
+    try { document.cookie = `kanikah_pending_invite=${inv.trim().toUpperCase()}; path=/; max-age=${60*60*24}` } catch {}
+  }
+  // prefill email jika ada ?email=
+  const emailQ = route.query.email as string | undefined
+  if (emailQ && !email.value) email.value = emailQ
 })
 
 function validate(): string | null {
@@ -56,6 +75,15 @@ async function onSubmit() {
       email: me.email,
       is_superadmin: me.is_superadmin ?? false,
     })
+
+    // jika ada pending invite, prioritaskan ke invite flow (auto-join)
+    const pendingInvite = inviteCode.value || (route.query.invite as string | undefined)?.trim().toUpperCase() || (import.meta.client ? localStorage.getItem('kanikah_pending_invite') : null)
+    if (pendingInvite && /^[A-Z0-9]{6,8}$/.test(pendingInvite)) {
+      // simpan lagi untuk invite page
+      if (import.meta.client) localStorage.setItem('kanikah_pending_invite', pendingInvite)
+      await router.push(`/invite/${pendingInvite}`)
+      return
+    }
 
     // superadmin langsung ke admin panel tanpa butuh wedding
     if (me.is_superadmin) {
@@ -113,6 +141,13 @@ async function onSubmit() {
         </p>
 
         <div
+          v-if="inviteCode"
+          class="mt-6 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700"
+        >
+          Kamu diundang ke workspace pasangan (kode <span class="font-mono font-bold tracking-widest">{{ inviteCode }}</span>). Masuk untuk gabung otomatis tanpa input manual.
+        </div>
+
+        <div
           v-if="registeredNotice"
           class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
         >
@@ -167,7 +202,7 @@ async function onSubmit() {
 
       <p class="mt-6 text-center text-sm text-slate-600">
         Belum punya akun?
-        <NuxtLink to="/register" class="font-medium text-rose-600 hover:text-rose-700 transition-colors">
+        <NuxtLink :to="inviteCode ? `/register?invite=${inviteCode}` : '/register'" class="font-medium text-rose-600 hover:text-rose-700 transition-colors">
           Daftar gratis
         </NuxtLink>
       </p>

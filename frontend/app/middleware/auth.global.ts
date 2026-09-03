@@ -11,8 +11,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/docs', '/panduan', '/faq', '/contact', '/privacy', '/terms', '/403', '/404', '/500', '/maintenance']
-  const isPublic = publicPages.includes(to.path) || to.path.startsWith('/_error')
+  const isPublic = publicPages.includes(to.path) || to.path.startsWith('/_error') || to.path.startsWith('/invite') || to.path.startsWith('/join')
   const isAdminRoute = to.path.startsWith('/admin')
+  const isInviteRoute = to.path.startsWith('/invite') || to.path.startsWith('/join')
 
   if (!auth.isAuthenticated && !isPublic) {
     return navigateTo('/login')
@@ -48,6 +49,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (auth.isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    // jika ada pending invite, prioritaskan ke invite link
+    const inviteFromQuery = (to.query.invite as string | undefined)?.trim().toUpperCase()
+    const inviteFromStorage = import.meta.client ? (localStorage.getItem('kanikah_pending_invite') || '') : ''
+    const pendingInvite = inviteFromQuery || inviteFromStorage
+    if (pendingInvite && /^[A-Z0-9]{6,8}$/.test(pendingInvite)) {
+      return navigateTo(`/invite/${pendingInvite}`)
+    }
     // superadmin langsung ke admin, jangan ke onboarding
     if (auth.isSuperadmin || auth.user?.is_superadmin) {
       return navigateTo('/admin')
@@ -55,6 +63,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const ok = await safeFetchWedding()
     if (!ok) return navigateTo('/login')
     return navigateTo(wedding.hasWedding ? '/dashboard' : '/onboarding')
+  }
+
+  // invite route tetap boleh diakses auth & unauth; jika auth sudah punya wedding yang sama, biarkan page handle sendiri
+  if (isInviteRoute) {
+    return
   }
 
   // admin routes bebas dari onboarding/dashboard guard — biar middleware/admin.ts yang handle

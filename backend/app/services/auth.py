@@ -15,17 +15,26 @@ from app.schemas.auth import LoginRequest, RegisterRequest
 
 
 async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
-    existing = await db.execute(select(User).where(User.email == data.email))
+    # normalisasi email (lower + strip) — best practice cegah duplicate case-sensitive
+    normalized_email = data.email.strip().lower()
+    existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar_one_or_none() is not None:
         raise ValueError("Email already registered")
 
     user = User(
-        email=data.email,
+        email=normalized_email,
         hashed_password=hash_password(data.password),
-        full_name=data.full_name,
+        full_name=data.full_name.strip(),
     )
     db.add(user)
-    await db.flush()
+    try:
+        await db.flush()
+    except Exception as exc:  # race condition: 2 request concurrent lolos check lalu violates unique
+        from sqlalchemy.exc import IntegrityError
+
+        if isinstance(exc, IntegrityError):
+            raise ValueError("Email already registered") from exc
+        raise
     await db.refresh(user)
     return user
 

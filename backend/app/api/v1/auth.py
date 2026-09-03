@@ -27,22 +27,29 @@ router = APIRouter()
 
 
 @router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/register", response_model=Token, status_code=status.HTTP_201_CREATED
 )
 @limiter.limit("5/minute")
 async def register(
     request: Request,
     data: RegisterRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> UserResponse:
+) -> Token:
+    """Atomic register: buat user + langsung terbitkan token.
+    Mencegah bug multi-step (register ok tapi login gagal → email already registered di retry)."""
     try:
         user = await auth_service.register_user(db, data)
+        # commit eksplisit sebelum terbitkan token agar GET /me berikutnya langsung melihat user
+        # (mencegah race "Could not validate credentials" karena flush saja belum commit)
+        await db.commit()
+        await db.refresh(user)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         ) from e
-    return user
+    tokens = auth_service.generate_tokens(str(user.id))
+    return Token(**tokens)
 
 
 @router.post("/login", response_model=Token)

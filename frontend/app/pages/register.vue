@@ -21,6 +21,8 @@ const confirmPassword = ref('')
 const submitting = ref(false)
 const formError = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
+// untuk UX: jika email sudah terdaftar, tawarkan login
+const duplicateEmail = ref(false)
 
 function validate(): boolean {
   const errors: Record<string, string> = {}
@@ -42,32 +44,103 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
+// best-practice: bersihkan field error saat user mengetik ulang
+watch([name, email, password, confirmPassword], () => {
+  if (Object.keys(fieldErrors.value).length) fieldErrors.value = {}
+  if (formError.value) {
+    formError.value = null
+    duplicateEmail.value = false
+  }
+})
+
+function decodeJwtSub(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return (payload?.sub as string) ?? null
+  } catch {
+    return null
+  }
+}
+
 async function onSubmit() {
   formError.value = null
+  duplicateEmail.value = false
+  fieldErrors.value = {}
   if (!validate()) return
 
   submitting.value = true
+  // simpan kredensial untuk fallback auto-login jika /me gagal
+  const rawEmail = email.value.trim()
+  const rawName = name.value.trim()
+  const rawPassword = password.value
+
   try {
-    await $fetch(`${apiBase}/api/v1/auth/register`, {
+    // best-practice: register sekarang atomik → langsung return Token (access + refresh)
+    // jadi tidak perlu call /login terpisah (mencegah bug: register sukses tapi login gagal → retry jadi "Email already registered")
+    const regRes = await $fetch<Record<string, unknown>>(`${apiBase}/api/v1/auth/register`, {
       method: 'POST',
       body: {
-        full_name: name.value.trim(),
-        email: email.value.trim(),
-        password: password.value
+        full_name: rawName,
+        email: rawEmail,
+        password: rawPassword
       }
     })
 
-    // Auto-login: buat access + refresh token lalu set session
-    const res = await $fetch<{ access_token: string; refresh_token: string }>(`${apiBase}/api/v1/auth/login`, {
-      method: 'POST',
-      body: { email: email.value.trim(), password: password.value }
-    })
+    // dukung 2 format: baru (Token) dan lama (User) untuk backward compat
+    let accessToken: string | undefined = regRes.access_token as string | undefined
+    let refreshToken: string | undefined = regRes.refresh_token as string | undefined
 
-    const me = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${res.access_token}` }
-    })
+    // fallback lama: jika backend masih return User, lakukan login
+    if (!accessToken) {
+      const loginRes = await $fetch<{ access_token: string; refresh_token: string }>(`${apiBase}/api/v1/auth/login`, {
+        method: 'POST',
+        body: { email: rawEmail, password: rawPassword }
+      })
+      accessToken = loginRes.access_token
+      refreshToken = loginRes.refresh_token
+    }
 
-    authStore.setSession(res.access_token, res.refresh_token, {
+    if (!accessToken) throw new Error('Token tidak diterima')
+
+    // fetch /me dengan fallback tangguh: jika /me gagal (mis. race commit atau 401), jangan anggap register gagal
+    let me: { id: string; full_name: string; email: string } | null = null
+    try {
+      me = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+    } catch (meErr) {
+      // coba fallback: login ulang lalu /me (mengatasi token yang belum commit)
+      if (meErr instanceof FetchError) {
+        const st = (meErr as unknown as { statusCode?: number }).statusCode
+        // 401 Could not validate credentials → coba login
+        if (st === 401) {
+          try {
+            const loginRes2 = await $fetch<{ access_token: string; refresh_token: string }>(`${apiBase}/api/v1/auth/login`, {
+              method: 'POST',
+              body: { email: rawEmail, password: rawPassword }
+            })
+            accessToken = loginRes2.access_token
+            refreshToken = loginRes2.refresh_token
+            me = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            })
+          } catch {
+            // tetap gagal → fallback ke data form + decode sub
+          }
+        }
+      }
+      // fallback terakhir: pakai data form agar auto-login tetap berhasil tanpa /me
+      if (!me) {
+        const sub = decodeJwtSub(accessToken)
+        me = {
+          id: sub ?? crypto.randomUUID(),
+          full_name: rawName,
+          email: rawEmail
+        }
+      }
+    }
+
+    authStore.setSession(accessToken, refreshToken ?? '', {
       id: me.id,
       name: me.full_name,
       email: me.email
@@ -80,14 +153,88 @@ async function onSubmit() {
     await router.push('/onboarding')
   } catch (err) {
     if (err instanceof FetchError) {
-      const detail = (err.data as Record<string, unknown> | undefined)?.detail
+      const status = (err as unknown as { statusCode?: number }).statusCode ?? (err as unknown as { status?: number }).status
+      const data = err.data as Record<string, unknown> | undefined
+      const detail = data?.detail as unknown
+
+      // 429 rate limit
+      if (status === 429) {
+        formError.value = 'Terlalu banyak percobaan. Coba lagi dalam 1 menit.'
+        return
+      }
+
+      // 422 validation error → petakan ke fieldErrors (Pydantic FastAPI)
+      if (status === 422 && Array.isArray(detail)) {
+        const mapped: Record<string, string> = {}
+        for (const item of detail as Array<{ loc?: unknown[]; msg?: string }>) {
+          const loc = item.loc as unknown[]
+          const field = Array.isArray(loc) ? String(loc[loc.length - 1]) : ''
+          const msg = item.msg ?? 'Invalid'
+          if (field === 'email') mapped.email = msg
+          else if (field === 'password') mapped.password = msg
+          else if (field === 'full_name') mapped.name = msg
+          else mapped[field] = msg
+        }
+        if (Object.keys(mapped).length) {
+          fieldErrors.value = mapped
+          formError.value = 'Periksa kembali isian form.'
+          return
+        }
+      }
+
+      // 400 duplicate email → UX: tawarkan login, opsional coba auto-login jika password cocok
+      const detailStr = typeof detail === 'string' ? detail : ''
+      const isDuplicate = detailStr.toLowerCase().includes('email already registered') || detailStr.includes('Email sudah digunakan')
+      if (isDuplicate || (typeof detailStr === 'string' && detailStr.toLowerCase().includes('already'))) {
+        duplicateEmail.value = true
+        formError.value = 'Email sudah terdaftar. Silakan masuk dengan akun tersebut atau gunakan email lain.'
+        // best-practice: coba auto-login jika user sebenarnya sudah terbuat di percobaan sebelumnya (mis. register sukses tapi login gagal)
+        try {
+          const loginRes = await $fetch<{ access_token: string; refresh_token: string }>(`${apiBase}/api/v1/auth/login`, {
+            method: 'POST',
+            body: { email: rawEmail, password: rawPassword }
+          })
+          let me2: { id: string; full_name: string; email: string } | null = null
+          try {
+            me2 = await $fetch<{ id: string; full_name: string; email: string }>(`${apiBase}/api/v1/auth/me`, {
+              headers: { Authorization: `Bearer ${loginRes.access_token}` }
+            })
+          } catch {
+            const sub2 = decodeJwtSub(loginRes.access_token)
+            me2 = { id: sub2 ?? crypto.randomUUID(), full_name: rawName, email: rawEmail }
+          }
+          authStore.setSession(loginRes.access_token, loginRes.refresh_token, {
+            id: me2.id,
+            name: me2.full_name,
+            email: me2.email
+          })
+          formError.value = null
+          duplicateEmail.value = false
+          const planParam2 = route.query.plan as string | undefined
+          if (planParam2 && import.meta.client) localStorage.setItem('kanikah_pending_plan', planParam2)
+          await router.push('/onboarding')
+          return
+        } catch {
+          // tetap tampilkan formError duplicate – user bisa klik Masuk
+        }
+        return
+      }
+
+      // fallback ramah untuk error kredensial yang bocor dari /me (seharusnya sudah ditangani di inner try)
+      if (typeof detailStr === 'string' && detailStr.toLowerCase().includes('could not validate credentials')) {
+        formError.value = 'Pendaftaran hampir selesai, tetapi sesi belum terbaca. Coba masuk dengan email dan password yang baru dibuat.'
+        duplicateEmail.value = true
+        return
+      }
+
       formError.value =
         typeof detail === 'string'
           ? detail
           : ((detail as Record<string, unknown> | undefined)?.message as string | undefined) ??
+            (data?.error as string | undefined) ??
             'Pendaftaran gagal. Coba lagi.'
     } else {
-      formError.value = 'Pendaftaran gagal. Coba lagi.'
+      formError.value = err instanceof Error ? err.message : 'Pendaftaran gagal. Coba lagi.'
     }
   } finally {
     submitting.value = false
@@ -154,12 +301,19 @@ async function onSubmit() {
             <p v-if="fieldErrors.confirmPassword" class="mt-1.5 text-xs text-rose-600">{{ fieldErrors.confirmPassword }}</p>
           </div>
 
-          <p
+          <div
             v-if="formError"
             class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
           >
-            {{ formError }}
-          </p>
+            <p>{{ formError }}</p>
+            <NuxtLink
+              v-if="duplicateEmail"
+              :to="`/login?email=${encodeURIComponent(email.trim())}`"
+              class="mt-2 inline-block font-medium underline hover:text-rose-800"
+            >
+              Masuk ke akun →
+            </NuxtLink>
+          </div>
 
           <button
             type="submit"

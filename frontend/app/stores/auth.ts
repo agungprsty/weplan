@@ -71,6 +71,13 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   const user = ref<AuthUser | null>(null)
+  // Capture runtimeConfig di setup agar doRefresh tidak panggil useRuntimeConfig di luar context (NUXT_E1001)
+  let _cachedConfig: ReturnType<typeof useRuntimeConfig> | null = null
+  try { _cachedConfig = useRuntimeConfig() } catch {}
+  function getApiBase(): string {
+    if (_cachedConfig) return (_cachedConfig.public.apiBase as string) || ''
+    try { return (useRuntimeConfig().public.apiBase as string) || '' } catch { return '' }
+  }
 
   // hydrate user from cookie on init (universal)
   if (userCookie.value) {
@@ -166,11 +173,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function doRefresh(): Promise<string | null> {
     if (!refreshToken.value) return null
     if (refreshing) return refreshing
-    const config = useRuntimeConfig()
+    const apiBase = getApiBase()
     refreshing = (async () => {
       try {
         const res = await $fetch<{ access_token: string; refresh_token: string }>(
-          `${config.public.apiBase}/api/v1/auth/refresh`,
+          `${apiBase}/api/v1/auth/refresh`,
           { method: 'POST', body: { refresh_token: refreshToken.value } },
         )
         token.value = res.access_token

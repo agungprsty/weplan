@@ -3,15 +3,43 @@ export function useApi() {
   const auth = useAuthStore()
   const baseURL = config.public.apiBase as string
 
+  // Capture Nuxt-bound instances di setup, agar callback async (onResponseError) tidak perlu panggil composable di luar context
+  let weddingStore: ReturnType<typeof useWeddingStore> | null = null
+  try { weddingStore = useWeddingStore() } catch {}
+  let router: ReturnType<typeof useRouter> | null = null
+  try { router = useRouter() } catch {}
+  let route: ReturnType<typeof useRoute> | null = null
+  try { route = useRoute() } catch {}
+
+  function getCurrentPath(): string {
+    if (route?.path) return route.path
+    if (router?.currentRoute?.value?.path) return router.currentRoute.value.path
+    if (import.meta.client) return window.location.pathname
+    return ''
+  }
+
   function redirectToLoginIfNeeded() {
     if (!import.meta.client) return
+    const currentPath = getCurrentPath()
+    const isAuthPage = currentPath === '/login' || currentPath === '/register'
+    if (isAuthPage) return
+    // Gunakan router jika ada, fallback ke navigateTo / window.location
     try {
-      const route = useRoute()
-      const isAuthPage = route.path === '/login' || route.path === '/register'
-      if (!isAuthPage) navigateTo('/login')
-    } catch {
-      // useRoute may be unavailable during SSR or outside Nuxt context; fallback to direct nav
+      if (router) {
+        void router.push('/login')
+        return
+      }
       navigateTo('/login')
+    } catch {
+      try { window.location.assign('/login') } catch {}
+    }
+  }
+
+  function clearWeddingSafe() {
+    try { weddingStore?.clearWedding() } catch {}
+    // fallback jika weddingStore belum tertangkap (mis. dipanggil di luar setup)
+    if (!weddingStore) {
+      try { useWeddingStore().clearWedding() } catch {}
     }
   }
 
@@ -32,10 +60,7 @@ export function useApi() {
         if (response?.status === 401 && isRefreshCall) {
           // refresh juga expired → paksa re-login
           auth.clearSession()
-          try {
-            const wedding = useWeddingStore()
-            wedding.clearWedding()
-          } catch {}
+          clearWeddingSafe()
           redirectToLoginIfNeeded()
         }
         return
@@ -45,10 +70,7 @@ export function useApi() {
       const hasRefresh = Boolean(auth.refreshToken)
       if (!hasRefresh) {
         auth.clearSession()
-        try {
-          const wedding = useWeddingStore()
-          wedding.clearWedding()
-        } catch {}
+        clearWeddingSafe()
         redirectToLoginIfNeeded()
         return
       }
@@ -61,10 +83,7 @@ export function useApi() {
       const newAccess = await auth.doRefresh()
       if (!newAccess) {
         // doRefresh sudah clearSession jika gagal
-        try {
-          const wedding = useWeddingStore()
-          wedding.clearWedding()
-        } catch {}
+        clearWeddingSafe()
         redirectToLoginIfNeeded()
         return
       }
